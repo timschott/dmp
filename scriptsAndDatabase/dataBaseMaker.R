@@ -5,13 +5,13 @@ library("dplyr")
 library("textclean")
 library("stringr")
 library("tm")
-
+library(qdap)
+install.packages("rJava")
+library(rJava)
+library("openNLPdata")
 ##### Let's try it with the tokenizer package.
 #### SPLITTING INTO SENTENCES
 # manually throw a \n at the end of every line
-#test_sentence<-c("Hello. There. This is a test of the sentence. cabability. Mr. Miagi. Hello Mr. Jsun. Mrs. smith.")
-#test_sentence <- gsub('Mr\\.', 'Mr', test_sentence)
-#test_sentence <- gsub('Mrs\\.', 'Mrs', test_sentence)
 stock <- c("Title", "Type", "ID", "Unit")
 
 #output <- unlist(tokenize_sentences(test_sentence))
@@ -23,6 +23,7 @@ heartOfDarkness.end <- which(heartOfDarkness == "sky--seemed to lead into the he
 
 heartOfDarkness<-heartOfDarkness[heartOfDarkness.start: heartOfDarkness.end]
 
+#get rid of volume markers. 
 heartOfDarkness.sents<-heartOfDarkness[-(1)]
 heartOfDarkness.sents<-heartOfDarkness.sents[-(1160)]
 heartOfDarkness.sents<-heartOfDarkness.sents[-(2128)]
@@ -79,17 +80,14 @@ summary(con)
 
 dbDisconnect(con)
 
-####
-#### BETTER WAY TO BREAK DOWN INTO WORDS
-# Better way to do my original work 
-
+#### into words. 
 heartOfDarkness <- scan("rawTexts/conrad-heart-of-darkness.txt",what="character",sep="\n")
 heartOfDarkness.start<- which(heartOfDarkness == "I")
 heartOfDarkness.end <- which(heartOfDarkness == "sky--seemed to lead into the heart of an immense darkness.")
 
 heartOfDarkness<-heartOfDarkness[heartOfDarkness.start: heartOfDarkness.end]
 
-## Grep out VOLUME markers (likely manually)
+## Grep out VOLUME markers
 
 heartOfDarkness.temp<-heartOfDarkness[-(1)]
 heartOfDarkness.temp<-heartOfDarkness.temp[-(1160)]
@@ -162,7 +160,7 @@ dbGetQuery(con, "SELECT Unit FROM textTable WHERE Type='paragraph' LIMIT 2")
 summary(con)
 dbDisconnect(con)
 
-###NEXT####
+###NEXT, the Road####
 
 theRoad <- scan("rawTexts/cormac-mccarthy-the-road.txt",what="character", sep="\n")
 #get rid of all numbers
@@ -261,6 +259,7 @@ dbDisconnect(con)
 theRoad.temp <- theRoad
 theRoad.temp <- paste(theRoad.temp, collapse=" ")
 theRoad.temp <-tolower(theRoad.temp)
+# a better regex that is going to maintain contractions. important! 
 theRoad.temp <- unlist(strsplit(theRoad.temp, "[^\\w']", perl=T))
 road.not.blanks <- which(theRoad.temp != "")
 theRoad.words <- theRoad.temp[road.not.blanks]
@@ -286,3 +285,46 @@ dbGetQuery(con, "SELECT Unit FROM textTable WHERE Type='word' AND Title='theRoad
 dbDisconnect(con)
 
 # yay added 2. 
+# onto the next. 
+# gatsby! 
+
+gatsby <- scan("rawTexts/fscott-fitzergald-the-great-gatsby.txt",what="character", sep="\n")
+# clean headmatter
+gatsby.start <- which(gatsby=="Chapter 1")
+gatsby.end<- which(gatsby=="the past.")
+# no had matter 
+gatsby<-gatsby[gatsby.start:gatsby.end]
+# get rid of chapter markers 
+gatsby<- gsub('Chapter [0-9]', "", gatsby)
+#https://rdrr.io/cran/qdap/man/replace_abbreviation.html
+gatsby <- replace_abbreviation(gatsby)
+gatsby <- gsub('(?<=[A-Z])(\\.)(?=[A-Z]|\\.|\\s)', '', perl=TRUE, gatsby)
+# split 
+first_half <- gatsby[1:2501]
+second_half<- gatsby[-(1:2501)]
+
+gatsby.sents.first <- paste0(first_half, collapse = "\n")
+gatsby.sents.first <- unlist(tokenize_sentences(gatsby.sents.first))
+
+gatsby.sents.second <- paste0(second_half, collapse = "\n")
+gatsby.sents.second <- unlist(tokenize_sentences(gatsby.sents.second))
+
+gatsby.sents <- c(gatsby.sents.first, gatsby.sents.second)
+gatsby.sents <- gsub('\"', '' , gatsby.sents, fixed=TRUE)
+
+# back to good. 
+gatsby.title <- rep("theGreatGatsby", 3413)
+gatsby.sents.type <- rep("sentence", 3413)
+gatsby.sents.id <- paste0("THE_GREAT_GATSBY_", "SENTENCE_", seq(1,3413))
+
+# make matrix. 
+
+gatsby.sents.matrix <- cbind(gatsby.title, gatsby.sents.type, gatsby.sents.id, gatsby.sents)
+gatsby.sents.df <- as.data.frame(gatsby.sents.matrix)
+colnames(gatsby.sents.df) <- stock
+
+
+con <- dbConnect(RSQLite::SQLite(), ":memory:", dbname="textTable.sqlite")
+dbWriteTable(con, "textTable", gatsby.sents.df, append=TRUE, row.names=FALSE)
+dbGetQuery(con, "SELECT Unit FROM textTable WHERE Type='sentence' AND Title='theGreatGatsby' LIMIT 2")
+dbDisconnect(con)
