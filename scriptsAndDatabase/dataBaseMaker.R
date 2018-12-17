@@ -292,7 +292,7 @@ gatsby <- scan("rawTexts/fscott-fitzergald-the-great-gatsby.txt",what="character
 # clean headmatter
 gatsby.start <- which(gatsby=="Chapter 1")
 gatsby.end<- which(gatsby=="the past.")
-# no had matter 
+# no head matter 
 gatsby<-gatsby[gatsby.start:gatsby.end]
 # get rid of chapter markers 
 gatsby<- gsub('Chapter [0-9]', "", gatsby)
@@ -328,3 +328,8 @@ con <- dbConnect(RSQLite::SQLite(), ":memory:", dbname="textTable.sqlite")
 dbWriteTable(con, "textTable", gatsby.sents.df, append=TRUE, row.names=FALSE)
 dbGetQuery(con, "SELECT Unit FROM textTable WHERE Type='sentence' AND Title='theGreatGatsby' LIMIT 2")
 dbDisconnect(con)
+
+# gatsby para's
+# should be easier. 
+# read in from python. 
+
