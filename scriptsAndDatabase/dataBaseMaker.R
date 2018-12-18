@@ -347,15 +347,52 @@ g.paragraphs.counter <- seq(1, 1589)
 g.paragraphs.id <- paste0("THE_GREAT_GATSBY_", "PARAGRAPH_", g.paragraphs.counter)
 
 g.paragraphs.matrix <- cbind(g.title, g.paragraphs.type, g.paragraphs.id, g.paragraphs$para)
-g.paragraphs.df <- as.data.frame(g.paragraphs.matrix)
+g.paragraphs.df <- as.data.frame(g.paragraphs.matrix, stringsAsFactors = FALSE)
 colnames(g.paragraphs.df) <- c("Title", "Type", "ID", "Unit")
 
 con <- dbConnect(RSQLite::SQLite(), ":memory:", dbname="textTable.sqlite")
 ### Columns. 
 # we should no longer need to set the column names
 dbWriteTable(con, "textTable", g.paragraphs.df, append=TRUE, row.names=FALSE)
-dbGetQuery(con, "SELECT Unit FROM textTable WHERE Type='paragraph' LIMIT 2")
+dbGetQuery(con, "SELECT Unit FROM textTable WHERE Type='paragraph' AND Title='theGreatGatsby' LIMIT 2")
 summary(con)
 dbDisconnect(con)
 
+################
+## MOBY DICK ##
+
+
+moby <- scan("rawTexts/herman-melville-moby-dick.txt",what="character",sep="\n")
+
+moby.start<- which(moby == "Call me Ishmael. Some years ago—never mind how long precisely—having")
+moby.end <- which(moby == "children, only found another orphan.")
+
+moby<-moby[moby.start: moby.end]
+moby <- replace_abbreviation(moby)
+moby <- gsub('_', '', perl=TRUE, moby)
+moby <- gsub("[0-9]", '', moby)
+moby.not.blanks <- which(moby != "")
+moby <- moby[moby.not.blanks]
+
+length(moby)
+
+# moby is 18390 lines. so really big. so have to split it a lot. 
+first_bite <- moby[1:2499]
+second_bite<- moby[2500:4999]
+third_bite <- moby[5000:7499]
+fourth_bite<- moby[7500:9999]
+fifth_bite <- moby[10000:12499]
+sixth_bite<- moby[15000:17499]
+sevenths_bite<- moby[17500:18390]
+
+
+
+gatsby.sents.first <- paste0(first_half, collapse = "\n")
+gatsby.sents.first <- unlist(tokenize_sentences(gatsby.sents.first))
+
+gatsby.sents.second <- paste0(second_half, collapse = "\n")
+gatsby.sents.second <- unlist(tokenize_sentences(gatsby.sents.second))
+
+gatsby.sents <- c(gatsby.sents.first, gatsby.sents.second)
+gatsby.sents <- gsub('\"', '' , gatsby.sents, fixed=TRUE)
 
