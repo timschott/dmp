@@ -333,3 +333,29 @@ dbDisconnect(con)
 # should be easier. 
 # read in from python. 
 
+g.paragraphs <- read.csv("../Python_Scripts/checkCorpus/GATBSY_paras.csv", stringsAsFactors = FALSE)
+g.paragraphs <- g.paragraphs[-c(1:20, 174, 225, 309, 473, 646, 805, 942, 1353, 1366,1619:1674),]
+
+g.paragraphs$X0 <- replace_abbreviation(g.paragraphs$X0)
+g.paragraphs$X0 <- gsub('(?<=[A-Z])(\\.)(?=[A-Z]|\\.|\\s)', '', perl=TRUE, g.paragraphs$X0)
+
+colnames(g.paragraphs) <- c("arbitrary", "para")
+
+g.title <- rep("theGreatGatsby", 1589)
+g.paragraphs.type <- rep("paragraph", 1589)
+g.paragraphs.counter <- seq(1, 1589)
+g.paragraphs.id <- paste0("THE_GREAT_GATSBY_", "PARAGRAPH_", g.paragraphs.counter)
+
+g.paragraphs.matrix <- cbind(g.title, g.paragraphs.type, g.paragraphs.id, g.paragraphs$para)
+g.paragraphs.df <- as.data.frame(g.paragraphs.matrix)
+colnames(g.paragraphs.df) <- c("Title", "Type", "ID", "Unit")
+
+con <- dbConnect(RSQLite::SQLite(), ":memory:", dbname="textTable.sqlite")
+### Columns. 
+# we should no longer need to set the column names
+dbWriteTable(con, "textTable", g.paragraphs.df, append=TRUE, row.names=FALSE)
+dbGetQuery(con, "SELECT Unit FROM textTable WHERE Type='paragraph' LIMIT 2")
+summary(con)
+dbDisconnect(con)
+
+
