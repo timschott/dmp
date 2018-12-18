@@ -194,3 +194,51 @@ dbGetQuery(con, "SELECT Unit FROM textTable WHERE Type='paragraph' AND Title='mo
 dbDisconnect(con)
 # scoop into db. 
 #words.. pretty easy. clean, scoop into db.
+
+moby <- scan("rawTexts/herman-melville-moby-dick.txt",what="character",sep="\n")
+
+moby.start<- which(moby == "Call me Ishmael. Some years ago—never mind how long precisely—having")
+moby.end <- which(moby == "children, only found another orphan.")
+
+moby<- moby[moby.start: moby.end]
+moby <- replace_abbreviation(moby)
+moby <- gsub('_', '', perl=TRUE, moby)
+
+# taking inititave and grepping out chapter markers. 
+
+moby<-  gsub('CHAPTER [0-9]+..*', "", perl=TRUE, moby)
+moby <- gsub('\\([A-z]+\\),.CHAPTER.[A-z]{1,}\\.', "", perl=TRUE,moby)
+moby <- gsub('BOOK.I{1,}\\.', "", perl=TRUE, moby)
+moby <- gsub("[0-9]", '', moby)
+moby.not.blanks <- which(moby != "")
+moby <- moby[moby.not.blanks]
+
+moby.temp <- moby
+moby.temp <- paste(moby.temp, collapse=" ")
+moby.temp <-tolower(moby.temp)
+# a better regex that is going to maintain contractions. important! 
+moby.temp <- unlist(strsplit(moby.temp, "[^\\w']", perl=T))
+moby.not.blanks <- which(moby.temp != "")
+moby.words <- moby.temp[moby.not.blanks]
+
+# lots of words! 
+print(length(moby.words))
+# 214062
+
+
+moby.title <- rep("mobyDick", 214062)
+moby.words.type <- rep("word", 214062)
+moby.words.counter <- seq(1, 214062)
+moby.words.id <- paste0("MOBY_DICK_", "WORD_", moby.words.counter)
+
+moby.words.matrix <- cbind(moby.title, moby.words.type, moby.words.id, moby.words)
+
+moby.words.df <- as.data.frame(moby.words.matrix, stringsAsFactors = FALSE)
+
+#writeLines(heartOfDarknessWords, "heartOfDarknessWords.txt")
+con <- dbConnect(RSQLite::SQLite(), ":memory:", dbname="textTable.sqlite")
+colnames(moby.words.df) <- c("Title", "Type", "ID", "Unit")
+dbWriteTable(con, "textTable", moby.words.df, append=TRUE, row.names=FALSE)
+dbGetQuery(con, "SELECT * FROM textTable WHERE Type= 'word' AND Title='mobyDick' LIMIT 10")
+dbDisconnect(con)
+
