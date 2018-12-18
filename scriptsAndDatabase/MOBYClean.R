@@ -66,19 +66,20 @@ moby.sents.seventh <- unlist(tokenize_sentences(moby.sents.seventh))
 moby.sents <- c(moby.sents.first, moby.sents.second, moby.sents.third, moby.sents.fourth, moby.sents.fifth, moby.sents.sixth, moby.sents.seventh)
 moby.sents <- gsub('\"', '' , moby.sents, fixed=TRUE)
 
+# need to get rid of folio etc business from the Cetalogy chapter
 moby.sents <- gsub('\\([A-z]+\\),.CHAPTER.[A-z]{1,}\\.', "", perl=TRUE,moby.sents)
 
 # now we need to join sentences that end in punctuation and begin with a capital letter 
 
-test <- c("Hello my name is tim?")
-substr(test, nchar(test), nchar(test))
+# test <- c("Hello my name is tim?")
+# substr(test, nchar(test), nchar(test))
 
 bad_spots<-c(0)
 
-first_boy <- c("Hello, my name is tim!")
-second_boy <- c(" he bellowed.")
-substr(moby.sents[1], nchar(moby.sents[1])-1, nchar(moby.sents[1]))
-substr(moby.sents[2], 1, 1)
+# first_boy <- c("Hello, my name is tim!")
+# second_boy <- c(" he bellowed.")
+# substr(moby.sents[1], nchar(moby.sents[1])-1, nchar(moby.sents[1]))
+# substr(moby.sents[2], 1, 1)
 
 for(i in seq(1:length(moby.sents))){
   #if the sentence ends with a punctuation mark and the next character is a lowercase, combine them
@@ -86,7 +87,7 @@ for(i in seq(1:length(moby.sents))){
   test2 <- substr(moby.sents[i+1], 1, 1)
   if(test %in% c('?', '!') && test2==tolower(test2)){
     moby.sents[i] <- paste(moby.sents[i], moby.sents[i+1])
-    print(moby.sents[i])
+    # print(moby.sents[i])
     bad_spots<-append(bad_spots, i+1)
   }
 }
@@ -100,7 +101,7 @@ for(i in seq(1:length(moby.sents))){
   test2 <- substr(moby.sents[i+1], 1, 1)
   if(test2 %in% c(LETTERS, letters)){
     if(test %in% c('?”', '!”') && test2==tolower(test2)){
-      print(i)
+      #print(i)
       moby.sents[i] <- paste(moby.sents[i], moby.sents[i+1])
       bad_spots<-append(bad_spots, i+1)
     }
@@ -114,15 +115,82 @@ moby.sents.df <- as.data.frame(moby.sents, stringsAsFactors = FALSE)
 write.csv(moby.sents.df, 'mobysents.csv')
 ### need to check if this is correct. going to confirm with Great Gatsby.
 
-moby.title <- rep("mobyDick", 8226)
-moby.sents.type <- rep("sentence", 8226)
-moby.sents.counter<-seq(1, 8226)
+moby.title <- rep("mobyDick", 7479)
+moby.sents.type <- rep("sentence", 7479)
+moby.sents.counter<-seq(1, 7479)
 moby.sents.id <- paste0("MOBY_", "SENT_", moby.sents.counter)
 print(length(moby.sents.id))
 moby.sents.matrix <- cbind(moby.title, moby.sents.type, moby.sents.id, moby.sents)
 moby.sents.df <- as.data.frame(moby.sents.matrix, stringsAsFactors = FALSE)
-
+colnames(moby.sents.df) <- stock
 # okay i think it's good now.
 # Moby To Do: press into sents into DB; 
-#paras clean; 
-#words clean.
+
+con <- dbConnect(RSQLite::SQLite(), ":memory:", dbname="textTable.sqlite")
+
+dbWriteTable(con, "textTable", moby.sents.df, append=TRUE, row.names=FALSE)
+dbGetQuery(con, "SELECT Unit FROM textTable WHERE Type='sentence' AND Title='mobyDick' LIMIT 2")
+dbDisconnect(con)
+#paras read in, clean, commit to db; 
+## PARAS
+moby.paragraphs <- read.csv("Python_Scripts/checkCorpus/MOBY_paras.csv", stringsAsFactors = FALSE)
+moby.paragraphs <- moby.paragraphs[-c(1:537, 3129:3183),]
+colnames(moby.paragraphs) <- c("arb", "para")
+moby.paragraphs <- moby.paragraphs %>%
+  mutate(paragraph = gsub('CHAPTER [0-9]+..*', "", perl=TRUE, para))
+moby.paragraphs <- moby.paragraphs %>% 
+  transmute(para = gsub('\\([A-z]+\\),.CHAPTER.[A-z]{1,}\\.', "", perl=TRUE,paragraph))
+
+moby.paragraphs <- as.data.frame(moby.paragraphs[-which(moby.paragraphs$para==""),], stringsAsFactors = FALSE)
+
+colnames(moby.paragraphs) <- c("para")
+
+moby.paragraphs <- moby.paragraphs %>%
+  transmute(paragraph = str_replace_all(para, "[\n]", " "))
+moby.paragraphs <- moby.paragraphs %>%
+  transmute(para = str_replace_all(paragraph, "_", ""))
+
+moby.paragraphs <- as.data.frame(moby.paragraphs[-c(2456),], stringsAsFactors = FALSE)
+colnames(moby.paragraphs) <- c("para")
+
+# need to get rid of _
+# need to join lowercase start with uppercase start
+
+bad<-c(0)
+for(i in seq(1:length(moby.paragraphs$para))){
+  test <- substr(moby.paragraphs$para[i], 1, 1)
+  if(test %in% c(LETTERS, letters) && test == tolower(test)){
+    moby.paragraphs$para[i-1] <- paste(moby.paragraphs$para[i-1], moby.paragraphs$para[i])
+    bad<-append(bad, i)
+    print(i)
+  }
+}
+moby.paragraphs <- as.data.frame(moby.paragraphs[-c(bad),], stringsAsFactors = FALSE)
+colnames(moby.paragraphs) <- c("para")
+moby.paragraphs <- as.data.frame(moby.paragraphs[-c(577, 586),], stringsAsFactors = FALSE)
+colnames(moby.paragraphs) <- c("para")
+
+moby.paragraphs <- moby.paragraphs %>%
+  mutate(paragraph = gsub('BOOK.I{1,}\\.', "", perl=TRUE, para))
+
+moby.paragraphs <- as.data.frame(moby.paragraphs$paragraph)
+colnames(moby.paragraphs) <- c("para")
+moby.paragraphs <- as.data.frame(moby.paragraphs[-c(590, 1071),], stringsAsFactors = FALSE)
+colnames(moby.paragraphs) <- c("para")
+
+moby.title <- rep("mobyDick", 2434)
+moby.paras.type <- rep("paragraph", 2434)
+moby.paras.counter<-seq(1, 2434)
+moby.paras.id <- paste0("MOBY_DICK_", "PARAGRAPH_", moby.paras.counter)
+moby.paras.matrix <- cbind(moby.title, moby.paras.type, moby.paras.id, moby.paragraphs)
+moby.paras.df <- as.data.frame(moby.paras.matrix, stringsAsFactors = FALSE)
+colnames(moby.paras.df) <- stock
+
+
+con <- dbConnect(RSQLite::SQLite(), ":memory:", dbname="textTable.sqlite")
+
+dbWriteTable(con, "textTable", moby.paras.df, append=TRUE, row.names=FALSE)
+dbGetQuery(con, "SELECT Unit FROM textTable WHERE Type='paragraph' AND Title='mobyDick' LIMIT 2")
+dbDisconnect(con)
+# scoop into db. 
+#words.. pretty easy. clean, scoop into db.
