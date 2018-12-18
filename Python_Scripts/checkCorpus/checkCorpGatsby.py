@@ -3,8 +3,7 @@ import regex as re
 import os.path
 import pandas as pd
 
-
-f = open('conrad-heart-of-darkness.txt', 'r')
+f = open('fscott-fitzergald-the-great-gatsby.txt', 'r')
 
 data = f.read()
 
@@ -22,17 +21,15 @@ df = pd.DataFrame(array_paragraphs)
 
 print(df.head(15))
 
-#write this over to a CSV and then we can use it in R.
+# write this over to a CSV and then we can use it in R.
 # lit.
 
-df.to_csv("HOD_paras.csv")
+df.to_csv("GATBSY_paras.csv")
 
+# for i in range(50, 60):
+#   print(list[i])
 
+# df = pd.DataFrame(np.array(my_list).reshape(3, 3), columns=list("abc"))
 
-#for i in range(50, 60):
- #   print(list[i])
-
-#df = pd.DataFrame(np.array(my_list).reshape(3, 3), columns=list("abc"))
-
-#print(len(list))
-#df = pd.DataFrame(np.recarray(my_list).reshape())
+# print(len(list))
+# df = pd.DataFrame(np.recarray(my_list).reshape())
