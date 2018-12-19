@@ -124,3 +124,31 @@ dbDisconnect(con)
 
 ##### paragraphs. 
 
+serpent.paragraphs <- read.csv("Python_Scripts/checkCorpus/SERPENT_paras.csv", stringsAsFactors = FALSE)
+serpent.paragraphs$X0[13]
+test <- as.data.frame(unlist(strsplit(serpent.paragraphs$X0[13:145], "\n\n", perl=TRUE)), stringsAsFactors=FALSE)
+test <- as.data.frame(test[-c(222,551, 765, 854, 1038, 1169, 1130,
+                1385, 1520, 1681, 1845, 1962, 2153,
+                2316, 2438, 2655, 2865, 3078,
+                3301, 3635, 3855, 4149, 4322, 4406, 4645, 4738),], stringsAsFactors=FALSE)
+serpent.paragraphs <- test
+colnames(serpent.paragraphs) <- c("paragraphs")
+
+print(length(serpent.paragraphs$paragraphs))# 4984
+
+serpent.title <- rep("theSerpent", 4984)
+serpent.para.type <- rep("paragraph", 4984)
+serpent.para.counter<-seq(1, 4984)
+serpent.para.id <- paste0("THE_SERPENT_", "PARAGRAPH_", serpent.para.counter)
+print(length(serpent.para.id))
+
+serpent.para.matrix <- cbind(serpent.title, serpent.para.type, serpent.para.id, serpent.paragraphs)
+serpent.para.df <- as.data.frame(serpent.para.matrix, stringsAsFactors = FALSE)
+colnames(serpent.para.df) <- stock
+
+con <- dbConnect(RSQLite::SQLite(), ":memory:", dbname="textTable.sqlite")
+
+dbWriteTable(con, "textTable", serpent.para.df, append=TRUE, row.names=FALSE)
+dbGetQuery(con, "SELECT Unit FROM textTable WHERE Type='paragraph' AND Title='theSerpent' LIMIT 2")
+
+dbDisconnect(con)
