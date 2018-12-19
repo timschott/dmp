@@ -139,3 +139,41 @@ colnames(rainbow.words.df) <- c("Title", "Type", "ID", "Unit")
 dbWriteTable(con, "textTable", rainbow.words.df, append=TRUE, row.names=FALSE)
 dbGetQuery(con, "SELECT * FROM textTable WHERE Type= 'word' AND Title='theRainbow' LIMIT 10")
 dbDisconnect(con)
+
+### paragraphs. 
+
+rainbow.paragraphs <- read.csv("Python_Scripts/checkCorpus/RAINBOW_paras.csv", stringsAsFactors = FALSE)
+
+rainbow.paragraphs <- rainbow.paragraphs[-c(1:29, 4571:4651),]
+colnames(rainbow.paragraphs) <- c("arb", "paras")
+
+rainbow.paragraphs <- rainbow.paragraphs %>%
+  transmute(paragraph = gsub('CHAPTER.X{0,3}(IX|IV|V?I{0,3}).|[A-Z]{2,}|_|EXEUNT|[0-9]', '', perl=TRUE, paras))
+
+colnames(rainbow.paragraphs)
+
+rainbow.paragraphs$paragraph[1:2]
+
+rainbow.paragraphs <- rainbow.paragraphs %>%
+  transmute(paras = gsub('\n', ' ', perl=TRUE, paragraph))
+
+rainbow.paragraphs <- as.data.frame(rainbow.paragraphs[-which(rainbow.paragraphs$para==""),], stringsAsFactors = FALSE)
+print(length(rainbow.paragraphs$`rainbow.paragraphs[-which(rainbow.paragraphs$para == ""), ]`))
+colnames(rainbow.paragraphs) <-c("paragraph")
+
+rainbow.title <- rep("theRainbow", 4524)
+rainbow.para.type <- rep("paragraph", 4524)
+rainbow.para.counter<-seq(1, 4524)
+rainbow.para.id <- paste0("THE_RAINBOW_", "PARAGRAPH_", rainbow.para.counter)
+print(length(rainbow.para.id))
+rainbow.para.matrix <- cbind(rainbow.title, rainbow.para.type, rainbow.para.id, rainbow.paragraphs)
+rainbow.para.df <- as.data.frame(rainbow.para.matrix, stringsAsFactors = FALSE)
+colnames(rainbow.para.df) <- stock
+
+con <- dbConnect(RSQLite::SQLite(), ":memory:", dbname="textTable.sqlite")
+
+dbWriteTable(con, "textTable", rainbow.para.df, append=TRUE, row.names=FALSE)
+dbGetQuery(con, "SELECT Unit FROM textTable WHERE Type='paragraph' AND Title='theRainbow' LIMIT 2")
+dbDisconnect(con)
+
+## YEET.

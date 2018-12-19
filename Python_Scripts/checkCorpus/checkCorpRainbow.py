@@ -3,7 +3,7 @@ import regex as re
 import os.path
 import pandas as pd
 
-f = open('dh-lawrence-women-in-love.txt', 'r')
+f = open('dh-lawrence-the-rainbow.txt', 'r')
 
 data = f.read()
 
@@ -24,7 +24,7 @@ print(df.head(15))
 # write this over to a CSV and then we can use it in R.
 # lit.
 
-df.to_csv("WOMEN_paras.csv")
+df.to_csv("RAINBOW_paras.csv")
 
 # for i in range(50, 60):
 #   print(list[i])
