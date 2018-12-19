@@ -97,3 +97,84 @@ con <- dbConnect(RSQLite::SQLite(), ":memory:", dbname="textTable.sqlite")
 dbWriteTable(con, "textTable", women.sents.df, append=TRUE, row.names=FALSE)
 dbGetQuery(con, "SELECT Unit FROM textTable WHERE Type='sentence' AND Title='womenInLove' LIMIT 2")
 dbDisconnect(con)
+
+## women paragraphs
+
+women.paragraphs <- read.csv("Python_Scripts/checkCorpus/WOMEN_paras.csv", stringsAsFactors = FALSE)
+women.paragraphs <- women.paragraphs[-c(1:14, 6073:6155),]
+colnames(women.paragraphs) <- c("arb", "paras")
+
+women.paragraphs <- women.paragraphs %>%
+  transmute(paragraph = gsub('CHAPTER.X{0,3}(IX|IV|V?I{0,3}).|[A-Z]{2,}|_|EXEUNT', '', perl=TRUE, paras))
+colnames(women.paragraphs)
+
+women.paragraphs <- women.paragraphs %>%
+  transmute(para = gsub('\n', ' ', perl=TRUE, paragraph))
+
+# do /n
+
+women.paragraphs <- as.data.frame(women.paragraphs[-c(4364),], stringsAsFactors = FALSE)
+colnames(women.paragraphs) <- c("paras")
+women.paragraphs <- as.data.frame(women.paragraphs[-which(women.paragraphs$para==""),], stringsAsFactors = FALSE)
+
+6012
+
+women.title <- rep("womenInLove", 6012)
+women.para.type <- rep("paragraph", 6012)
+women.para.counter<-seq(1, 6012)
+women.para.id <- paste0("WOMEN_IN_LOVE_", "PARAGRAPH_", women.para.counter)
+print(length(women.para.id))
+women.para.matrix <- cbind(women.title, women.para.type, women.para.id, women.paragraphs)
+women.para.df <- as.data.frame(women.para.matrix, stringsAsFactors = FALSE)
+colnames(women.para.df) <- stock
+
+con <- dbConnect(RSQLite::SQLite(), ":memory:", dbname="textTable.sqlite")
+
+dbWriteTable(con, "textTable", women.para.df, append=TRUE, row.names=FALSE)
+dbGetQuery(con, "SELECT Unit FROM textTable WHERE Type='paragraph' AND Title='womenInLove' LIMIT 2")
+
+dbDisconnect(con)
+
+## Words.
+
+women <- scan("rawTexts/dh-lawrence-women-in-love.txt",what="character",sep="\n")
+
+women.start<- which(women == "Ursula and Gudrun Brangwen sat one morning in the window-bay of their")
+women.end <- which(women == "“I don’t believe that,” he answered.")
+women <- women[women.start:women.end]
+#women <- replace_abbreviation(women)
+women <- gsub('_', '', perl=TRUE, women)
+# https://stackoverflow.com/questions/36612808/regex-match-roman-numerals-from-0-39-only
+# no chapters or chapter names 
+women <- gsub('CHAPTER.X{0,3}(IX|IV|V?I{0,3}).|[A-Z]{2,}|_|EXEUNT|[0-9]', '', perl=TRUE, women)
+
+women.not.blanks <- which(women != "")
+women <- women[women.not.blanks]
+
+women.temp <- women
+women.temp <- paste(women.temp, collapse=" ")
+women.temp <-tolower(women.temp)
+# a better regex that is going to maintain contractions. important! 
+
+women.temp <- unlist(strsplit(women.temp, "[^\\w’]", perl=TRUE))
+women.not.blanks <- which(women.temp != "")
+women.words <- women.temp[women.not.blanks]
+
+# lots of words! 
+print(length(women.words))
+
+
+women.title <- rep("womenInLove", 182657)
+women.words.type <- rep("word", 182657)
+women.words.counter <- seq(1, 182657)
+women.words.id <- paste0("WOMEN_IN_LOVE_", "WORD_", women.words.counter)
+
+women.words.matrix <- cbind(women.title, women.words.type, women.words.id, women.words)
+
+women.words.df <- as.data.frame(women.words.matrix, stringsAsFactors = FALSE)
+
+con <- dbConnect(RSQLite::SQLite(), ":memory:", dbname="textTable.sqlite")
+colnames(women.words.df) <- c("Title", "Type", "ID", "Unit")
+dbWriteTable(con, "textTable", women.words.df, append=TRUE, row.names=FALSE)
+dbGetQuery(con, "SELECT * FROM textTable WHERE Type= 'word' AND Title='womenInLove' LIMIT 10")
+dbDisconnect(con)
