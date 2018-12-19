@@ -1,0 +1,87 @@
+setwd("~/Documents/7thSemester/dmp/corpus")
+library("RSQLite")
+library("tokenizers")
+library("dplyr")
+library("textclean")
+library("stringr")
+library("tm")
+library(qdap)
+install.packages("rJava")
+library(rJava)
+library("openNLPdata")
+
+stock <- c("Title", "Type", "ID", "Unit")
+
+portrait <- scan("rawTexts/james-joyce-portrait-of-the-artist.txt",what="character",sep="\n")
+
+portrait.start<- which(portrait == "Once upon a time and a very good time it was there was a moocow coming")
+portrait.end <- which(portrait == "stead.")
+
+portrait<- portrait[portrait.start: portrait.end]
+portrait <- replace_abbreviation(portrait)
+portrait <- gsub('_', '', perl=TRUE, portrait)
+
+portrait <- gsub('Chapter.X{0,3}(IX|IV|V?I{0,3}).', '', perl=TRUE, portrait)
+
+portrait.not.blanks <- which(portrait != "")
+portrait <- portrait[portrait.not.blanks]
+
+length(portrait)
+
+first_bite <- portrait[1:2499]
+second_bite<- portrait[2500:4999]
+third_bite <- portrait[5000:7700]
+
+portrait.sents.first <- paste0(first_bite, collapse = "\n")
+portrait.sents.first <- unlist(tokenize_sentences(portrait.sents.first))
+
+portrait.sents.second <- paste0(second_bite, collapse = "\n")
+portrait.sents.second <- unlist(tokenize_sentences(portrait.sents.second))
+
+portrait.sents.third <- paste0(third_bite, collapse = "\n")
+portrait.sents.third <- unlist(tokenize_sentences(portrait.sents.third))
+
+portrait.sents <- c(portrait.sents.first, portrait.sents.second, portrait.sents.third)
+
+portrait.sents.df <- as.data.frame(portrait.sents, stringsAsFactors = FALSE)
+
+bad_spots<-c(0)
+substr(portrait.sents[750], nchar(portrait.sents[750]), nchar(portrait.sents[750]))
+
+for(i in seq(1:length(portrait.sents))){
+  #if the sentence ends with a punctuation mark and the next character is a lowercase, combine them
+  test <- substr(portrait.sents[i], nchar(portrait.sents[i]), nchar(portrait.sents[i]))
+  test2 <- substr(portrait.sents[i+1], 1, 1)
+  if(test %in% c('?', '!') && test2==tolower(test2)){
+    portrait.sents[i] <- paste(portrait.sents[i], portrait.sents[i+1])
+    # print(portrait.sents[i])
+    bad_spots<-append(bad_spots, i+1)
+  }
+}
+
+portrait.sents <- portrait.sents[-bad_spots]
+
+print(length(portrait.sents))
+
+portrait.title <- rep("portraitOfTheArtist", 4452)
+portrait.sents.type <- rep("sentence", 4452)
+portrait.sents.counter<-seq(1, 4452)
+portrait.sents.id <- paste0("PORTRAIT_OF_THE_ARTIST_", "SENT_", portrait.sents.counter)
+print(length(portrait.sents.id))
+portrait.sents.matrix <- cbind(portrait.title, portrait.sents.type, portrait.sents.id, portrait.sents)
+portrait.sents.df <- as.data.frame(portrait.sents.matrix, stringsAsFactors = FALSE)
+colnames(portrait.sents.df) <- stock
+# okay i think it's good now.
+# portrait To Do: press into sents into DB; 
+
+con <- dbConnect(RSQLite::SQLite(), ":memory:", dbname="textTable.sqlite")
+
+dbWriteTable(con, "textTable", portrait.sents.df, append=TRUE, row.names=FALSE)
+dbGetQuery(con, "SELECT Unit FROM textTable WHERE Type='sentence' AND Title='portraitOfTheArtist' LIMIT 2")
+dbDisconnect(con)
+
+#### words ####
+
+
+
+
