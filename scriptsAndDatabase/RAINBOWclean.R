@@ -110,5 +110,32 @@ rainbow <- rainbow[rainbow.start:rainbow.end]
 rainbow <- gsub('CHAPTER.X{0,3}(IX|IV|V?I{0,3}).|[A-Z]{2,}|_|EXEUNT|[0-9]', '', perl=TRUE, rainbow)
 
 rainbow <- gsub('\"', '' , rainbow, fixed=TRUE)
-# lets just look for the line number. 
 rainbow <- replace_abbreviation(rainbow)
+
+# separate. 
+
+rainbow.temp <- rainbow
+rainbow.temp <- paste(rainbow.temp, collapse=" ")
+rainbow.temp <-tolower(rainbow.temp)
+# a better regex that is going to maintain contractions. important! 
+
+rainbow.temp <- unlist(strsplit(rainbow.temp, "[^\\w']", perl=TRUE))
+rainbow.not.blanks <- which(rainbow.temp != "")
+rainbow.words <- rainbow.temp[rainbow.not.blanks]
+print(length(rainbow.words))
+
+
+rainbow.title <- rep("theRainbow", 187557)
+rainbow.words.type <- rep("word", 187557)
+rainbow.words.counter <- seq(1, 187557)
+rainbow.words.id <- paste0("THE_RAINBOW", "WORD_", rainbow.words.counter)
+
+rainbow.words.matrix <- cbind(rainbow.title, rainbow.words.type, rainbow.words.id, rainbow.words)
+
+rainbow.words.df <- as.data.frame(rainbow.words.matrix, stringsAsFactors = FALSE)
+
+con <- dbConnect(RSQLite::SQLite(), ":memory:", dbname="textTable.sqlite")
+colnames(rainbow.words.df) <- c("Title", "Type", "ID", "Unit")
+dbWriteTable(con, "textTable", rainbow.words.df, append=TRUE, row.names=FALSE)
+dbGetQuery(con, "SELECT * FROM textTable WHERE Type= 'word' AND Title='theRainbow' LIMIT 10")
+dbDisconnect(con)
