@@ -1,0 +1,114 @@
+setwd("~/Documents/7thSemester/dmp/corpus")
+library("RSQLite")
+library("tokenizers")
+library("dplyr")
+library("textclean")
+library("stringr")
+library("tm")
+library(qdap)
+# library(rJava)
+# library("openNLPdata")
+
+stock <- c("Title", "Type", "ID", "Unit")
+
+#### the Rainbow cleaning. 
+
+rainbow <- scan("rawTexts/dh-lawrence-the-rainbow.txt",what="character",sep="\n")
+
+rainbow.start<- which(rainbow == "The Brangwens had lived for generations on the Marsh Farm, in")
+rainbow.end <- which(rainbow == "Truth, fitting to the over-arching heaven.")
+
+rainbow <- rainbow[rainbow.start:rainbow.end]
+
+rainbow <- gsub('CHAPTER.X{0,3}(IX|IV|V?I{0,3}).|[A-Z]{2,}|_|EXEUNT|[0-9]', '', perl=TRUE, rainbow)
+
+rainbow <- gsub('\"', '' , rainbow, fixed=TRUE)
+# lets just look for the line number. 
+rainbow <- replace_abbreviation(rainbow)
+# okay sentences. 
+
+print(length(rainbow))
+
+first_bite <- rainbow[1:2499]
+second_bite<- rainbow[2500:4999]
+third_bite <- rainbow[5000:7499]
+fourth_bite<- rainbow[7500:9999]
+fifth_bite <- rainbow[10000:12499]
+sixth_bite <- rainbow[15000:17499]
+seventh_bite <- rainbow[17500:19003]
+
+rainbow.sents.first <- paste0(first_bite, collapse = "\n")
+rainbow.sents.first <- unlist(tokenize_sentences(rainbow.sents.first))
+
+rainbow.sents.second <- paste0(second_bite, collapse = "\n")
+rainbow.sents.second <- unlist(tokenize_sentences(rainbow.sents.second))
+
+rainbow.sents.third <- paste0(third_bite, collapse = "\n")
+rainbow.sents.third <- unlist(tokenize_sentences(rainbow.sents.third))
+
+rainbow.sents.fourth <- paste0(fourth_bite, collapse = "\n")
+rainbow.sents.fourth <- unlist(tokenize_sentences(rainbow.sents.fourth))
+
+rainbow.sents.fifth <- paste0(fifth_bite, collapse = "\n")
+rainbow.sents.fifth <- unlist(tokenize_sentences(rainbow.sents.fifth))
+
+rainbow.sents.sixth <- paste0(sixth_bite, collapse = "\n")
+rainbow.sents.sixth <- unlist(tokenize_sentences(rainbow.sents.sixth))
+
+rainbow.sents.seventh <- paste0(seventh_bite, collapse = "\n")
+rainbow.sents.seventh <- unlist(tokenize_sentences(rainbow.sents.seventh))
+
+rainbow.sents <- c(rainbow.sents.first, rainbow.sents.second, rainbow.sents.third, rainbow.sents.fourth, rainbow.sents.fifth, rainbow.sents.sixth, rainbow.sents.seventh)
+
+rainbow.sents[1109:1111]
+
+#rainbow.sents.df <- as.data.frame(rainbow.sents, stringsAsFactors = FALSE)
+substr(rainbow.sents[1109], nchar(rainbow.sents[1109]), nchar(rainbow.sents[1109]))
+
+bad_spots <-c(0)
+for(i in seq(1:length(rainbow.sents))){
+  #if the sentence ends with a punctuation mark and the next character is a lowercase, combine them
+  test <- substr(rainbow.sents[i], nchar(rainbow.sents[i]), nchar(rainbow.sents[i]))
+  test2 <- substr(rainbow.sents[i+1], 1, 1)
+  if(test2 %in% c(LETTERS, letters)){
+    if(test %in% c('?', '!') && test2==tolower(test2)){
+      print(i)
+      rainbow.sents[i] <- paste(rainbow.sents[i], rainbow.sents[i+1])
+      bad_spots<-append(bad_spots, i+1)
+    }
+  }
+}
+
+rainbow.sents[bad_spots]
+rainbow.sents <- rainbow.sents[-c(bad_spots)]
+print(length(rainbow.sents))
+
+rainbow.title <- rep("theRainbow", 12273)
+rainbow.sents.type <- rep("sentence", 12273)
+rainbow.sents.counter<-seq(1, 12273)
+rainbow.sents.id <- paste0("THE_RAINBOW_", "SENT_", rainbow.sents.counter)
+print(length(rainbow.sents.id))
+rainbow.sents.matrix <- cbind(rainbow.title, rainbow.sents.type, rainbow.sents.id, rainbow.sents)
+rainbow.sents.df <- as.data.frame(rainbow.sents.matrix, stringsAsFactors = FALSE)
+colnames(rainbow.sents.df) <- stock
+
+con <- dbConnect(RSQLite::SQLite(), ":memory:", dbname="textTable.sqlite")
+
+dbWriteTable(con, "textTable", rainbow.sents.df, append=TRUE, row.names=FALSE)
+dbGetQuery(con, "SELECT Unit FROM textTable WHERE Type='sentence' AND Title='theRainbow' LIMIT 2")
+dbDisconnect(con)
+
+## rainbow, words 
+
+rainbow <- scan("rawTexts/dh-lawrence-the-rainbow.txt",what="character",sep="\n")
+
+rainbow.start<- which(rainbow == "The Brangwens had lived for generations on the Marsh Farm, in")
+rainbow.end <- which(rainbow == "Truth, fitting to the over-arching heaven.")
+
+rainbow <- rainbow[rainbow.start:rainbow.end]
+
+rainbow <- gsub('CHAPTER.X{0,3}(IX|IV|V?I{0,3}).|[A-Z]{2,}|_|EXEUNT|[0-9]', '', perl=TRUE, rainbow)
+
+rainbow <- gsub('\"', '' , rainbow, fixed=TRUE)
+# lets just look for the line number. 
+rainbow <- replace_abbreviation(rainbow)
