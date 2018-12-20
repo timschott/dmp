@@ -138,6 +138,42 @@ dbDisconnect(con)
 
 ## paragraphs. 
 
+pym.paragraphs <- read.csv("Python_Scripts/checkCorpus/PYM_paras.csv", stringsAsFactors = FALSE)
+pym.paragraphs$X0[13]
+test <- as.data.frame(unlist(strsplit(pym.paragraphs$X0[8:86], "\n\n", perl=TRUE)), stringsAsFactors=FALSE)
+pym.paragraphs <- test
+colnames(pym.paragraphs) <- c("para")
 
 
+pym.paragraphs <- pym.paragraphs %>%
+  mutate(paragraph = gsub('CHAPTER [0-9]+..*|(?<=[A-Z])(\\.)(?=[A-Z]|\\.|\\s)', '', perl=TRUE, para))
+pym.paragraphs <- pym.paragraphs %>% 
+  transmute(para = gsub('CHAPTER [0-9]', '', perl=TRUE,paragraph))
 
+
+pym.paragraphs <- as.data.frame(pym.paragraphs[-c(1),], stringsAsFactors = FALSE)
+
+colnames(pym.paragraphs) <- c("para")
+print(length(pym.paragraphs$para))# 4984
+
+pym.paragraphs <- pym.paragraphs %>% 
+  transmute(paragraph = gsub('\n', '', perl=TRUE,para))
+
+colnames(pym.paragraphs)
+print(length(pym.paragraphs$paragraph))
+
+pym.title <- rep("pym", 625)
+pym.para.type <- rep("paragraph", 625)
+pym.para.counter<-seq(1, 625)
+pym.para.id <- paste0("PYM_", "PARAGRAPH_", pym.para.counter)
+print(length(pym.para.id))
+
+pym.para.matrix <- cbind(pym.title, pym.para.type, pym.para.id, pym.paragraphs)
+pym.para.df <- as.data.frame(pym.para.matrix, stringsAsFactors = FALSE)
+colnames(pym.para.df) <- stock
+
+con <- dbConnect(RSQLite::SQLite(), ":memory:", dbname="textTable.sqlite")
+
+dbWriteTable(con, "textTable", pym.para.df, append=TRUE, row.names=FALSE)
+dbGetQuery(con, "SELECT Unit FROM textTable WHERE Type='paragraph' AND Title='pym' LIMIT 2")
+dbDisconnect(con)
