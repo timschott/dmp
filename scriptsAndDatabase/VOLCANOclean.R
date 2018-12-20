@@ -107,4 +107,47 @@ con <- dbConnect(RSQLite::SQLite(), ":memory:", dbname="textTable.sqlite")
 dbWriteTable(con, "textTable", volc.sents.df, append=TRUE, row.names=FALSE)
 dbGetQuery(con, "SELECT Unit FROM textTable WHERE Type='sentence' AND Title='underTheVolcano' LIMIT 2")
 
-#######
+####### did you see the words? 
+
+## 
+
+stock <- c("Title", "Type", "ID", "Unit")
+volc <- scan("rawTexts/malcolm-lowry-under-the-volcano.txt",what="character",sep="\n")
+volc_start <- 65
+volc_end <- which(volc == "Somebody threw a dead dog after him down the ravine.")
+volc <- volc[volc_start:volc_end]
+
+volc <- replace_abbreviation(volc)
+volc <- gsub('_', '', perl=TRUE, volc)
+volc <- gsub('I^|II^|III^', '', perl=TRUE, volc)
+volc <- gsub('M. Laruelle', 'M Laruelle', perl=TRUE, volc)
+print(length(volc))
+
+
+volc.temp <- volc
+volc.temp <- paste(volc.temp, collapse=" ")
+volc.temp <-tolower(volc.temp)
+# a better regex that is going to maintain contractions. important! 
+
+volc.temp <- unlist(strsplit(volc.temp, "[^\\w’]", perl=TRUE))
+volc.not.blanks <- which(volc.temp != "")
+volc.words <- volc.temp[volc.not.blanks]
+print(length(volc.words))
+
+
+volc.title <- rep("underTheVolcano", 138612)
+volc.words.type <- rep("word", 138612)
+volc.words.counter <- seq(1, 138612)
+volc.words.id <- paste0("UNDER_THE_VOLCANO_", "WORD_", volc.words.counter)
+
+volc.words.matrix <- cbind(volc.title, volc.words.type, volc.words.id, volc.words)
+
+volc.words.df <- as.data.frame(volc.words.matrix, stringsAsFactors = FALSE)
+
+con <- dbConnect(RSQLite::SQLite(), ":memory:", dbname="textTable.sqlite")
+colnames(volc.words.df) <- c("Title", "Type", "ID", "Unit")
+dbWriteTable(con, "textTable", volc.words.df, append=TRUE, row.names=FALSE)
+dbGetQuery(con, "SELECT * FROM textTable WHERE Type= 'word' AND Title='underTheVolcano' LIMIT 10")
+dbDisconnect(con)
+
+
