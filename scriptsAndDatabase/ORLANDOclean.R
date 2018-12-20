@@ -152,3 +152,42 @@ dbDisconnect(con)
 
 ####### paragraphs. ####
 
+orlando.paragraphs <- read.csv("Python_Scripts/checkCorpus/ORLANDO_paras.csv", stringsAsFactors = FALSE)
+
+orlando.paragraphs <- orlando.paragraphs[-c(1:18, 470:473),]
+colnames(orlando.paragraphs) <- c("arb", "paras")
+
+# cleanzo
+
+orlando.paragraphs <- orlando.paragraphs %>%
+  transmute(paragraph = gsub('CHAPTER [0-9]\\.', '', perl=TRUE, paras))
+
+orlando.paragraphs <- orlando.paragraphs %>%
+  transmute(paras = gsub('(?<=[A-Z])(\\.)(?=[A-Z]|\\.|\\s)', '', perl=TRUE, paragraph))
+
+orlando.paragraphs <- orlando.paragraphs %>%
+  transmute(paragraphs = replace_abbreviation(paras))
+
+print(length(orlando.paragraphs$paragraphs))
+
+orlando.title <- rep("orlando", 451)
+orlando.para.type <- rep("paragraph", 451)
+orlando.para.counter<-seq(1, 451)
+orlando.para.id <- paste0("ORLANDO_", "PARAGRAPH_", orlando.para.counter)
+print(length(orlando.para.id))
+orlando.para.matrix <- cbind(orlando.title, orlando.para.type, orlando.para.id, orlando.paragraphs)
+orlando.para.df <- as.data.frame(orlando.para.matrix, stringsAsFactors = FALSE)
+colnames(orlando.para.df) <- stock
+
+con <- dbConnect(RSQLite::SQLite(), ":memory:", dbname="textTable.sqlite")
+
+dbWriteTable(con, "textTable", orlando.para.df, append=TRUE, row.names=FALSE)
+dbGetQuery(con, "SELECT Unit FROM textTable WHERE Type='paragraph' AND Title='orlando' LIMIT 2")
+dbDisconnect(con)
+### orlandone.
+
+
+
+
+
+
