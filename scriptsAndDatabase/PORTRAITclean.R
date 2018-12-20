@@ -127,5 +127,35 @@ dbDisconnect(con)
 
 ####### Paragraphs ###### 
 
+portrait.paragraphs <- read.csv("Python_Scripts/checkCorpus/PORTRAIT_paras.csv", stringsAsFactors = FALSE)
+
+portrait.paragraphs <- portrait.paragraphs[-c(1:19, 2247:2302),]
+colnames(portrait.paragraphs) <- c("arb", "paras")
+
+# cleanzo
+
+portrait.paragraphs <- portrait.paragraphs %>%
+  transmute(paragraph = gsub('CHAPTER.X{0,3}(IX|IV|V?I{0,3}).|_', '', perl=TRUE, paras))
+
+portrait.paragraphs <- portrait.paragraphs %>%
+  transmute(paras = gsub('\n', ' ', perl=TRUE, paragraph))
+
+
+portrait.title <- rep("portraitOfTheArtist", 2227)
+portrait.para.type <- rep("paragraph", 2227)
+portrait.para.counter<-seq(1, 2227)
+portrait.para.id <- paste0("PORTRAIT_OF_THE_ARTIST_", "PARAGRAPH_", portrait.para.counter)
+print(length(portrait.para.id))
+portrait.para.matrix <- cbind(portrait.title, portrait.para.type, portrait.para.id, portrait.paragraphs)
+portrait.para.df <- as.data.frame(portrait.para.matrix, stringsAsFactors = FALSE)
+colnames(portrait.para.df) <- stock
+
+con <- dbConnect(RSQLite::SQLite(), ":memory:", dbname="textTable.sqlite")
+
+dbWriteTable(con, "textTable", portrait.para.df, append=TRUE, row.names=FALSE)
+dbGetQuery(con, "SELECT Unit FROM textTable WHERE Type='paragraph' AND Title='portraitOfTheArtist' LIMIT 2")
+dbDisconnect(con)
+
+# portrait done. 
 
 
