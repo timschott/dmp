@@ -20,7 +20,7 @@ rainbow.end <- which(rainbow == "Truth, fitting to the over-arching heaven.")
 
 rainbow <- rainbow[rainbow.start:rainbow.end]
 
-rainbow <- gsub('CHAPTER.X{0,3}(IX|IV|V?I{0,3}).|[A-Z]{2,}|_|EXEUNT|[0-9]', '', perl=TRUE, rainbow)
+rainbow <- gsub('CHAPTER.X{0,3}(IX|IV|V?I{0,3}).|[A-Z]{2,}|_|EXEUNT', '', perl=TRUE, rainbow)
 
 rainbow <- gsub('\"', '' , rainbow, fixed=TRUE)
 # lets just look for the line number. 
@@ -60,10 +60,9 @@ rainbow.sents.seventh <- unlist(tokenize_sentences(rainbow.sents.seventh))
 
 rainbow.sents <- c(rainbow.sents.first, rainbow.sents.second, rainbow.sents.third, rainbow.sents.fourth, rainbow.sents.fifth, rainbow.sents.sixth, rainbow.sents.seventh)
 
-rainbow.sents[1109:1111]
 
 #rainbow.sents.df <- as.data.frame(rainbow.sents, stringsAsFactors = FALSE)
-substr(rainbow.sents[1109], nchar(rainbow.sents[1109]), nchar(rainbow.sents[1109]))
+#substr(rainbow.sents[1109], nchar(rainbow.sents[1109]), nchar(rainbow.sents[1109]))
 
 bad_spots <-c(0)
 for(i in seq(1:length(rainbow.sents))){
@@ -79,13 +78,14 @@ for(i in seq(1:length(rainbow.sents))){
   }
 }
 
-rainbow.sents[bad_spots]
+# rainbow.sents[bad_spots]
 rainbow.sents <- rainbow.sents[-c(bad_spots)]
-print(length(rainbow.sents))
+# print(length(rainbow.sents))
+# print(length(rainbow.sents))
 
-rainbow.title <- rep("theRainbow", 12273)
-rainbow.sents.type <- rep("sentence", 12273)
-rainbow.sents.counter<-seq(1, 12273)
+rainbow.title <- rep("theRainbow", 12372)
+rainbow.sents.type <- rep("sentence", 12372)
+rainbow.sents.counter<-seq(1, 12372)
 rainbow.sents.id <- paste0("THE_RAINBOW_", "SENT_", rainbow.sents.counter)
 print(length(rainbow.sents.id))
 rainbow.sents.matrix <- cbind(rainbow.title, rainbow.sents.type, rainbow.sents.id, rainbow.sents)
@@ -96,6 +96,8 @@ con <- dbConnect(RSQLite::SQLite(), ":memory:", dbname="textTable.sqlite")
 
 dbWriteTable(con, "textTable", rainbow.sents.df, append=TRUE, row.names=FALSE)
 dbGetQuery(con, "SELECT Unit FROM textTable WHERE Type='sentence' AND Title='theRainbow' LIMIT 2")
+# dbExecute(con, "DELETE FROM textTable WHERE Title='theRainbow'")
+
 dbDisconnect(con)
 
 ## rainbow, words 
@@ -107,7 +109,7 @@ rainbow.end <- which(rainbow == "Truth, fitting to the over-arching heaven.")
 
 rainbow <- rainbow[rainbow.start:rainbow.end]
 
-rainbow <- gsub('CHAPTER.X{0,3}(IX|IV|V?I{0,3}).|[A-Z]{2,}|_|EXEUNT|[0-9]', '', perl=TRUE, rainbow)
+rainbow <- gsub('CHAPTER.X{0,3}(IX|IV|V?I{0,3}).|[A-Z]{2,}|_|EXEUNT|(?<=[A-Z])(\\.)(?=[A-Z]|\\.|\\s)', '', perl=TRUE, rainbow)
 
 rainbow <- gsub('\"', '' , rainbow, fixed=TRUE)
 rainbow <- replace_abbreviation(rainbow)
@@ -125,9 +127,9 @@ rainbow.words <- rainbow.temp[rainbow.not.blanks]
 print(length(rainbow.words))
 
 
-rainbow.title <- rep("theRainbow", 187557)
-rainbow.words.type <- rep("word", 187557)
-rainbow.words.counter <- seq(1, 187557)
+rainbow.title <- rep("theRainbow", 187559)
+rainbow.words.type <- rep("word", 187559)
+rainbow.words.counter <- seq(1, 187559)
 rainbow.words.id <- paste0("THE_RAINBOW", "WORD_", rainbow.words.counter)
 
 rainbow.words.matrix <- cbind(rainbow.title, rainbow.words.type, rainbow.words.id, rainbow.words)
@@ -148,7 +150,7 @@ rainbow.paragraphs <- rainbow.paragraphs[-c(1:29, 4571:4651),]
 colnames(rainbow.paragraphs) <- c("arb", "paras")
 
 rainbow.paragraphs <- rainbow.paragraphs %>%
-  transmute(paragraph = gsub('CHAPTER.X{0,3}(IX|IV|V?I{0,3}).|[A-Z]{2,}|_|EXEUNT|[0-9]', '', perl=TRUE, paras))
+  transmute(paragraph = gsub('CHAPTER.X{0,3}(IX|IV|V?I{0,3}).|[A-Z]{2,}|_|EXEUNT|(?<=[A-Z])(\\.)(?=[A-Z]|\\.|\\s)', '', perl=TRUE, paras))
 
 colnames(rainbow.paragraphs)
 

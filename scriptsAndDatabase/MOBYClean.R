@@ -26,8 +26,7 @@ moby <- gsub('_', '', perl=TRUE, moby)
 
 # taking inititave and grepping out chapter markers. 
 
-moby<-  gsub('CHAPTER [0-9]+..*', "", perl=TRUE, moby)
-moby <- gsub("[0-9]", '', moby)
+moby<-  gsub('CHAPTER [0-9]+..*|(?<=[A-Z])(\\.)(?=[A-Z]|\\.|\\s)', "", perl=TRUE, moby)
 moby.not.blanks <- which(moby != "")
 moby <- moby[moby.not.blanks]
 
@@ -107,7 +106,7 @@ for(i in seq(1:length(moby.sents))){
     }
   }
 }
-moby.sents[bad_spots]
+#moby.sents[bad_spots]
 moby.sents <- moby.sents[-bad_spots]
 
 moby.sents.df <- as.data.frame(moby.sents, stringsAsFactors = FALSE)
@@ -115,9 +114,9 @@ moby.sents.df <- as.data.frame(moby.sents, stringsAsFactors = FALSE)
 write.csv(moby.sents.df, 'mobysents.csv')
 ### need to check if this is correct. going to confirm with Great Gatsby.
 
-moby.title <- rep("mobyDick", 7479)
-moby.sents.type <- rep("sentence", 7479)
-moby.sents.counter<-seq(1, 7479)
+moby.title <- rep("mobyDick", 7381)
+moby.sents.type <- rep("sentence", 7381)
+moby.sents.counter<-seq(1, 7381)
 moby.sents.id <- paste0("MOBY_", "SENT_", moby.sents.counter)
 print(length(moby.sents.id))
 moby.sents.matrix <- cbind(moby.title, moby.sents.type, moby.sents.id, moby.sents)
@@ -130,6 +129,8 @@ con <- dbConnect(RSQLite::SQLite(), ":memory:", dbname="textTable.sqlite")
 
 dbWriteTable(con, "textTable", moby.sents.df, append=TRUE, row.names=FALSE)
 dbGetQuery(con, "SELECT Unit FROM textTable WHERE Type='sentence' AND Title='mobyDick' LIMIT 2")
+# dbExecute(con, "DELETE FROM textTable WHERE Title='mobyDick'")
+
 dbDisconnect(con)
 #paras read in, clean, commit to db; 
 ## PARAS
@@ -207,9 +208,9 @@ moby <- gsub('_', '', perl=TRUE, moby)
 # taking inititave and grepping out chapter markers. 
 
 moby<-  gsub('CHAPTER [0-9]+..*', "", perl=TRUE, moby)
-moby <- gsub('\\([A-z]+\\),.CHAPTER.[A-z]{1,}\\.', "", perl=TRUE,moby)
+moby <- gsub('\\([A-z]+\\),.CHAPTER.[A-z]{1,}\\.\|(?<=[A-Z])(\\.)(?=[A-Z]|\\.|\\s)', "", perl=TRUE,moby)
 moby <- gsub('BOOK.I{1,}\\.', "", perl=TRUE, moby)
-moby <- gsub("[0-9]", '', moby)
+# moby <- gsub("[0-9]", '', moby)
 moby.not.blanks <- which(moby != "")
 moby <- moby[moby.not.blanks]
 
@@ -226,16 +227,15 @@ print(length(moby.words))
 # 214062
 
 
-moby.title <- rep("mobyDick", 214062)
-moby.words.type <- rep("word", 214062)
-moby.words.counter <- seq(1, 214062)
+moby.title <- rep("mobyDick", 214183)
+moby.words.type <- rep("word", 214183)
+moby.words.counter <- seq(1, 214183)
 moby.words.id <- paste0("MOBY_DICK_", "WORD_", moby.words.counter)
 
 moby.words.matrix <- cbind(moby.title, moby.words.type, moby.words.id, moby.words)
 
 moby.words.df <- as.data.frame(moby.words.matrix, stringsAsFactors = FALSE)
 
-#writeLines(heartOfDarknessWords, "heartOfDarknessWords.txt")
 con <- dbConnect(RSQLite::SQLite(), ":memory:", dbname="textTable.sqlite")
 colnames(moby.words.df) <- c("Title", "Type", "ID", "Unit")
 dbWriteTable(con, "textTable", moby.words.df, append=TRUE, row.names=FALSE)
