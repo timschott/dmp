@@ -4,7 +4,7 @@
 
 #### What's this repo for?
 
-This is the working repository for my Distinguished Majors Program thesis for the UVa English Department: *Reading DT Leaves: A Computational Analysis of the Lyrical Novel*. Better contextualize yourself by trawling [the blog](timschott.github.io) I set up using `HTML,` `Jekyll,` and `CSS.`
+This is the working repository for my Distinguished Majors Program thesis for the UVa English Department: *Reading DT Leaves: A Computational Analysis of the Lyrical Novel*. Better contextualize yourself by trawling timschott.github.io, the blog I set up using `HTML,` `Jekyll,` and `CSS.`
 
 #### Do you know what you're doing?
 
