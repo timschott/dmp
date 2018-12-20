@@ -82,6 +82,50 @@ dbDisconnect(con)
 
 #### words ####
 
+stock <- c("Title", "Type", "ID", "Unit")
+
+portrait <- scan("rawTexts/james-joyce-portrait-of-the-artist.txt",what="character",sep="\n")
+
+portrait.start<- which(portrait == "Once upon a time and a very good time it was there was a moocow coming")
+portrait.end <- which(portrait == "stead.")
+
+portrait<- portrait[portrait.start: portrait.end]
+portrait <- replace_abbreviation(portrait)
+portrait <- gsub('_', '', perl=TRUE, portrait)
+
+portrait <- gsub('Chapter.X{0,3}(IX|IV|V?I{0,3}).', '', perl=TRUE, portrait)
+
+portrait.not.blanks <- which(portrait != "")
+portrait <- portrait[portrait.not.blanks]
+
+
+portrait.temp <- portrait
+portrait.temp <- paste(portrait.temp, collapse=" ")
+portrait.temp <-tolower(portrait.temp)
+# a better regex that is going to maintain contractions. important! 
+portrait.temp <- unlist(strsplit(portrait.temp, "[^\\w’]", perl=T))
+portrait.not.blanks <- which(portrait.temp != "")
+portrait.words <- portrait.temp[portrait.not.blanks]
+
+# lots of words! 
+print(length(portrait.words))
+
+portrait.title <- rep("portraitOfTheArtist", 84927)
+portrait.words.type <- rep("word", 84927)
+portrait.words.counter <- seq(1, 84927)
+portrait.words.id <- paste0("PORTRAIT_OF_THE_ARTIST", "WORD_", portrait.words.counter)
+
+portrait.words.matrix <- cbind(portrait.title, portrait.words.type, portrait.words.id, portrait.words)
+
+portrait.words.df <- as.data.frame(portrait.words.matrix, stringsAsFactors = FALSE)
+
+con <- dbConnect(RSQLite::SQLite(), ":memory:", dbname="textTable.sqlite")
+colnames(portrait.words.df) <- c("Title", "Type", "ID", "Unit")
+dbWriteTable(con, "textTable", portrait.words.df, append=TRUE, row.names=FALSE)
+dbGetQuery(con, "SELECT * FROM textTable WHERE Type= 'word' AND Title='portraitOfTheArtist' LIMIT 10")
+dbDisconnect(con)
+
+####### Paragraphs ###### 
 
 
 
