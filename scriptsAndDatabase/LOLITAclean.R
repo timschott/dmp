@@ -145,5 +145,73 @@ dbGetQuery(con, "SELECT * FROM textTable WHERE Type= 'word' AND Title='lolita' L
 dbDisconnect(con)
 
 ### LOLITA, PARAGRAPHS.
+lita <- scan("rawTexts/vladimir-nabokov-lolita-2.txt",what="character", sep="\n")
+# lets kill the line number 
+lita <- gsub('^[0-9]+', '', perl=TRUE, lita)
+lita <- gsub('(?<=[A-Z])(\\.)(?=[A-Z]|\\.|\\s)', '', perl=TRUE, lita)
+lita.not.blanks <- which(lita != "")
+lita <- replace_abbreviation(lita)
 
+lita <- lita[lita.not.blanks]
+lita <- gsub('\"', '', perl=TRUE, lita)
+
+#tiny <- lita[1:10]
+#tiny_test <- paste(tiny, "\n", sep="")
+#tiny_test
+#print(length(lita))
+#test <- paste(lita[7148:7150],"\n", collapse="")
+#test2<-paste(test, collapse="\n")
+#test3 <- gsub("\n", "", perl=TRUE, test2)
+
+lita_ind <- lita[1:9177]
+lita_slash <- paste(lita_ind, "\n", sep="")
+
+# procedure: 
+# add \n to end of every line.
+# collapse index-- end of index on "\n" 
+# append to para vec
+# for all in para vec, sub "" for \n .
+paras_ind <- grep("     ", lita)
+paras <- c('')
+
+for(i in seq(1:length(lita))){
+  #if the sentence ends with a punctuation mark and the next character is a lowercase, combine them
+  #test <- substr(lita.sents[i], nchar(lita.sents[i]), nchar(lita.sents[i]))
+  if(i<1211){
+    paragraph <- paste(lita_slash[paras_ind[i]:(paras_ind[i+1]-1)], collapse="\n")
+    paras <- append(paras, paragraph)
+  }
+}
+paras <- paras[-c(1)]
+first_para <- c("Lolita, light of my life, fire of my loins. My sin, my soul. Lo-lee-ta: the tip  of  the tongue taking a trip of three steps down the palate to tap, at three, on the teeth. Lo. Lee. Ta.")
+last_para <- c("Thus, neither of us is alive when the reader opens this book. But while the blood  still  throbs through my writing hand, you are still as much part of blessed matter as I am, and I can still talk to you from here to  Alaska. Be  true  to  your  Dick. Do not let other fellows touch you. Do not talk to strangers. I hope you will love your baby. I hope it will  be  a  boy.  That husband  of  yours, I hope, will always treat you well, because otherwise my specter shall come at him, like black smoke, like a demented giant, and pull him apart nerve by nerve. And do not pity C. Q. One had  to  choose  between him  and  H.H.,  and  one  wanted  H.H. to exist at least a couple of months longer, so as to have him make you live in the minds of later generations. I am thinking of aurochs and angels, the secret of durable pigments, prophetic sonnets, the refuge of art. And this is the only immortality you and  I  may share, my Lolita.")
+# okay, so let's just build our own paragraphs...
+
+## okay take out the new lines. double and single. 
+paras_out <- gsub('\n\n', ' ', perl=TRUE, paras)
+paras <- gsub('\n', '', perl=TRUE, paras_out)
+paras_out<- gsub('     ', '', perl=TRUE, paras)
+paras <- gsub('  ', ' ', perl=TRUE, paras_out)
+
+# okay finally. 
+print(length(paras))
+
+lita.paras <- c(first_para, paras, last_para)
+
+# phew.. 
+
+lita.title <- rep("lolita", 1212)
+lita.para.type <- rep("paragraph", 1212)
+lita.para.counter<-seq(1, 1212)
+lita.para.id <- paste0("LOLITA_", "PARAGRAPH_", lita.para.counter)
+print(length(lita.para.id))
+lita.para.matrix <- cbind(lita.title, lita.para.type, lita.para.id, lita.paras)
+lita.para.df <- as.data.frame(lita.para.matrix, stringsAsFactors = FALSE)
+colnames(lita.para.df) <- stock
+
+con <- dbConnect(RSQLite::SQLite(), ":memory:", dbname="textTable.sqlite")
+
+dbWriteTable(con, "textTable", lita.para.df, append=TRUE, row.names=FALSE)
+dbGetQuery(con, "SELECT Unit FROM textTable WHERE Type='paragraph' AND Title='lolita' LIMIT 2")
+dbDisconnect(con)
 
