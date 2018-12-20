@@ -22,10 +22,10 @@ lita <- replace_abbreviation(lita)
 lita <- gsub('_', '', perl=TRUE, lita)
 
 lita <- gsub('^[0-9]+', '', perl=TRUE, lita)
+lita <- gsub('(?<=[A-Z])(\\.)(?=[A-Z]|\\.|\\s)', '', perl=TRUE, lita)
 
 lita.not.blanks <- which(lita != "")
 lita <- lita[lita.not.blanks]
-9176
 
 
 first_bite <- lita[1:2499]
@@ -85,9 +85,9 @@ lita.sents <- lita.sents[-bad_spots]
 
 print(length(lita.sents))
 
-lita.title <- rep("lolita", 5158)
-lita.sents.type <- rep("sentence", 5158)
-lita.sents.counter<-seq(1, 5158)
+lita.title <- rep("lolita", 5063)
+lita.sents.type <- rep("sentence", 5063)
+lita.sents.counter<-seq(1, 5063)
 lita.sents.id <- paste0("LOLITA_", "SENT_", lita.sents.counter)
 print(length(lita.sents.id))
 lita.sents.matrix <- cbind(lita.title, lita.sents.type, lita.sents.id, lita.sents)
@@ -101,3 +101,49 @@ con <- dbConnect(RSQLite::SQLite(), ":memory:", dbname="textTable.sqlite")
 dbWriteTable(con, "textTable", lita.sents.df, append=TRUE, row.names=FALSE)
 dbGetQuery(con, "SELECT Unit FROM textTable WHERE Type='sentence' AND Title='lolita' LIMIT 2")
 dbDisconnect(con)
+
+##### words. 
+lita <- scan("rawTexts/vladimir-nabokov-lolita-2.txt",what="character",sep="\n")
+
+lita.start<- which(lita == "Lolita, light of my life, fire of my loins. My sin, my soul. Lo-lee-ta:")
+lita.end <- which(lita == "share, my Lolita.")
+
+lita<- lita[lita.start: lita.end]
+lita <- replace_abbreviation(lita)
+lita <- gsub('_', '', perl=TRUE, lita)
+
+lita <- gsub('^[0-9]+', '', perl=TRUE, lita)
+
+lita.not.blanks <- which(lita != "")
+lita <- lita[lita.not.blanks]
+
+lita.temp <- lita
+lita.temp <- paste(lita.temp, collapse=" ")
+lita.temp <-tolower(lita.temp)
+# a better regex that is going to maintain contractions. important! 
+lita.temp <- unlist(strsplit(lita.temp, "[^\\w']", perl=T))
+lita.not.blanks <- which(lita.temp != "")
+lita.words <- lita.temp[lita.not.blanks]
+
+# lots of words! 
+print(length(lita.words))
+
+
+lita.title <- rep("lolita", 112193)
+lita.words.type <- rep("word", 112193)
+lita.words.counter <- seq(1, 112193)
+lita.words.id <- paste0("LOLITA_", "WORD_", lita.words.counter)
+
+lita.words.matrix <- cbind(lita.title, lita.words.type, lita.words.id, lita.words)
+
+lita.words.df <- as.data.frame(lita.words.matrix, stringsAsFactors = FALSE)
+
+con <- dbConnect(RSQLite::SQLite(), ":memory:", dbname="textTable.sqlite")
+colnames(lita.words.df) <- c("Title", "Type", "ID", "Unit")
+dbWriteTable(con, "textTable", lita.words.df, append=TRUE, row.names=FALSE)
+dbGetQuery(con, "SELECT * FROM textTable WHERE Type= 'word' AND Title='lolita' LIMIT 9")
+dbDisconnect(con)
+
+### LOLITA, PARAGRAPHS.
+
+
