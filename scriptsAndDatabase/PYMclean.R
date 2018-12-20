@@ -55,7 +55,7 @@ substr(poe.sents[114], nchar(poe.sents[114]), nchar(poe.sents[114]))
 bad_spots <-c(0)
 for(i in seq(1:length(poe.sents))){
   #if the sentence ends with a punctuation mark and the next character is a lowercase, combine them,
-  # but if the sequence starts with a capital letter, eg ha! ha! ha! don't combine
+  # if the sequence starts with a capital letter... but for eg ha! ha! ha! don't combine
   # so check if the first sentence starts with a lowercase as well
   test <- substr(poe.sents[i], nchar(poe.sents[i]), nchar(poe.sents[i]))
   test2 <- substr(poe.sents[i+1], 1, 1)
@@ -177,3 +177,4 @@ con <- dbConnect(RSQLite::SQLite(), ":memory:", dbname="textTable.sqlite")
 dbWriteTable(con, "textTable", pym.para.df, append=TRUE, row.names=FALSE)
 dbGetQuery(con, "SELECT Unit FROM textTable WHERE Type='paragraph' AND Title='pym' LIMIT 2")
 dbDisconnect(con)
+
