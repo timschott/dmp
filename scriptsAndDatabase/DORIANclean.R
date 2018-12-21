@@ -150,8 +150,6 @@ dorian.paragraphs <- dorian.paragraphs %>%
 # no blanx
 dorian.paragraphs <- dorian.paragraphs %>% filter(paragraphs!="")
 
-
-
 print(length(dorian.paragraphs$paragraphs))
 
 dorian.title <- rep("dorian", 1524)
@@ -169,3 +167,6 @@ dbGetQuery(con, "SELECT Unit FROM textTable WHERE Type='paragraph' AND Title='do
 dbDisconnect(con)
 
 # dorian done. 
+
+
+

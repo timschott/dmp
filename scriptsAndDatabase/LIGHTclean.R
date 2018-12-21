@@ -137,5 +137,37 @@ dbGetQuery(con, "SELECT * FROM textTable WHERE Type= 'word' AND Title='toTheLigh
 dbDisconnect(con)
 
 ## paras..
+light.paragraphs <- read.csv("Python_Scripts/checkCorpus/LIGHTparas.csv", stringsAsFactors = FALSE)
 
+light.paragraphs <- light.paragraphs[-c(1:14,552:556),]
+# bouncing gsubs
+colnames(light.paragraphs) <- c("arb", "paras")
+light.paragraphs <- light.paragraphs %>%
+  transmute(paragraph = gsub('(?<=[A-Z])(\\.)(?=[A-Z]|\\.|\\s)|_', '', perl=TRUE, paras))
+light.paragraphs <- light.paragraphs %>%
+  transmute(paras = gsub('\"', '', perl=TRUE, paragraph))
+light.paragraphs <- light.paragraphs %>%
+  transmute(paragraph = gsub('[0-9]+', '', perl=TRUE, paras))
+light.paragraphs <- light.paragraphs %>%
+  transmute(paras = gsub('Mr.', 'Mr', perl=TRUE, paragraph))
+light.paragraphs <- light.paragraphs %>%
+  transmute(paragraph = gsub('Mrs.', 'Mrs', perl=TRUE, paras))
+light.paragraphs <- light.paragraphs %>% filter(paragraph!="")
+light.paragraphs <- light.paragraphs %>%
+  transmute(paras = gsub('\n', ' ', perl=TRUE, paragraph))
 
+light.title <- rep("toTheLighthouse", 495)
+light.para.type <- rep("paragraph", 495)
+light.para.counter<-seq(1, 495)
+light.para.id <- paste0("TO_THE_LIGHTHOUSE_", "PARAGRAPH_", light.para.counter)
+print(length(light.para.id))
+light.para.matrix <- cbind(light.title, light.para.type, light.para.id, light.paragraphs)
+light.para.df <- as.data.frame(light.para.matrix, stringsAsFactors = FALSE)
+colnames(light.para.df) <- stock
+
+con <- dbConnect(RSQLite::SQLite(), ":memory:", dbname="textTable.sqlite")
+dbWriteTable(con, "textTable", light.para.df, append=TRUE, row.names=FALSE)
+dbGetQuery(con, "SELECT Unit FROM textTable WHERE Type='paragraph' AND Title='toTheLighthouse' LIMIT 2")
+dbDisconnect(con)
+
+# light done. 
