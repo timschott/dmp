@@ -132,3 +132,40 @@ dbGetQuery(con, "SELECT * FROM textTable WHERE Type= 'word' AND Title='dorian' L
 dbDisconnect(con)
 
 ################## paras. 
+
+dorian.paragraphs <- read.csv("Python_Scripts/checkCorpus/DORIAN_paras.csv", stringsAsFactors = FALSE)
+
+dorian.paragraphs <- dorian.paragraphs[-c(1:21,1555:1634),]
+colnames(dorian.paragraphs) <- c("arb", "paras")
+
+dorian.paragraphs <- dorian.paragraphs %>%
+  transmute(paragraph = gsub('CHAPTER [0-9]', '', perl=TRUE, paras))
+
+dorian.paragraphs <- dorian.paragraphs %>%
+  transmute(paras = gsub('(?<=[A-Z])(\\.)(?=[A-Z]|\\.|\\s)|_', '', perl=TRUE, paragraph))
+
+dorian.paragraphs <- dorian.paragraphs %>%
+  transmute(paragraphs = replace_abbreviation(paras))
+
+# no blanx
+dorian.paragraphs <- dorian.paragraphs %>% filter(paragraphs!="")
+
+
+
+print(length(dorian.paragraphs$paragraphs))
+
+dorian.title <- rep("dorian", 1524)
+dorian.para.type <- rep("paragraph", 1524)
+dorian.para.counter<-seq(1, 1524)
+dorian.para.id <- paste0("DORIAN_", "PARAGRAPH_", dorian.para.counter)
+print(length(dorian.para.id))
+dorian.para.matrix <- cbind(dorian.title, dorian.para.type, dorian.para.id, dorian.paragraphs)
+dorian.para.df <- as.data.frame(dorian.para.matrix, stringsAsFactors = FALSE)
+colnames(dorian.para.df) <- stock
+
+con <- dbConnect(RSQLite::SQLite(), ":memory:", dbname="textTable.sqlite")
+dbWriteTable(con, "textTable", dorian.para.df, append=TRUE, row.names=FALSE)
+dbGetQuery(con, "SELECT Unit FROM textTable WHERE Type='paragraph' AND Title='dorian' LIMIT 2")
+dbDisconnect(con)
+
+# dorian done. 

@@ -9,8 +9,7 @@ library(qdap)
 # library(rJava)
 # library("openNLPdata")
 
-## Malcolm Lowry, Under the Volcano. 
-
+## Woolf, Orlando. 
 stock <- c("Title", "Type", "ID", "Unit")
 orlando <- scan("rawTexts/virginia-woolf-orlando.txt",what="character", sep="\n")
 orlando.start <- which(orlando=="He--for there could be no doubt of his sex, though the fashion of the")
@@ -70,6 +69,7 @@ orlando.sents.df <- as.data.frame(orlando.sents, stringsAsFactors = FALSE)
 bad_spots<-c(0)
 orlando.sents[92:94]
 
+## standalone, you need the third condition. 
 for(i in seq(1:length(orlando.sents))){
   #if the sentence ends with a punctuation mark and the next sentence starts with a lowercase, combine them
   test <- substr(orlando.sents[i], nchar(orlando.sents[i]), nchar(orlando.sents[i]))
