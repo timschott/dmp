@@ -89,3 +89,46 @@ dbDisconnect(con)
 
 ## words. 
 
+
+dorian <- scan("rawTexts/oscar-wilde-picture-of-dorian-gray.txt",what="character", sep="\n")
+dorian.start <- which(dorian=="The studio was filled with the rich odour of roses, and when the light")
+dorian.end<- which(dorian=="that they recognized who it was.")
+dorian <- dorian[dorian.start:dorian.end]
+print(length(dorian))
+dorian<- gsub('CHAPTER [0-9]+', "", dorian)
+dorian <- replace_abbreviation(dorian)
+dorian <- gsub('(?<=[A-Z])(\\.)(?=[A-Z]|\\.|\\s)', '', perl=TRUE, dorian)
+dorian <- gsub('_', '', perl=TRUE, dorian)
+
+print(length(dorian))
+
+dorian.not.blanks <- which(dorian != "")
+dorian <- dorian[dorian.not.blanks]
+
+dorian.temp <- dorian
+dorian.temp <- paste(dorian.temp, collapse=" ")
+dorian.temp <-tolower(dorian.temp)
+# a better regex that is going to maintain contractions. important! 
+
+dorian.temp <- unlist(strsplit(dorian.temp, "[^\\w']", perl=TRUE))
+dorian.not.blanks <- which(dorian.temp != "")
+dorian.words <- dorian.temp[dorian.not.blanks]
+
+print(length(dorian.words))
+
+dorian.title <- rep("dorian", 79295)
+dorian.words.type <- rep("word", 79295)
+dorian.words.counter <- seq(1, 79295)
+dorian.words.id <- paste0("DORIAN_", "WORD_", dorian.words.counter)
+
+dorian.words.matrix <- cbind(dorian.title, dorian.words.type, dorian.words.id, dorian.words)
+
+dorian.words.df <- as.data.frame(dorian.words.matrix, stringsAsFactors = FALSE)
+
+con <- dbConnect(RSQLite::SQLite(), ":memory:", dbname="textTable.sqlite")
+colnames(dorian.words.df) <- c("Title", "Type", "ID", "Unit")
+dbWriteTable(con, "textTable", dorian.words.df, append=TRUE, row.names=FALSE)
+dbGetQuery(con, "SELECT * FROM textTable WHERE Type= 'word' AND Title='dorian' LIMIT 10")
+dbDisconnect(con)
+
+################## paras. 
