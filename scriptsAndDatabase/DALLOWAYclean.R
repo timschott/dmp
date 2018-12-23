@@ -15,13 +15,14 @@ dali <- scan("rawTexts/virginia-woolf-mrs-dalloway.txt",what="character",sep="\n
 dali.start <-which(dali == "Mrs. Dalloway said she would buy the flowers herself.")
 dali.end <- which(dali == "For there she was.")
 dali <- dali[dali.start:dali.end]
-length(dali)
 
 dali <- gsub('_', '', perl=TRUE, dali)
 dali<-  gsub('(?<=[A-Z])(\\.)(?=[A-Z]|\\.|\\s)', '', perl=TRUE, dali)
 dali <- gsub('Mrs.', 'Mrs', perl=TRUE, dali)
 dali <- gsub('Mr.', 'Mr', perl=TRUE, dali)
 dali <- gsub('St.', 'St', perl=TRUE, dali)
+dali <- gsub("t?te-?-t?tes", "tête-à-tête", perl=TRUE, dali)
+dali <- gsub("caf?", "café", perl=TRUE,dali)
 dali <- gsub('\"', '', perl=TRUE, dali)
 # bad diacritics! 
 dali[167] <- "knowledge Fräulein Daniels gave them she could not think. She knew"
@@ -98,13 +99,15 @@ dali.start <-which(dali == "Mrs. Dalloway said she would buy the flowers herself
 dali.end <- which(dali == "For there she was.")
 dali <- dali[dali.start:dali.end]
 length(dali)
-
 dali <- gsub('_', '', perl=TRUE, dali)
 dali<-  gsub('(?<=[A-Z])(\\.)(?=[A-Z]|\\.|\\s)', '', perl=TRUE, dali)
 dali <- gsub('Mrs.', 'Mrs', perl=TRUE, dali)
 dali <- gsub('Mr.', 'Mr', perl=TRUE, dali)
 dali <- gsub('St.', 'St', perl=TRUE, dali)
+dali <- gsub("t?te-?-t?tes", "tête-à-tête", perl=TRUE, dali)
+dali <- gsub("caf?", "café", perl=TRUE,dali)
 dali <- gsub('\"', '', perl=TRUE, dali)
+
 # bad diacritics! 
 dali[167] <- "knowledge Fräulein Daniels gave them she could not think. She knew"
 dali[3266] <- "somehow right. So she let Hugh eat his soufflé; asked after poor"
@@ -145,7 +148,75 @@ con <- dbConnect(RSQLite::SQLite(), ":memory:", dbname="textTable.sqlite")
 colnames(dali.words.df) <- c("Title", "Type", "ID", "Unit")
 dbWriteTable(con, "textTable", dali.words.df, append=TRUE, row.names=FALSE)
 dbGetQuery(con, "SELECT * FROM textTable WHERE Type= 'word' AND Title='mrsDalloway' LIMIT 10")
+
 dbDisconnect(con)
 
 ### paras. 
+dali.paragraphs <- read.csv("Python_Scripts/checkCorpus/DALI_paras.csv", stringsAsFactors = FALSE)
+dali.paragraphs$X0[20]
+# gotta sub \n for a space
+dali.paragraphs <- dali.paragraphs[-c(1:18,773:777),]
+# subs..
+colnames(dali.paragraphs) <- c("arb", "paras")
+dali.paragraphs <- dali.paragraphs %>%
+  transmute(paragraph = gsub('Mrs.', 'Mrs', perl=TRUE, paras))
+
+dali.paragraphs <- dali.paragraphs %>%
+  transmute(paras = gsub('Mr.', 'Mr', perl=TRUE, paragraph))
+
+dali.paragraphs <- dali.paragraphs %>%
+  transmute(paragraph = gsub('St.', 'St', perl=TRUE, paras))
+
+dali.paragraphs <- dali.paragraphs %>%
+  transmute(paras = gsub('\n', ' ', perl=TRUE, paragraph))
+
+
+bads <- grep("<", dali.paragraphs$paras)
+dali.paragraphs$paras[bads[1]] <- gsub("Fr<e4>ulein", "Fräulein", dali.paragraphs$paras[bads[1]])
+dali.paragraphs$paras[bads[2]] <- gsub("t<ea>te-<e0>-t<ea>tes", "tête-à-têtes", dali.paragraphs$paras[bads[2]])
+dali.paragraphs$paras[bads[3]] <- gsub("souffl<e9>", "soufflé", dali.paragraphs$paras[bads[3]])
+dali.paragraphs$paras[bads[4]] <- gsub("<e9>clair", "éclair", dali.paragraphs$paras[bads[4]])
+dali.paragraphs$paras[bads[5]] <- gsub("<e9>clair", "éclair", dali.paragraphs$paras[bads[5]])
+dali.paragraphs$paras[bads[6]] <- gsub("<e9>clair", "éclair", dali.paragraphs$paras[bads[6]])
+dali.paragraphs$paras[bads[7]] <- gsub("caf?", "café", dali.paragraphs$paras[bads[7]])
+dali.paragraphs$paras[bads[8]] <- gsub('Littr<e9>', 'Littré', dali.paragraphs$paras[bads[8]])
+dali.paragraphs$paras[bads[9]] <- gsub('entr<e9>e', 'entrée', dali.paragraphs$paras[bads[9]])
+dali.paragraphs$paras[bads[10]] <- gsub('Bront<eb>', "Brontë", dali.paragraphs$paras[bads[10]])
+
+dali.paragraphs <- dali.paragraphs %>%
+  transmute(paragraph = gsub('St.', 'St', perl=TRUE, paras))
+
+dali.paragraphs <- dali.paragraphs %>%
+  transmute(paras = gsub('\n', ' ', perl=TRUE, paragraph))
+
+dali.paragraphs <- dali.paragraphs %>%
+  transmute(paragraph = gsub('  ', ' ', perl=TRUE, paras))
+
+dali.paragraphs <- dali.paragraphs %>%
+  transmute(paras = replace_abbreviation(paragraph))
+print(length(dali.paragraphs$paras))
+
+
+dali.title <- rep("mrsDalloway", 754)
+dali.para.type <- rep("paragraph", 754)
+dali.para.counter<-seq(1, 754)
+dali.para.id <- paste0("MRS_DALLOWAY_", "PARAGRAPH_", dali.para.counter)
+print(length(dali.para.id))
+dali.para.matrix <- cbind(dali.title, dali.para.type, dali.para.id, dali.paragraphs)
+dali.para.df <- as.data.frame(dali.para.matrix, stringsAsFactors = FALSE)
+colnames(dali.para.df) <- stock
+
+con <- dbConnect(RSQLite::SQLite(), ":memory:", dbname="textTable.sqlite")
+
+dbWriteTable(con, "textTable", dali.para.df, append=TRUE, row.names=FALSE)
+dbGetQuery(con, "SELECT Unit FROM textTable WHERE Type='paragraph' AND Title='mrsDalloway' LIMIT 2")
+dbDisconnect(con)
+## DALI SQUEAKY CLEAN.
+
+
+
+
+
+
+
 
