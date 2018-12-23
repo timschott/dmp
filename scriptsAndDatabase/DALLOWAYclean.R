@@ -92,5 +92,60 @@ dbGetQuery(con, "SELECT Unit FROM textTable WHERE Type='sentence' AND Title='mrs
 dbDisconnect(con)
 
 #### words. 
+stock <- c("Title", "Type", "ID", "Unit")
+dali <- scan("rawTexts/virginia-woolf-mrs-dalloway.txt",what="character",sep="\n")
+dali.start <-which(dali == "Mrs. Dalloway said she would buy the flowers herself.")
+dali.end <- which(dali == "For there she was.")
+dali <- dali[dali.start:dali.end]
+length(dali)
 
+dali <- gsub('_', '', perl=TRUE, dali)
+dali<-  gsub('(?<=[A-Z])(\\.)(?=[A-Z]|\\.|\\s)', '', perl=TRUE, dali)
+dali <- gsub('Mrs.', 'Mrs', perl=TRUE, dali)
+dali <- gsub('Mr.', 'Mr', perl=TRUE, dali)
+dali <- gsub('St.', 'St', perl=TRUE, dali)
+dali <- gsub('\"', '', perl=TRUE, dali)
+# bad diacritics! 
+dali[167] <- "knowledge Fräulein Daniels gave them she could not think. She knew"
+dali[3266] <- "somehow right. So she let Hugh eat his soufflé; asked after poor"
+dali[3935] <- "inches of a chocolate éclair."
+dali[3938] <- "inches of the chocolate éclair, then wiped her fingers, and washed"
+dali[3973] <- "éclairs, stricken once, twice, thrice by shocks of suffering. She"
+dali[4380] <- "had felt about him, that night in the café when he had come in with"
+dali[4878] <- "blotting-paper with Littré's dictionary on top, sitting under the"
+dali[4982] <- "about the entrée, was it really made at home? But it was the"
+dali[5656] <- "still had a little Emily Brontë he had given her, and he was to"
+dali <- replace_abbreviation(dali)
+
+# splits. 
+
+dali.not.blanks <- which(dali != "")
+dali <- dali[dali.not.blanks]
+
+dali.temp <- dali
+dali.temp <- paste(dali.temp, collapse=" ")
+dali.temp <-tolower(dali.temp)
+# a better regex that is going to maintain contractions. important! 
+
+dali.temp <- unlist(strsplit(dali.temp, "[^\\w']", perl=TRUE))
+dali.not.blanks <- which(dali.temp != "")
+dali.words <- dali.temp[dali.not.blanks]
+
+# data base commit 
+dali.title <- rep("mrsDalloway", 64267)
+dali.words.type <- rep("word", 64267)
+dali.words.counter <- seq(1, 64267)
+dali.words.id <- paste0("MRS_DALLOWAY_", "WORD_", dali.words.counter)
+
+dali.words.matrix <- cbind(dali.title, dali.words.type, dali.words.id, dali.words)
+
+dali.words.df <- as.data.frame(dali.words.matrix, stringsAsFactors = FALSE)
+
+con <- dbConnect(RSQLite::SQLite(), ":memory:", dbname="textTable.sqlite")
+colnames(dali.words.df) <- c("Title", "Type", "ID", "Unit")
+dbWriteTable(con, "textTable", dali.words.df, append=TRUE, row.names=FALSE)
+dbGetQuery(con, "SELECT * FROM textTable WHERE Type= 'word' AND Title='mrsDalloway' LIMIT 10")
+dbDisconnect(con)
+
+### paras. 
 
