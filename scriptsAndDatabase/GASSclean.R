@@ -10,13 +10,11 @@ library(qdap)
 # library(rJava)
 # library("openNLPdata")
 
-# gass. going to put all his stories into one unit. can separate them into each story later
-# if i think that's necessary but in the db, they'll all live together. 
-
+# the pedersen kid
 stock <- c("Title", "Type", "ID", "Unit")
 gas <- scan("rawTexts/william-h-gass-in-the-heart-of-the-heart-of-the-country.txt",what="character",sep="\n")
-gas.start <-which(gas=="Few of the stories one has it in one’s self to speak get spoken, because the heart rarely confesses to intelligence its deeper needs; and few of the stories one has at the top of one’s head to tell get told, because the mind does not always possess the voice for them. Even when the voice is there, and the tongue is limber as if with liquor or with love, where is that sensitive, admiring, other pair of ears?")
-gas.fin <-which(gas=="It is the week of Christmas and the stores, to accommodate the rush they hope for, are remaining open in the evening. You can see snow falling in the cones of the street lamps. The roads are filling—undisturbed. Strings of red and green lights droop over the principal highway, and the water tower wears a star. The windows of the stores have been bedizened. Shamelessly they beckon. But I am alone, leaning against a pole—no . . . there is no one in sight. They’re all at home, perhaps by their instruments, tuning in on their evenings, and like Ramona, tirelessly playing and replaying themselves. There’s a speaker perched in the tower, and through the boughs of falling snow and over the vacant streets, it drapes the twisted and metallic strains of a tune that can barely be distinguished—yes, I believe it’s one of the jolly ones, it’s “Joy to the World.” There’s no one to hear the music but myself, and though I’m listening, I’m no longer certain. Perhaps the record’s playing something else.")
+gas.start<-which(gas=="Big Hans yelled, so I came out. The barn was dark, but the sun burned on the snow. Hans was carrying something from the crib. I yelled, but Big Hans didn’t hear. He was in the house with what he had before I reached the steps.")
+gas.fin<-which(gas=="It was pleasant not to have to stamp the snow off my boots, and the fire was speaking pleasantly and the kettle was sounding softly. There was no need for me to grieve. I had been the brave one and now I was free. The snow would keep me. I would bury pa and the Pedersens and Hans and even ma if I wanted to bother. I hadn’t wanted to come but now I didn’t mind. The kid and me, we’d done brave things well worth remembering. The way that fellow had come so mysteriously through the snow and done us such a glorious turn—well it made me think how I was told to feel in church. The winter time had finally got them all, and I really did hope that the kid was as warm as I was now, warm inside and out, burning up, inside and out, with joy.")
 gas<-gas[gas.start:gas.fin]
 
 # okay, time to clean. 
@@ -31,7 +29,7 @@ gas <- gsub('Mr.', 'Mr', perl=TRUE,gas)
 ## sents
 print(length(gas))
 
-first_bite <- gas[1:1263]
+first_bite <- gas[1:793]
 
 gas.sents.first <- paste0(first_bite, collapse = "\n")
 gas.sents.first <- unlist(tokenize_sentences(gas.sents.first))
@@ -61,30 +59,12 @@ bad_spots <- bad_spots[-c(1)]
 gas.sents <- gas.sents[-bad_spots]
 print(length(gas.sents))
 
-# with quote? 
-
-bad_spots <-c(0)
-for(i in seq(1:length(gas.sents))){
-  #if the sentence ends with a punctuation mark and the next character is a lowercase, combine them
-  test <- substr(gas.sents[i], nchar(gas.sents[i])-1, nchar(gas.sents[i]))
-  test2 <- substr(gas.sents[i+1], 1, 1)
-  if(test2 %in% c(LETTERS, letters)){
-    if(test %in% c("?”", "!”") && test2==tolower(test2)){
-      gas.sents[i] <- paste(gas.sents[i], gas.sents[i+1])
-      bad_spots<-append(bad_spots, i+1)
-    }
-  }
-}
-bad_spots <- bad_spots[-c(1)]
-
-gas.sents[bad_spots]
-gas.sents <- gas.sents[-c(bad_spots)]
+gas.sents <-gas.sents[gas.sents!=""]
 print(length(gas.sents))
-
-gas.title <- rep("heartOfTheCountry", 5904)
-gas.sents.type <- rep("sentence", 5904)
-gas.sents.counter<-seq(1, 5904)
-gas.sents.id <- paste0("HEART_OF_THE_COUNTRY_", "SENT_", gas.sents.counter)
+gas.title <- rep("thePedersenKid", 2622)
+gas.sents.type <- rep("sentence", 2622)
+gas.sents.counter<-seq(1, 2622)
+gas.sents.id <- paste0("THE_PEDERSEN_KID_", "SENT_", gas.sents.counter)
 print(length(gas.sents.id))
 gas.sents.matrix <- cbind(gas.title, gas.sents.type, gas.sents.id, gas.sents)
 gas.sents.df <- as.data.frame(gas.sents.matrix, stringsAsFactors = FALSE)
@@ -95,18 +75,18 @@ colnames(gas.sents.df) <- stock
 con <- dbConnect(RSQLite::SQLite(), ":memory:", dbname="textTable.sqlite")
 
 dbWriteTable(con, "textTable", gas.sents.df, append=TRUE, row.names=FALSE)
-dbGetQuery(con, "SELECT Unit FROM textTable WHERE Type='sentence' AND Title='heartOfTheCountry' LIMIT 2")
+dbGetQuery(con, "SELECT Unit FROM textTable WHERE Type='sentence' AND Title='thePedersenKid' LIMIT 2")
 
 dbDisconnect(con)
 
 ### words. 
 
-
 stock <- c("Title", "Type", "ID", "Unit")
 gas <- scan("rawTexts/william-h-gass-in-the-heart-of-the-heart-of-the-country.txt",what="character",sep="\n")
-gas.start <-which(gas=="Few of the stories one has it in one’s self to speak get spoken, because the heart rarely confesses to intelligence its deeper needs; and few of the stories one has at the top of one’s head to tell get told, because the mind does not always possess the voice for them. Even when the voice is there, and the tongue is limber as if with liquor or with love, where is that sensitive, admiring, other pair of ears?")
-gas.fin <-which(gas=="It is the week of Christmas and the stores, to accommodate the rush they hope for, are remaining open in the evening. You can see snow falling in the cones of the street lamps. The roads are filling—undisturbed. Strings of red and green lights droop over the principal highway, and the water tower wears a star. The windows of the stores have been bedizened. Shamelessly they beckon. But I am alone, leaning against a pole—no . . . there is no one in sight. They’re all at home, perhaps by their instruments, tuning in on their evenings, and like Ramona, tirelessly playing and replaying themselves. There’s a speaker perched in the tower, and through the boughs of falling snow and over the vacant streets, it drapes the twisted and metallic strains of a tune that can barely be distinguished—yes, I believe it’s one of the jolly ones, it’s “Joy to the World.” There’s no one to hear the music but myself, and though I’m listening, I’m no longer certain. Perhaps the record’s playing something else.")
+gas.start<-which(gas=="Big Hans yelled, so I came out. The barn was dark, but the sun burned on the snow. Hans was carrying something from the crib. I yelled, but Big Hans didn’t hear. He was in the house with what he had before I reached the steps.")
+gas.fin<-which(gas=="It was pleasant not to have to stamp the snow off my boots, and the fire was speaking pleasantly and the kettle was sounding softly. There was no need for me to grieve. I had been the brave one and now I was free. The snow would keep me. I would bury pa and the Pedersens and Hans and even ma if I wanted to bother. I hadn’t wanted to come but now I didn’t mind. The kid and me, we’d done brave things well worth remembering. The way that fellow had come so mysteriously through the snow and done us such a glorious turn—well it made me think how I was told to feel in church. The winter time had finally got them all, and I really did hope that the kid was as warm as I was now, warm inside and out, burning up, inside and out, with joy.")
 gas<-gas[gas.start:gas.fin]
+
 # okay, time to clean. 
 # leave in the story titles. but get rid of chap markers. 
 
@@ -127,11 +107,11 @@ gas.temp <-tolower(gas.temp)
 gas.temp <- unlist(strsplit(gas.temp, "[^\\w’]", perl=TRUE))
 gas.not.blanks <- which(gas.temp != "")
 gas.words <- gas.temp[gas.not.blanks]
-
-gas.title <- rep("heartOfTheCountry", 72073)
-gas.words.type <- rep("word", 72073)
-gas.words.counter <- seq(1, 72073)
-gas.words.id <- paste0("HEART_OF_THE_COUNTRY_", "WORD_", gas.words.counter)
+print(length(gas.words))
+gas.title <- rep("thePedersenKid", 23702)
+gas.words.type <- rep("word", 23702)
+gas.words.counter <- seq(1, 23702)
+gas.words.id <- paste0("THE_PEDERSEN_KID_", "WORD_", gas.words.counter)
 
 gas.words.matrix <- cbind(gas.title, gas.words.type, gas.words.id, gas.words)
 
@@ -140,13 +120,12 @@ gas.words.df <- as.data.frame(gas.words.matrix, stringsAsFactors = FALSE)
 con <- dbConnect(RSQLite::SQLite(), ":memory:", dbname="textTable.sqlite")
 colnames(gas.words.df) <- c("Title", "Type", "ID", "Unit")
 dbWriteTable(con, "textTable", gas.words.df, append=TRUE, row.names=FALSE)
-dbGetQuery(con, "SELECT * FROM textTable WHERE Type= 'word' AND Title='heartOfTheCountry' LIMIT 10")
+dbGetQuery(con, "SELECT * FROM textTable WHERE Type= 'word' AND Title='thePedersenKid' LIMIT 10")
 dbDisconnect(con)
 
 # paras. 
-
 gas.paragraphs <- read.csv("Python_Scripts/checkCorpus/COUNTRYparas.csv", stringsAsFactors = FALSE)
-gas.paragraphs <- as.data.frame(unlist(strsplit(gas.paragraphs$X0[9:40], "\n\n", perl=TRUE)), stringsAsFactors=FALSE)
+gas.paragraphs <- as.data.frame(unlist(strsplit(gas.paragraphs$X0[24:26], "\n\n", perl=TRUE)), stringsAsFactors=FALSE)
 colnames(gas.paragraphs) <- c("paragraph")
 
 gas.paragraphs <- gas.paragraphs %>%
@@ -164,13 +143,19 @@ gas.paragraphs <- gas.paragraphs %>%
 gas.paragraphs <- gas.paragraphs %>%
   transmute(paras = gsub('^[1-9]$', '', perl=TRUE, paragraph))
 gas.paragraphs <- gas.paragraphs %>% filter(paras!="")
-gas.paragraphs <- as.data.frame(gas.paragraphs[-c(102:103,238,364,824,856, 875,921,949,982,1034),])
+gas.paragraphs <- gas.paragraphs %>% filter(paras!="\n")
+gas.paragraphs <- gas.paragraphs %>%
+  transmute(paragraph = gsub('\n[1-9]', '', perl=TRUE, paras))
+gas.paragraphs <- gas.paragraphs %>% filter(paragraph!="")
+gas.paragraphs <- as.data.frame(gas.paragraphs[-c(1:2,408,719),], stringsAsFactors = FALSE)
+print(length(gas.paragraphs$`gas.paragraphs[-c(1:2, 408, 719), ]`))
+colnames(gas.paragraphs) <- c("paras")
 # okay good.
 
-gas.title <- rep("heartOfTheCountry", 1260)
-gas.para.type <- rep("paragraph", 1260)
-gas.para.counter<-seq(1, 1260)
-gas.para.id <- paste0("HEART_OF_THE_COUNTRY_", "PARAGRAPH_", gas.para.counter)
+gas.title <- rep("thePedersenKid", 789)
+gas.para.type <- rep("paragraph", 789)
+gas.para.counter<-seq(1, 789)
+gas.para.id <- paste0("THE_PEDERSEN_KID_", "PARAGRAPH_", gas.para.counter)
 print(length(gas.para.id))
 gas.para.matrix <- cbind(gas.title, gas.para.type, gas.para.id, gas.paragraphs)
 gas.para.df <- as.data.frame(gas.para.matrix, stringsAsFactors = FALSE)
@@ -179,7 +164,7 @@ colnames(gas.para.df) <- stock
 con <- dbConnect(RSQLite::SQLite(), ":memory:", dbname="textTable.sqlite")
 
 dbWriteTable(con, "textTable", gas.para.df, append=TRUE, row.names=FALSE)
-dbGetQuery(con, "SELECT Unit FROM textTable WHERE Type='paragraph' AND Title='heartOfTheCountry' LIMIT 2")
+dbGetQuery(con, "SELECT Unit FROM textTable WHERE Type='paragraph' AND Title='thePedersenKid' LIMIT 2")
 dbDisconnect(con)
 
 # done.
