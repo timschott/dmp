@@ -155,3 +155,49 @@ dbDisconnect(con)
 
 # paras. 
 
+fury.paragraphs <- read.csv("Python_Scripts/checkCorpus/FURY_paras.csv", stringsAsFactors = FALSE)
+fury.paragraphs <- fury.paragraphs[-c(1:20, 3232:3235),]
+colnames(fury.paragraphs) <- c("arb", "paras")
+
+fury.paragraphs <- fury.paragraphs %>%
+  transmute(paragraph = gsub('APRIL EIGHTH, 1928', '', perl=TRUE, paras))
+
+fury.paragraphs <- fury.paragraphs %>%
+  transmute(paras = gsub('(?<=[A-Z])(\\.)(?=[A-Z]|\\.|\\s)', '', perl=TRUE, paragraph))
+
+fury.paragraphs <- fury.paragraphs %>%
+  transmute(paragraph = gsub('JUNE SECOND, 1910', '', perl=TRUE, paras))
+
+fury.paragraphs <- fury.paragraphs %>%
+  transmute(paras = gsub('APRIL SIXTH, 1928', '', perl=TRUE, paragraph))
+
+fury.paragraphs <- fury.paragraphs %>%
+  transmute(paragraph = gsub('_', '', perl=TRUE, paras))
+
+fury.paragraphs <- fury.paragraphs %>%
+  transmute(paras = gsub('T P', 'TP', perl=TRUE, paragraph))
+
+# cool.
+fury.paragraphs <- fury.paragraphs %>% filter(paras!="")
+
+print(length(fury.paragraphs$paras))
+
+fury.paragraphs <- fury.paragraphs %>%
+  transmute(paragraph = gsub('\n', ' ', perl=TRUE, paras))
+
+fury.title <- rep("theSoundAndTheFury", 3208)
+fury.para.type <- rep("paragraph", 3208)
+fury.para.counter<-seq(1, 3208)
+fury.para.id <- paste0("THE_SOUND_AND_THE_FURY_", "PARAGRAPH_", fury.para.counter)
+print(length(fury.para.id))
+fury.para.matrix <- cbind(fury.title, fury.para.type, fury.para.id, fury.paragraphs)
+fury.para.df <- as.data.frame(fury.para.matrix, stringsAsFactors = FALSE)
+colnames(fury.para.df) <- stock
+
+con <- dbConnect(RSQLite::SQLite(), ":memory:", dbname="textTable.sqlite")
+
+dbWriteTable(con, "textTable", fury.para.df, append=TRUE, row.names=FALSE)
+dbGetQuery(con, "SELECT Unit FROM textTable WHERE Type='paragraph' AND Title='theSoundAndTheFury' LIMIT 2")
+dbDisconnect(con)
+
+# fury done.
