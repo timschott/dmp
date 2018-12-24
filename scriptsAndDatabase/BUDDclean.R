@@ -131,3 +131,35 @@ dbGetQuery(con, "SELECT * FROM textTable WHERE Type= 'word' AND Title='billyBudd
 dbDisconnect(con)
 
 # paras.
+
+bud.paragraphs <- read.csv("Python_Scripts/checkCorpus/BUDD_paras.csv", stringsAsFactors = FALSE)
+bud.paragraphs <- bud.paragraphs[-c(1:9, 329:332),]
+colnames(bud.paragraphs) <- c("arb", "paras")
+
+bud.paragraphs <- bud.paragraphs %>%
+  transmute(paragraph = gsub('Chapter [0-9]+', '', perl=TRUE, paras))
+
+bud.paragraphs <- bud.paragraphs %>%
+  transmute(paras = gsub('(?<=[A-Z])(\\.)(?=[A-Z]|\\.|\\s)', '', perl=TRUE, paragraph))
+
+bud.paragraphs <- bud.paragraphs %>%
+  transmute(paragraph = gsub('Camo\xebns', 'CamoÎns', perl=TRUE, paras))
+
+bud.paragraphs <- bud.paragraphs %>%
+  transmute(paras = replace_abbreviation(paragraph))
+bud.paragraphs <- bud.paragraphs %>% filter(paras!="")
+bud.paragraphs <- bud.paragraphs[-c(288),]
+bud.title <- rep("billyBudd", 288)
+bud.para.type <- rep("paragraph", 288)
+bud.para.counter<-seq(1, 288)
+bud.para.id <- paste0("BILLY_BUDD_", "PARAGRAPH_", bud.para.counter)
+print(length(bud.para.id))
+bud.para.matrix <- cbind(bud.title, bud.para.type, bud.para.id, bud.paragraphs)
+bud.para.df <- as.data.frame(bud.para.matrix, stringsAsFactors = FALSE)
+colnames(bud.para.df) <- stock
+
+con <- dbConnect(RSQLite::SQLite(), ":memory:", dbname="textTable.sqlite")
+
+dbWriteTable(con, "textTable", bud.para.df, append=TRUE, row.names=FALSE)
+dbGetQuery(con, "SELECT Unit FROM textTable WHERE Type='paragraph' AND Title='billyBudd' LIMIT 2")
+dbDisconnect(con)
