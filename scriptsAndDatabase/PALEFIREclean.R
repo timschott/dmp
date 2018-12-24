@@ -96,12 +96,24 @@ print(length(fire))
 fileConn <- file("test.txt")    
 writeLines(fire, fileConn)
 
+grep("\\* \\* \\*", perl=TRUE, fire)
+fire[537] <- ""
+fire[483] <- c("pada ata lane pad not ogo old wart alan ther tale feur far rant lant tal told")
+fire <- gsub("  ", " ", fire)
+grep("PALE FIRE", fire)
+fire[32:34] <- ""
 # get rid of ..
-#PALE FIRE
-#A Poem in Four Cantos
-#Canto One
+# replace
+# * * *
+# for
+# pada ata lane pad not ogo old wart alan ther tale feur far rant lant tal told
+# (first time) DONE
+# "" second time DONE
+# "  " for " " DONE
 
-
+# 678 DONE. 
+fire[677] <- "Upon referring to my little diary, I see that during the five-month period of my intercourse with the Shades I was invited to their table exactly three times. Initiation took place on Saturday, March the 14th, when I dined at their house with the following people: Nattochdag (whom I saw every day in his office); Professor Gordon of the Music Department (who completely dominated the conversation); the Head of the Russian Department (a farcical pedant of whom the less said the better); and three or four interchangeable women (of whom one - Mrs. Gordon, I think) was enceinte, and another, a perfect stranger, steadily talked to me, or rather into me, from eight to eleven owing to an unfortunate afterdinner distribution of available seats. My next treat, a smaller but by no means cozier souper on Saturday, May 23, was attended by Milton Stone (a new librarian, with whom Shade discussed till midnight the classification of certain Wordsmithiana); good old Nattochdag (whom I continued to see every day); and an undeodorized Frenchwoman (who gave me a complete picture of language-teaching conditions at the University of California). The date of my third and last meal at the Shades is not entered in my little book but I know it was one morning in June when I brought over a beautiful plan I had drawn of the King's Palace in Onhava with all sorts of heraldic niceties, and a touch of gold paint that I had some trouble in obtaining, and was graciously urged to stay for an impromptu lunch. I should add that, despite my protests, at all three meals my vegetarian limitations of fare were not taken into account, and I was exposed to animal matter in, or around, some of the contaminated greens I might have deigned to taste. I revanched myself rather neatly. Of a dozen or so invitations that I extended, the Shades accepted just three. Every one of these meals was built around some vegetable that I subjected to as many exquisite metamorphoses as Parmentier had his pet tuber undergo. Every time I had but one additional guest to entertain Mrs. Shade (who, if you please - thinning my voice to a feminine pitch - was allergic to artichokes, avocado pears, African acorns - in fact to everything beginning with an \"a\"). I find nothing more conducive to the blunting of one's appetite than to have none but elderly persons sitting around one at table, fouling their napkins with the disintegration of their make-up, and surreptitiously trying, behind noncommittal smiles, to dislodge the red-hot torture point of a raspberry seed from between false gum and dead gum. So I had young people, students: the first time, the son of a padishah; the second time, my gardener; and the third time, that girl in the black leotard, with that long white face and eyelids painted a ghoulish green; but she came very late, and the Shades left very early - in fact, I doubt if the confrontation lasted more than ten minutes, whereupon I had the task of entertaining the young lady with phonograph records far into the night when at last she rang up somebody to accompany her to a \"diner\" in Dulwich."
+# okay pretty okay.
 
 # paste
 # 40 and The sun with stolen ice, the moon with leaves
@@ -109,8 +121,17 @@ writeLines(fire, fileConn)
 #theKing. Well, anyway, take off that red fufa. And the cap. Give them here. He tossed the things in the back of the car and drove off.
 # to lines 286 and 408).
 # Migraine again worse today.
+# 10:14 P.M. Investigation commenced.
+#10:23.
+#Scrappy and scrabbly sounds.
+#10:25.
+#A roundlet of pale light, the size of a small doily; flitted across the dark walls, the boarded windows,
+#10:37.
+#Back again.
+# (whom they spelled SEW Khrushchev)
 
 # separate
 #Sun: Ground meat \\ (All it got from me was milk and sardines
 # Verbálala wod gév ut trí phantána \\(I have marked the stress accents).
 # answered.  \\ Bon soir, Sybil.
+# THE HAUNTED BARN \\ Pitch-darkness. Father, Mother and Daughter are heard breathing gently in different corners. Three minutes pass.
