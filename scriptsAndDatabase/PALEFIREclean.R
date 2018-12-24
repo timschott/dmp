@@ -184,3 +184,111 @@ fire <- gsub("  ", " ", fire) # do this again.
 
 # okay, in theory, this is pale fire's foreword, and the commentary,
 # in separated paragraphs. 
+print(length(fire))
+
+fire.title <- rep("paleFire", 1037)
+fire.para.type <- rep("paragraph", 1037)
+fire.para.counter<-seq(1, 1037)
+fire.para.id <- paste0("PALE_FIRE_", "PARAGRAPH_", fire.para.counter)
+print(length(fire.para.id))
+fire.para.matrix <- cbind(fire.title, fire.para.type, fire.para.id, fire)
+fire.para.df <- as.data.frame(fire.para.matrix, stringsAsFactors = FALSE)
+colnames(fire.para.df) <- stock
+
+con <- dbConnect(RSQLite::SQLite(), ":memory:", dbname="textTable.sqlite")
+
+dbWriteTable(con, "textTable", fire.para.df, append=TRUE, row.names=FALSE)
+dbGetQuery(con, "SELECT Unit FROM textTable WHERE Type='paragraph' AND Title='paleFire' LIMIT 2")
+dbDisconnect(con)
+
+# done with paras. words. easy.
+
+fire.temp <- fire
+fire.temp <- paste(fire.temp, collapse=" ")
+fire.temp <-tolower(fire.temp)
+# a better regex that is going to maintain contractions. important! 
+
+fire.temp <- unlist(strsplit(fire.temp, "[^\\w']", perl=TRUE))
+fire.not.blanks <- which(fire.temp != "")
+fire.words <- fire.temp[fire.not.blanks]
+
+# db words.
+
+fire.title <- rep("paleFire", 68132)
+fire.words.type <- rep("word", 68132)
+fire.words.counter <- seq(1, 68132)
+fire.words.id <- paste0("PALE_FIRE_", "WORD_", fire.words.counter)
+
+fire.words.matrix <- cbind(fire.title, fire.words.type, fire.words.id, fire.words)
+
+fire.words.df <- as.data.frame(fire.words.matrix, stringsAsFactors = FALSE)
+
+con <- dbConnect(RSQLite::SQLite(), ":memory:", dbname="textTable.sqlite")
+colnames(fire.words.df) <- c("Title", "Type", "ID", "Unit")
+dbWriteTable(con, "textTable", fire.words.df, append=TRUE, row.names=FALSE)
+dbGetQuery(con, "SELECT * FROM textTable WHERE Type= 'word' AND Title='paleFire' LIMIT 10")
+dbDisconnect(con)
+
+# sents? feed into sents func! 
+
+# do the period regex first. it's still going to get rocked..
+
+fire <- gsub('(?<=[A-Z])(\\.)(?=[A-Z]|\\.|\\s)', '', perl=TRUE,fire)
+# now sents. 
+fire <- gsub("Mr.", "Mr", fire) # do this again.
+grep("Mr\\.",fire)
+fire <- gsub("Dr.", "Dr", fire) # do this again.
+fire <- gsub("Mrs.", "Mrs", fire) # do this again.
+fire <- gsub("Prof.", "Prof", fire) # do this again.
+fire <- gsub("10:23.", "10:23", fire) # do this again.
+fire <- gsub("10:25.", "10:25", fire) # do this again.
+fire <- gsub("10:37.", "10:37", fire) # do this again.
+fire <- gsub("Oct.", "Oct", fire) # do this again.
+fire <- gsub("Mt.", "Mt", fire) # do this again.
+fire <- gsub("b. 1874", "b 1874", fire) # do this again.
+fire <- gsub("Mr.", "Mr", fire) # do this again.
+
+first_bite <- fire[1:1037]
+
+fire.sents.first <- paste0(first_bite, collapse = "\n")
+fire.sents.first <- unlist(tokenize_sentences(fire.sents.first))
+
+fire.sents <- c(fire.sents.first)
+
+bad_spots<-c(0)
+
+## standalone, you need the third condition. 
+for(i in seq(1:length(fire.sents))){
+  #if the sentence ends with a punctuation mark and the next sentence starts with a lowercase, combine them
+  test <- substr(fire.sents[i], nchar(fire.sents[i]), nchar(fire.sents[i]))
+  test2 <- substr(fire.sents[i+1], 1, 1)
+  test3 <- substr(fire.sents[i], 1, 1)
+  if(test %in% c('?', '!') && test2==tolower(test2) && test3!=tolower(test3)){
+    fire.sents[i] <- paste(fire.sents[i], fire.sents[i+1])
+    # print(fire.sents[i])
+    bad_spots<-append(bad_spots, i+1)
+  }
+}
+bad_spots <- bad_spots[-c(1)]
+fire.sents <- fire.sents[-bad_spots]
+print(length(fire.sents))
+
+fire.sents.df <- as.data.frame(fire.sents, stringsAsFactors = FALSE)
+
+fire.title <- rep("paleFire", 2545)
+fire.sents.type <- rep("sentence", 2545)
+fire.sents.counter<-seq(1, 2545)
+fire.sents.id <- paste0("PALE_FIRE_", "SENT_", fire.sents.counter)
+print(length(fire.sents.id))
+fire.sents.matrix <- cbind(fire.title, fire.sents.type, fire.sents.id, fire.sents)
+fire.sents.df <- as.data.frame(fire.sents.matrix, stringsAsFactors = FALSE)
+colnames(fire.sents.df) <- stock
+
+con <- dbConnect(RSQLite::SQLite(), ":memory:", dbname="textTable.sqlite")
+
+dbWriteTable(con, "textTable", fire.sents.df, append=TRUE, row.names=FALSE)
+dbGetQuery(con, "SELECT Unit FROM textTable WHERE Type='sentence' AND Title='paleFire' LIMIT 2")
+
+dbDisconnect(con)
+
+# okay done.. eep.

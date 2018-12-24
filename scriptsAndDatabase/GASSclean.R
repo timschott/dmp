@@ -183,3 +183,4 @@ dbGetQuery(con, "SELECT Unit FROM textTable WHERE Type='paragraph' AND Title='he
 dbDisconnect(con)
 
 # done.
+
