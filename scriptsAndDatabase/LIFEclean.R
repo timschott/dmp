@@ -115,3 +115,38 @@ dbGetQuery(con, "SELECT Unit FROM textTable WHERE Type='sentence' AND Title='lif
 dbDisconnect(con)
 
 ## words. 
+
+life.temp <- life
+life.temp <- paste(life.temp, collapse=" ")
+life.temp <-tolower(life.temp)
+# a better regex that is going to maintain contractions. important! 
+
+life.temp <- unlist(strsplit(life.temp, "[^\\w']", perl=TRUE))
+life.not.blanks <- which(life.temp != "")
+life.words <- life.temp[life.not.blanks]
+print(length(life.words))
+grep("^'", life.words)
+life.words<- gsub("^'",'',perl=TRUE, life.words)
+life.words <- life.words[which(life.words !="")]
+print(length(life.words))
+
+#db commit. 
+life.title <- rep("lifeAndTimesOfMichaelK", 66345)
+life.words.type <- rep("word", 66345)
+life.words.counter <- seq(1, 66345)
+life.words.id <- paste0("LIFE_AND_TIMES_OF_MICHAEL_K_", "WORD_", life.words.counter)
+
+life.words.matrix <- cbind(life.title, life.words.type, life.words.id, life.words)
+
+life.words.df <- as.data.frame(life.words.matrix, stringsAsFactors = FALSE)
+
+con <- dbConnect(RSQLite::SQLite(), ":memory:", dbname="textTable.sqlite")
+colnames(life.words.df) <- c("Title", "Type", "ID", "Unit")
+dbWriteTable(con, "textTable", life.words.df, append=TRUE, row.names=FALSE)
+dbGetQuery(con, "SELECT * FROM textTable WHERE Type= 'word' AND Title='lifeAndTimesOfMichaelK' LIMIT 10")
+dbDisconnect(con)
+
+
+
+
+
