@@ -41,7 +41,103 @@ dbDisconnect(con)
 ## sents.
 
 
+first_bite <- sea[1:1175]
+
+sea.sents.first <- paste0(first_bite, collapse = "\n")
+sea.sents.first <- unlist(tokenize_sentences(sea.sents.first))
+
+sea.sents <- c(sea.sents.first)
+
+sea.sents.df <- as.data.frame(sea.sents, stringsAsFactors = FALSE)
 
 
+bad_spots <-c(0)
+for(i in seq(1:length(sea.sents))){
+  #if the sentence ends with a punctuation mark and the next character is a lowercase, combine them,
+  # if the sequence starts with a capital letter... but for eg ha! ha! ha! don't combine
+  # so check if the first sentence starts with a lowercase as well
+  test <- substr(sea.sents[i], nchar(sea.sents[i]), nchar(sea.sents[i]))
+  test2 <- substr(sea.sents[i+1], 1, 1)
+  test3 <- substr(sea.sents[i], 1, 1)
+  if(test2 %in% c(LETTERS, letters)){
+    if(test %in% c('?', '!') && test2==tolower(test2) && test3!=tolower(test3)){
+      #print(i)
+      sea.sents[i] <- paste(sea.sents[i], sea.sents[i+1])
+      bad_spots<-append(bad_spots, i+1)
+    }
+  }
+}
+bad_spots <- bad_spots[-c(1)]
+
+sea.sents <- sea.sents[-c(bad_spots)]
+print(length(sea.sents))
 
 
+bad_spots <-c(0)
+for(i in seq(1:length(sea.sents))){
+  #if the sentence ends with a punctuation mark and the next character is a lowercase, combine them
+  test <- substr(sea.sents[i], nchar(sea.sents[i])-1, nchar(sea.sents[i]))
+  test2 <- substr(sea.sents[i+1], 1, 1)
+  if(test2 %in% c(LETTERS, letters)){
+    if(test %in% c("?’", "!’") && test2==tolower(test2)){
+      sea.sents[i] <- paste(sea.sents[i], sea.sents[i+1])
+      bad_spots<-append(bad_spots, i+1)
+    }
+  }
+}
+bad_spots <- bad_spots[-c(1)]
+
+sea.sents[bad_spots]
+sea.sents <- sea.sents[-c(bad_spots)]
+print(length(sea.sents))
+
+# cool. 
+
+sea.title <- rep("wideSargassoSea", 4278)
+sea.sents.type <- rep("sentence", 4278)
+sea.sents.counter<-seq(1, 4278)
+sea.sents.id <- paste0("WIDE_SARGASSO_SEA_", "SENT_", sea.sents.counter)
+print(length(sea.sents.id))
+
+sea.sents.matrix <- cbind(sea.title, sea.sents.type, sea.sents.id, sea.sents)
+sea.sents.df <- as.data.frame(sea.sents.matrix, stringsAsFactors = FALSE)
+colnames(sea.sents.df) <- stock
+con <- dbConnect(RSQLite::SQLite(), ":memory:", dbname="textTable.sqlite")
+
+dbWriteTable(con, "textTable", sea.sents.df, append=TRUE, row.names=FALSE)
+dbGetQuery(con, "SELECT Unit FROM textTable WHERE Type='sentence' AND Title='wideSargassoSea' LIMIT 2")
+dbDisconnect(con)
+
+###
+sea.temp <- sea
+sea.temp <- paste(sea.temp, collapse=" ")
+sea.temp <-tolower(sea.temp)
+# a better regex that is going to maintain contractions. important! 
+
+sea.temp <- unlist(strsplit(sea.temp, "[^\\w’]", perl=TRUE))
+sea.not.blanks <- which(sea.temp != "")
+sea.words <- sea.temp[sea.not.blanks]
+print(length(sea.words))
+
+sea.words<- sea.words[which(sea.words!="")]
+print(length(sea.words))
+grep("", sea.words)
+sea.words[23392]
+sea.words<- sea.words[which(sea.words!="’")]
+print(length(sea.words))
+
+sea.title <- rep("wideSargassoSea", 47302)
+sea.words.type <- rep("word", 47302)
+sea.words.counter <- seq(1, 47302)
+sea.words.id <- paste0("WIDE_SARGASSO_SEA_", "WORD_", sea.words.counter)
+
+sea.words.matrix <- cbind(sea.title, sea.words.type, sea.words.id, sea.words)
+
+sea.words.df <- as.data.frame(sea.words.matrix, stringsAsFactors = FALSE)
+
+con <- dbConnect(RSQLite::SQLite(), ":memory:", dbname="textTable.sqlite")
+colnames(sea.words.df) <- c("Title", "Type", "ID", "Unit")
+dbWriteTable(con, "textTable", sea.words.df, append=TRUE, row.names=FALSE)
+dbGetQuery(con, "SELECT * FROM textTable WHERE Type= 'word' AND Title='wideSargassoSea' LIMIT 10")
+dbDisconnect(con)
+# sick! 
