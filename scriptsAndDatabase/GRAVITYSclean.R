@@ -175,21 +175,64 @@ dbGetQuery(con, "SELECT Unit FROM textTable WHERE Type='sentence' AND Title='gra
 dbDisconnect(con)
 
 # words! 
-grav.temp <- grav
-grav.temp.1 <- paste(grav.temp[1:2499], collapse=" ")
-grav.temp.2 <- paste(grav.temp[2500:5669], collapse=" ")
+grav.temp <- grav.paragraphs$paragraphs
+grav.temp.1 <- paste(grav.temp[1:999], collapse=" ")
+grav.temp.2 <- paste(grav.temp[1000:1999], collapse=" ")
+grav.temp.3 <- paste(grav.temp[2000:2999], collapse=" ")
+grav.temp.4 <- paste(grav.temp[3000:3999], collapse=" ")
+grav.temp.5 <- paste(grav.temp[4000:5669], collapse=" ")
+
 grav.temp.1 <-tolower(grav.temp.1)
 grav.temp.2 <-tolower(grav.temp.2)
+grav.temp.3 <-tolower(grav.temp.3)
+grav.temp.4 <-tolower(grav.temp.4)
+grav.temp.5 <-tolower(grav.temp.5)
+
 grav.temp.1 <- unlist(strsplit(grav.temp.1, "[^\\w’]", perl=TRUE))
 grav.temp.2 <- unlist(strsplit(grav.temp.2, "[^\\w’]", perl=TRUE))
+grav.temp.3 <- unlist(strsplit(grav.temp.3, "[^\\w’]", perl=TRUE))
+grav.temp.4 <- unlist(strsplit(grav.temp.4, "[^\\w’]", perl=TRUE))
+grav.temp.5 <- unlist(strsplit(grav.temp.5, "[^\\w’]", perl=TRUE))
 
 # a better regex that is going to maintain contractions. important! 
 
-grav.temp <- unlist(strsplit(grav.temp, "[^\\w’]", perl=TRUE))
-grav.not.blanks <- which(grav.temp != "")
-grav.words <- grav.temp[grav.not.blanks]
+grav.not.blanks.1 <- which(grav.temp.1 != "")
+grav.not.blanks.2 <- which(grav.temp.2 != "")
+grav.not.blanks.3 <- which(grav.temp.3 != "")
+grav.not.blanks.4 <- which(grav.temp.4 != "")
+grav.not.blanks.5 <- which(grav.temp.5 != "")
+
+grav.words.1 <- grav.temp.1[grav.not.blanks.1]
+grav.words.2 <- grav.temp.2[grav.not.blanks.2]
+grav.words.3 <- grav.temp.3[grav.not.blanks.3]
+grav.words.4 <- grav.temp.4[grav.not.blanks.4]
+grav.words.5 <- grav.temp.5[grav.not.blanks.5]
+grav.words <- c(grav.words.1,grav.words.2,grav.words.3,grav.words.4,grav.words.5)
+
 print(length(grav.words))
-grav.words<- grav.words[which(grav.words!="'")]
+grav.words<- grav.words[which(grav.words!="^’")]
 print(length(grav.words))
+
+# sheesh. 333k words.
+gravitys.title <- rep("gravitysRainbow", 333370)
+gravitys.words.type <- rep("word", 333370)
+gravitys.words.counter <- seq(1, 333370)
+gravitys.words.id <- paste0("GRAVITYS_RAINBOW_", "WORD_", gravitys.words.counter)
+
+gravitys.words.matrix <- cbind(gravitys.title, gravitys.words.type, gravitys.words.id, grav.words)
+
+gravitys.words.df <- as.data.frame(gravitys.words.matrix, stringsAsFactors = FALSE)
+# 37.1 MB!!! "yuge!"
+con <- dbConnect(RSQLite::SQLite(), ":memory:", dbname="textTable.sqlite")
+colnames(gravitys.words.df) <- c("Title", "Type", "ID", "Unit")
+dbWriteTable(con, "textTable", gravitys.words.df, append=TRUE, row.names=FALSE)
+dbGetQuery(con, "SELECT * FROM textTable WHERE Type= 'word' AND Title='gravitysRainbow' LIMIT 10")
+dbGetQuery(con, "SELECT COUNT(*) FROM textTable WHERE Type='word'")
+dbGetQuery(con, "SELECT COUNT(*) FROM textTable WHERE Type='sentence'")
+dbGetQuery(con, "SELECT COUNT(*) FROM textTable WHERE Type='paragraph'")
+dbExecute(con, "ALTER TABLE textTable ADD 'Label' INT")
+dbExecute(con, "UPDATE textTable SET 'Label' = 1")
+# 3 million "lyrical". 
+dbDisconnect(con)
 
 
