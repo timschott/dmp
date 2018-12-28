@@ -10,17 +10,17 @@ library(qdap)
 # library(rJava)
 # library("openNLPdata")
 
-stock <- c("Title", "Type", "ID", "Unit")
-dali <- scan("rawTexts/virginia-woolf-mrs-dalloway.txt",what="character",sep="\n")
+stock <- c("Title", "Type", "ID", "Unit", "Label")
+dali <- scan("rawTexts/lyrical/virginia-woolf-mrs-dalloway.txt",what="character",sep="\n")
 dali.start <-which(dali == "Mrs. Dalloway said she would buy the flowers herself.")
 dali.end <- which(dali == "For there she was.")
 dali <- dali[dali.start:dali.end]
 
 dali <- gsub('_', '', perl=TRUE, dali)
 dali<-  gsub('(?<=[A-Z])(\\.)(?=[A-Z]|\\.|\\s)', '', perl=TRUE, dali)
-dali <- gsub('Mrs.', 'Mrs', perl=TRUE, dali)
-dali <- gsub('Mr.', 'Mr', perl=TRUE, dali)
-dali <- gsub('St.', 'St', perl=TRUE, dali)
+dali <- gsub('Mrs\\.', 'Mrs', perl=TRUE, dali)
+dali <- gsub('Mr\\.', 'Mr', perl=TRUE, dali)
+dali <- gsub('St\\.', 'St', perl=TRUE, dali)
 dali <- gsub("t?te-?-t?tes", "tête-à-tête", perl=TRUE, dali)
 dali <- gsub("caf?", "café", perl=TRUE,dali)
 dali <- gsub('\"', '', perl=TRUE, dali)
@@ -81,8 +81,9 @@ dali.title <- rep("mrsDalloway", 3405)
 dali.sents.type <- rep("sentence", 3405)
 dali.sents.counter<-seq(1, 3405)
 dali.sents.id <- paste0("MRS_DALLOWAY_", "SENT_", dali.sents.counter)
+dali.label <- rep("1", 3405)
 print(length(dali.sents.id))
-dali.sents.matrix <- cbind(dali.title, dali.sents.type, dali.sents.id, dali.sents)
+dali.sents.matrix <- cbind(dali.title, dali.sents.type, dali.sents.id, dali.sents, dali.label)
 dali.sents.df <- as.data.frame(dali.sents.matrix, stringsAsFactors = FALSE)
 colnames(dali.sents.df) <- stock
 
@@ -93,17 +94,17 @@ dbGetQuery(con, "SELECT Unit FROM textTable WHERE Type='sentence' AND Title='mrs
 dbDisconnect(con)
 
 #### words. 
-stock <- c("Title", "Type", "ID", "Unit")
-dali <- scan("rawTexts/virginia-woolf-mrs-dalloway.txt",what="character",sep="\n")
+stock <- c("Title", "Type", "ID", "Unit", "Label")
+dali <- scan("rawTexts/lyrical/virginia-woolf-mrs-dalloway.txt",what="character",sep="\n")
 dali.start <-which(dali == "Mrs. Dalloway said she would buy the flowers herself.")
 dali.end <- which(dali == "For there she was.")
 dali <- dali[dali.start:dali.end]
 length(dali)
 dali <- gsub('_', '', perl=TRUE, dali)
 dali<-  gsub('(?<=[A-Z])(\\.)(?=[A-Z]|\\.|\\s)', '', perl=TRUE, dali)
-dali <- gsub('Mrs.', 'Mrs', perl=TRUE, dali)
-dali <- gsub('Mr.', 'Mr', perl=TRUE, dali)
-dali <- gsub('St.', 'St', perl=TRUE, dali)
+dali <- gsub('Mrs\\.', 'Mrs', perl=TRUE, dali)
+dali <- gsub('Mr\\.', 'Mr', perl=TRUE, dali)
+dali <- gsub('St\\.', 'St', perl=TRUE, dali)
 dali <- gsub("t?te-?-t?tes", "tête-à-tête", perl=TRUE, dali)
 dali <- gsub("caf?", "café", perl=TRUE,dali)
 dali <- gsub('\"', '', perl=TRUE, dali)
@@ -139,13 +140,13 @@ dali.title <- rep("mrsDalloway", 64267)
 dali.words.type <- rep("word", 64267)
 dali.words.counter <- seq(1, 64267)
 dali.words.id <- paste0("MRS_DALLOWAY_", "WORD_", dali.words.counter)
-
-dali.words.matrix <- cbind(dali.title, dali.words.type, dali.words.id, dali.words)
+dali.label <- rep("1", 64267)
+dali.words.matrix <- cbind(dali.title, dali.words.type, dali.words.id, dali.words, dali.label)
 
 dali.words.df <- as.data.frame(dali.words.matrix, stringsAsFactors = FALSE)
 
 con <- dbConnect(RSQLite::SQLite(), ":memory:", dbname="textTable.sqlite")
-colnames(dali.words.df) <- c("Title", "Type", "ID", "Unit")
+colnames(dali.words.df) <- c("Title", "Type", "ID", "Unit", 'Label')
 dbWriteTable(con, "textTable", dali.words.df, append=TRUE, row.names=FALSE)
 dbGetQuery(con, "SELECT * FROM textTable WHERE Type= 'word' AND Title='mrsDalloway' LIMIT 10")
 
@@ -159,13 +160,13 @@ dali.paragraphs <- dali.paragraphs[-c(1:18,773:777),]
 # subs..
 colnames(dali.paragraphs) <- c("arb", "paras")
 dali.paragraphs <- dali.paragraphs %>%
-  transmute(paragraph = gsub('Mrs.', 'Mrs', perl=TRUE, paras))
+  transmute(paragraph = gsub('Mrs\\.', 'Mrs', perl=TRUE, paras))
 
 dali.paragraphs <- dali.paragraphs %>%
-  transmute(paras = gsub('Mr.', 'Mr', perl=TRUE, paragraph))
+  transmute(paras = gsub('Mr\\.', 'Mr', perl=TRUE, paragraph))
 
 dali.paragraphs <- dali.paragraphs %>%
-  transmute(paragraph = gsub('St.', 'St', perl=TRUE, paras))
+  transmute(paragraph = gsub('St\\.', 'St', perl=TRUE, paras))
 
 dali.paragraphs <- dali.paragraphs %>%
   transmute(paras = gsub('\n', ' ', perl=TRUE, paragraph))
@@ -184,7 +185,7 @@ dali.paragraphs$paras[bads[9]] <- gsub('entr<e9>e', 'entrée', dali.paragraphs$p
 dali.paragraphs$paras[bads[10]] <- gsub('Bront<eb>', "Brontë", dali.paragraphs$paras[bads[10]])
 
 dali.paragraphs <- dali.paragraphs %>%
-  transmute(paragraph = gsub('St.', 'St', perl=TRUE, paras))
+  transmute(paragraph = gsub('St\\.', 'St', perl=TRUE, paras))
 
 dali.paragraphs <- dali.paragraphs %>%
   transmute(paras = gsub('\n', ' ', perl=TRUE, paragraph))
@@ -201,8 +202,9 @@ dali.title <- rep("mrsDalloway", 754)
 dali.para.type <- rep("paragraph", 754)
 dali.para.counter<-seq(1, 754)
 dali.para.id <- paste0("MRS_DALLOWAY_", "PARAGRAPH_", dali.para.counter)
+dali.label <- rep("1", 754)
 print(length(dali.para.id))
-dali.para.matrix <- cbind(dali.title, dali.para.type, dali.para.id, dali.paragraphs)
+dali.para.matrix <- cbind(dali.title, dali.para.type, dali.para.id, dali.paragraphs, dali.label)
 dali.para.df <- as.data.frame(dali.para.matrix, stringsAsFactors = FALSE)
 colnames(dali.para.df) <- stock
 
