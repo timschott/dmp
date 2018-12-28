@@ -10,8 +10,9 @@ library(qdap)
 # library("openNLPdata")
 
 ## something happened
+stock <- c("Title", "Type", "ID", "Unit", "Label")
 
-hell <- scan("rawTexts/joseph-heller-something-happened.txt",what="character", sep="\n")
+hell <- scan("rawTexts/lyrical/joseph-heller-something-happened.txt",what="character", sep="\n")
 hell.start <- which(hell=="I get the willies when I see closed doors. Even at work, where I am doing so well now, the sight of a closed door is sometimes enough to make me dread that something horrible is happening behind it, something that is going to affect me adversely; if I am tired and dejected from a night of lies or booze or sex or just plain nerves and insomnia, I can almost smell the disaster mounting invisibly and flooding out toward me through the frosted glass panes. My hands may perspire, and my voice may come out strange. I wonder why.")
 hell.end<- which(hell=="Everyone seems pleased with the way I’ve taken command.")
 hell <- hell[hell.start:hell.end]
@@ -29,7 +30,7 @@ hell <- hell[-5062]
 hell.paragraphs <- as.data.frame(hell, stringsAsFactors=FALSE)
 colnames(hell.paragraphs) <- c("paras")
 hell.paragraphs <- hell.paragraphs %>% 
-  transmute(paragraphs=  gsub("Mr.", "Mr", paras))
+  transmute(paragraphs=  gsub("Mr\\.", "Mr", paras))
 hell.paragraphs <- hell.paragraphs %>% 
   transmute(paras=  replace_abbreviation(paragraphs))
 print(length(hell.paragraphs$paras))
@@ -41,10 +42,11 @@ print(length(hell.paragraphs$paras))
 hell.title <- rep("somethingHappened", 5124)
 hell.para.type <- rep("paragraph", 5124)
 hell.para.counter<-seq(1, 5124)
+hell.label <- rep("1", 5124)
 hell.para.id <- paste0("SOMETHING_HAPPENED_", "PARAGRAPH_", hell.para.counter)
 print(length(hell.para.id))
 
-hell.para.matrix <- cbind(hell.title, hell.para.type, hell.para.id, hell.paragraphs)
+hell.para.matrix <- cbind(hell.title, hell.para.type, hell.para.id, hell.paragraphs, hell.label)
 hell.para.df <- as.data.frame(hell.para.matrix, stringsAsFactors = FALSE)
 colnames(hell.para.df) <- stock
 
@@ -111,24 +113,25 @@ bad_spots <- bad_spots[-c(1)]
 hell.sents[bad_spots]
 hell.sents <- hell.sents[-c(bad_spots)]
 print(length(hell.sents))
-hell.sents[7514] <-paste(hell.sents[7514], hell.sents[7515])
-hell.sents[7515] <- ""
-hell.sents[8623] <- paste(hell.sents[8623], hell.sents[8624])
-hell.sents[8624] <- ""
-hell.sents[9061:9062]
-hell.sents[9061] <- paste(hell.sents[9061], hell.sents[9062])
-hell.sents[9062] <- ""
+hell.sents[7592] <-paste(hell.sents[7592], hell.sents[7593])
+hell.sents[7593] <- ""
+hell.sents[8706] <- paste(hell.sents[8706], hell.sents[8707])
+hell.sents[8707] <- ""
+hell.sents[9150:9152]
+hell.sents[9151] <- paste(hell.sents[9151], hell.sents[9152])
+hell.sents[9152] <- ""
 hell.sents <- hell.sents[hell.sents!=""]
 print(length(hell.sents))
-
+hell.sents.df <- as.data.frame(hell.sents, stringsAsFactors = FALSE)
            # lots of sents. 
-hell.title <- rep("somethingHappened", 14884)
-hell.sents.type <- rep("sentence", 14884)
-hell.sents.counter<-seq(1, 14884)
+hell.title <- rep("somethingHappened", 14994)
+hell.sents.type <- rep("sentence", 14994)
+hell.sents.counter<-seq(1, 14994)
+hell.label <- rep("1", 14994)
 hell.sents.id <- paste0("SOMETHING_HAPPENED_", "SENT_", hell.sents.counter)
 print(length(hell.sents.id))
 
-hell.sents.matrix <- cbind(hell.title, hell.sents.type, hell.sents.id, hell.sents)
+hell.sents.matrix <- cbind(hell.title, hell.sents.type, hell.sents.id, hell.sents, hell.label)
 hell.sents.df <- as.data.frame(hell.sents.matrix, stringsAsFactors = FALSE)
 colnames(hell.sents.df) <- stock
 con <- dbConnect(RSQLite::SQLite(), ":memory:", dbname="textTable.sqlite")
@@ -156,17 +159,18 @@ print(length(hell.words))
 hell.words[1:100]
 
 
-hell.title <- rep("somethingHappened", 190267)
-hell.words.type <- rep("word", 190267)
-hell.words.counter <- seq(1, 190267)
+hell.title <- rep("somethingHappened", 190235)
+hell.words.type <- rep("word", 190235)
+hell.words.counter <- seq(1, 190235)
+hell.label <- rep("1", 190235)
 hell.words.id <- paste0("SOMETHING_HAPPENED_", "WORD_", hell.words.counter)
 
-hell.words.matrix <- cbind(hell.title, hell.words.type, hell.words.id, hell.words)
+hell.words.matrix <- cbind(hell.title, hell.words.type, hell.words.id, hell.words, hell.label)
 
 hell.words.df <- as.data.frame(hell.words.matrix, stringsAsFactors = FALSE)
 
 con <- dbConnect(RSQLite::SQLite(), ":memory:", dbname="textTable.sqlite")
-colnames(hell.words.df) <- c("Title", "Type", "ID", "Unit")
+colnames(hell.words.df) <- c("Title", "Type", "ID", "Unit", "Label")
 dbWriteTable(con, "textTable", hell.words.df, append=TRUE, row.names=FALSE)
 dbGetQuery(con, "SELECT * FROM textTable WHERE Type= 'word' AND Title='somethingHappened' LIMIT 10")
 dbDisconnect(con)
