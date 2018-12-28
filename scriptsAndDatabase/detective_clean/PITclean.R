@@ -62,6 +62,109 @@ dbDisconnect(con)
 
 # sents 
 
+pit <- pit.paragraphs$paragraphs
 
+first_bite <- pit[1:1740]
+
+pit.sents.first <- paste0(first_bite, collapse = "\n")
+pit.sents.first <- unlist(tokenize_sentences(pit.sents.first))
+
+pit.sents <- c(pit.sents.first)
+pit.sents.df <- as.data.frame(pit.sents, stringsAsFactors = FALSE)
+
+print(length(pit.sents.df$pit.sents))
+
+
+bad_spots <-c(0)
+for(i in seq(1:length(pit.sents))){
+  #if the sentence ends with a punctuation mark and the next character is a lowercase, combine them,
+  # if the sequence starts with a capital letter... but for eg ha! ha! ha! don't combine
+  # so check if the first sentence starts with a lowercase as well
+  test <- substr(pit.sents[i], nchar(pit.sents[i]), nchar(pit.sents[i]))
+  test2 <- substr(pit.sents[i+1], 1, 1)
+  test3 <- substr(pit.sents[i], 1, 1)
+  if(test2 %in% c(LETTERS, letters)){
+    if(test %in% c('?', '!') && test2==tolower(test2) && test3!=tolower(test3)){
+      #print(i)
+      pit.sents[i] <- paste(pit.sents[i], pit.sents[i+1])
+      bad_spots<-append(bad_spots, i+1)
+    }
+  }
+}
+bad_spots <- bad_spots[-c(1)]
+# pit.sents[bad_spots]
+pit.sents <- pit.sents[-c(bad_spots)]
+
+
+bad_spots <-c(0)
+for(i in seq(1:length(pit.sents))){
+  #if the sentence ends with a punctuation mark and the next character is a lowercase, combine them
+  test <- substr(pit.sents[i], nchar(pit.sents[i])-1, nchar(pit.sents[i]))
+  test2 <- substr(pit.sents[i+1], 1, 1)
+  if(test2 %in% c(LETTERS, letters)){
+    if((test %in% c('?"', '!"') && test2==tolower(test2) && test2!='I')|| (test %in% c('?”', '!”') && test2=='I')){
+      #print(i)
+      pit.sents[i] <- paste(pit.sents[i], pit.sents[i+1])
+      bad_spots<-append(bad_spots, i+1)
+    }
+  }
+}
+
+pit.sents[bad_spots]
+pit.sents <- pit.sents[-c(bad_spots)]
+
+print(length(pit.sents))
+
+pit.sents.df <- as.data.frame(pit.sents, stringsAsFactors = FALSE)
+
+pit.title <- rep("theShriekingPit", 5204)
+pit.sents.type <- rep("sentence", 5204)
+pit.sents.counter<-seq(1, 5204)
+pit.sents.id <- paste0("THE_SHRIEKING_PIT_", "SENT_", pit.sents.counter)
+pit.label <- rep("0", 5204)
+print(length(pit.sents.id))
+
+pit.sents.matrix <- cbind(pit.title, pit.sents.type, pit.sents.id, pit.sents, pit.label)
+pit.sents.df <- as.data.frame(pit.sents.matrix, stringsAsFactors = FALSE)
+stock <- c("Title", "Type", "ID", "Unit", "Label")
+colnames(pit.sents.df) <- stock
+con <- dbConnect(RSQLite::SQLite(), ":memory:", dbname="textTable.sqlite")
+
+dbWriteTable(con, "textTable", pit.sents.df, append=TRUE, row.names=FALSE)
+dbGetQuery(con, "SELECT Unit FROM textTable WHERE Type='sentence' AND Title='theShriekingPit' LIMIT 2")
+dbDisconnect(con)
+
+# words.
+
+pit.temp <- pit
+pit.temp <- paste(pit.temp, collapse=" ")
+pit.temp <-tolower(pit.temp)
+# a better regex that is going to maintain contractions. important! 
+
+pit.temp <- unlist(strsplit(pit.temp, "[^\\w']", perl=TRUE))
+pit.not.blanks <- which(pit.temp != "")
+pit.words <- pit.temp[pit.not.blanks]
+print(length(pit.words))
+
+pit.words<- pit.words[which(pit.words!="'")]
+print(length(pit.words))
+pit.words<-gsub("^'","", pit.words)
+print(length(pit.words))
+pit.title <- rep("theShriekingPit", 99941)
+pit.words.type <- rep("word", 99941)
+pit.words.counter <- seq(1, 99941)
+pit.words.id <- paste0("THE_SHRIEKING_PIT", "WORD_", pit.words.counter)
+pit.label<- rep("0", 99941)
+pit.words.matrix <- cbind(pit.title, pit.words.type, pit.words.id, pit.words, pit.label)
+
+pit.words.df <- as.data.frame(pit.words.matrix, stringsAsFactors = FALSE)
+
+con <- dbConnect(RSQLite::SQLite(), ":memory:", dbname="textTable.sqlite")
+stock <- c("Title", "Type", "ID", "Unit", "Label")
+colnames(pit.words.df) <- c("Title", "Type", "ID", "Unit", "Label")
+dbWriteTable(con, "textTable", pit.words.df, append=TRUE, row.names=FALSE)
+dbGetQuery(con, "SELECT * FROM textTable WHERE Type= 'word' AND Title='theShriekingPit' LIMIT 10")
+dbDisconnect(con)
+# pit done.
 
 
