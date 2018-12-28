@@ -12,8 +12,8 @@ library("openNLPdata")
 
 # absalom absalom
 
-ab <- scan("rawTexts/william-faulkner-absalom-absalom.txt",what="character",sep="\n")
-stock <- c("Title", "Type", "ID", "Unit")
+ab <- scan("rawTexts/lyrical/william-faulkner-absalom-absalom.txt",what="character",sep="\n")
+stock <- c("Title", "Type", "ID", "Unit", "Label")
 
 ab.start <-which(ab=="FROM a little after two o'clock until almost sundown of the long still hot weary dead September afternoon they sat in what Miss Coldfield still called the office because her father had called it that—a dim hot airless room with the blinds all closed and fastened for forty-three summers because when she was a girl someone had believed that light and moving air carried heat and that dark was always cooler, and which (as the sun shone fuller and fuller on that side of the house) became latticed with yellow slashes full of dust motes which Quentin thought of as being flecks of the dead old dried paint itself blown inward from the scaling blinds as wind might have blown them.")
 ab.end <- which(ab=="I don't hate it! I don't hate it!")
@@ -29,7 +29,7 @@ ab <- ab[-chaps]
 ab.paragraphs <- as.data.frame(ab, stringsAsFactors=FALSE)
 colnames(ab.paragraphs) <- c("paras")
 ab.paragraphs <- ab.paragraphs %>% 
-  transmute(paragraphs=  gsub("Mr.", "Mr", paras))
+  transmute(paragraphs=  gsub("Mr\\.", "Mr", paras))
 ab.paragraphs <- ab.paragraphs %>% 
   transmute(paras=  replace_abbreviation(paragraphs))
 print(length(ab.paragraphs$paras))
@@ -40,9 +40,10 @@ ab.title <- rep("absalomAbsalom", 569)
 ab.para.type <- rep("paragraph", 569)
 ab.para.counter<-seq(1, 569)
 ab.para.id <- paste0("ABSALOM_ABSALOM_", "PARAGRAPH_", ab.para.counter)
+ab.label <- rep("1", 569)
 print(length(ab.para.id))
-
-ab.para.matrix <- cbind(ab.title, ab.para.type, ab.para.id, ab.paragraphs)
+test <- c("Mrs.", "Mr.")
+ab.para.matrix <- cbind(ab.title, ab.para.type, ab.para.id, ab.paragraphs, ab.label)
 ab.para.df <- as.data.frame(ab.para.matrix, stringsAsFactors = FALSE)
 colnames(ab.para.df) <- stock
 
@@ -84,16 +85,45 @@ ab.sents <- ab.sents[-c(bad_spots)]
 # sick.
 
 ab.sents.df <- as.data.frame(ab.sents, stringsAsFactors = FALSE)
+ab.sents[2706] <- paste(ab.sents[2706], ab.sents[2707])
+ab.sents[2707] <- ""
+ab.sents <- gsub("\"", "",ab.sents)
+ab.sents[1100] <- paste(ab.sents[1100], ab.sents[1101])
+ab.sents[1101] <- ""
+ab.sents[1100] <-gsub("4nd", "And", ab.sents[1100])
 
+bad_spots <-c(0)
+for(i in seq(1:length(ab.sents))){
+  #if the sentence ends with a punctuation mark and the next character is a lowercase, combine them,
+  # if the sequence starts with a capital letter... but for eg ha! ha! ha! don't combine
+  # so check if the first sentence starts with a lowercase as well
+  test <- substr(ab.sents[i], nchar(ab.sents[i]), nchar(ab.sents[i]))
+  test2 <- substr(ab.sents[i+1], 1, 1)
+  test3 <- substr(ab.sents[i], 1, 1)
+  if(test2 %in% c(LETTERS, letters)){
+    if(test %in% c('?', '!') && test2==tolower(test2) && test3!=tolower(test3)){
+      #print(i)
+      ab.sents[i] <- paste(ab.sents[i], ab.sents[i+1])
+      bad_spots<-append(bad_spots, i+1)
+    }
+  }
+}
+bad_spots <- bad_spots[-c(1)]
+ab.sents[bad_spots]
+ab.sents <- ab.sents[-c(bad_spots)]
+ab.sents <- ab.sents[ab.sents!=""]
+ab.sents[2641] <- paste(ab.sents[2641], ab.sents[2642])
+ab.sents[2642] <- ""
 # sew tg
 print(length(ab.sents))
-ab.title <- rep("absalomAbsalom", 2986)
-ab.sents.type <- rep("sentence", 2986)
-ab.sents.counter<-seq(1, 2986)
+ab.title <- rep("absalomAbsalom", 2969)
+ab.sents.type <- rep("sentence", 2969)
+ab.sents.counter<-seq(1, 2969)
 ab.sents.id <- paste0("ABSALOM_ABSALOM_", "SENT_", ab.sents.counter)
+ab.label <- rep("1", 2969)
 print(length(ab.sents.id))
 
-ab.sents.matrix <- cbind(ab.title, ab.sents.type, ab.sents.id, ab.sents)
+ab.sents.matrix <- cbind(ab.title, ab.sents.type, ab.sents.id, ab.sents, ab.label)
 ab.sents.df <- as.data.frame(ab.sents.matrix, stringsAsFactors = FALSE)
 colnames(ab.sents.df) <- stock
 con <- dbConnect(RSQLite::SQLite(), ":memory:", dbname="textTable.sqlite")
@@ -121,17 +151,17 @@ ab.title <- rep("absalomAbsalom", 132668)
 ab.words.type <- rep("word", 132668)
 ab.words.counter <- seq(1, 132668)
 ab.words.id <- paste0("ABSALOM_ABSALOM_", "WORD_", ab.words.counter)
-
-ab.words.matrix <- cbind(ab.title, ab.words.type, ab.words.id, ab.words)
+ab.label <- rep("1", 132668)
+ab.words.matrix <- cbind(ab.title, ab.words.type, ab.words.id, ab.words, ab.label)
 grep("'", ab.words.df$ab.words)
 ab.words.df <- as.data.frame(ab.words.matrix, stringsAsFactors = FALSE)
 
 ab.words.df <- ab.words.df %>%
   mutate(word = gsub("'", "", perl=TRUE, ab.words)) %>%
-  select(ab.title, ab.words.type, ab.words.id, word)
+  select(ab.title, ab.words.type, ab.words.id, word, ab.label)
 
 con <- dbConnect(RSQLite::SQLite(), ":memory:", dbname="textTable.sqlite")
-colnames(ab.words.df) <- c("Title", "Type", "ID", "Unit")
+colnames(ab.words.df) <- c("Title", "Type", "ID", "Unit", "Label")
 dbWriteTable(con, "textTable", ab.words.df, append=TRUE, row.names=FALSE)
 dbGetQuery(con, "SELECT * FROM textTable WHERE Type= 'word' AND Title='absalomAbsalom' LIMIT 10")
 dbDisconnect(con)
