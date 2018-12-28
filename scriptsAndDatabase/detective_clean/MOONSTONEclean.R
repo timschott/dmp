@@ -1,0 +1,13 @@
+setwd("~/Documents/7thSemester/dmp/corpus")
+library("RSQLite")
+library("tokenizers")
+library("dplyr")
+library("textclean")
+library("stringr")
+library("tm")
+library(qdap)
+install.packages("rJava")
+library(rJava)
+library("openNLPdata")
+
+stock <- c("Title", "Type", "ID", "Unit", "Label")
