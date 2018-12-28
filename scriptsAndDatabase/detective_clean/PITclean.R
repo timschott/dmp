@@ -16,10 +16,10 @@ pit.paragraphs <- as.data.frame(pit, stringsAsFactors=FALSE)
 colnames(pit.paragraphs) <- c("paras")
 
 pit.paragraphs <- pit.paragraphs %>% 
-  transmute(paragraphs=  gsub("Mr.", "Mr", paras))
+  transmute(paragraphs=  gsub("Mr\\.", "Mr", paras))
 
 pit.paragraphs <- pit.paragraphs %>% 
-  transmute(paras=  gsub("Mrs.", "Mr", paragraphs))
+  transmute(paras=  gsub("Mrs\\.", "Mrs", paragraphs))
 
 pit.paragraphs <- pit.paragraphs %>% 
   transmute(paragraphs=  gsub("\"", "", paras))
@@ -113,15 +113,15 @@ for(i in seq(1:length(pit.sents))){
 pit.sents[bad_spots]
 pit.sents <- pit.sents[-c(bad_spots)]
 
-print(length(pit.sents))
 
 pit.sents.df <- as.data.frame(pit.sents, stringsAsFactors = FALSE)
-
-pit.title <- rep("theShriekingPit", 5204)
-pit.sents.type <- rep("sentence", 5204)
-pit.sents.counter<-seq(1, 5204)
+pit.sents <- pit.sents[pit.sents!=""]
+print(length(pit.sents))
+pit.title <- rep("theShriekingPit", 5195)
+pit.sents.type <- rep("sentence", 5195)
+pit.sents.counter<-seq(1, 5195)
 pit.sents.id <- paste0("THE_SHRIEKING_PIT_", "SENT_", pit.sents.counter)
-pit.label <- rep("0", 5204)
+pit.label <- rep("0", 5195)
 print(length(pit.sents.id))
 
 pit.sents.matrix <- cbind(pit.title, pit.sents.type, pit.sents.id, pit.sents, pit.label)
@@ -166,5 +166,7 @@ dbWriteTable(con, "textTable", pit.words.df, append=TRUE, row.names=FALSE)
 dbGetQuery(con, "SELECT * FROM textTable WHERE Type= 'word' AND Title='theShriekingPit' LIMIT 10")
 dbDisconnect(con)
 # pit done.
+
+
 
 

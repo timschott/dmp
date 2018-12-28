@@ -10,7 +10,6 @@ install.packages("rJava")
 library(rJava)
 library("openNLPdata")
 
-stock <- c("Title", "Type", "ID", "Unit", "Label")
 
 moon <- scan("rawTexts/detective/wilkie-collins-the-moonstone.txt",what="character",sep="\n")
 # roman numeral chaps
@@ -19,10 +18,10 @@ moon <- moon[-c(spots[-c(1, 27, 29, 40, 51, 55, 56, 64, 68, 69, 71)])]
 moon.paragraphs <- as.data.frame(moon, stringsAsFactors=FALSE)
 colnames(moon.paragraphs) <- c("paras")
 moon.paragraphs <- moon.paragraphs %>% 
-  transmute(paragraphs=  gsub("Mr.", "Mr", paras))
+  transmute(paragraphs=  gsub("Mr\\.", "Mr", paras))
 
 moon.paragraphs <- moon.paragraphs %>% 
-  transmute(paras=  gsub("Mrs.", "Mr", paragraphs))
+  transmute(paras=  gsub("Mrs\\.", "Mrs", paragraphs))
 
 moon.paragraphs <- moon.paragraphs %>% 
   transmute(paragraphs=  replace_abbreviation(paras))
@@ -53,8 +52,8 @@ print(length(moon.para.id))
 
 moon.para.matrix <- cbind(moon.title, moon.para.type, moon.para.id, moon.paragraphs, moon.label)
 moon.para.df <- as.data.frame(moon.para.matrix, stringsAsFactors = FALSE)
+stock <- c("Title", "Type", "ID", "Unit", "Label")
 colnames(moon.para.df) <- stock
-
 con <- dbConnect(RSQLite::SQLite(), ":memory:", dbname="textTable.sqlite")
 dbWriteTable(con, "textTable", moon.para.df, append=TRUE, row.names=FALSE)
 dbGetQuery(con, "SELECT Unit FROM textTable WHERE Type='paragraph' AND Title='theMoonstone' LIMIT 2")
@@ -131,6 +130,7 @@ print(length(moon.sents.id))
 
 moon.sents.matrix <- cbind(moon.title, moon.sents.type, moon.sents.id, moon.sents, moon.label)
 moon.sents.df <- as.data.frame(moon.sents.matrix, stringsAsFactors = FALSE)
+stock <- c("Title", "Type", "ID", "Unit", "Label")
 colnames(moon.sents.df) <- stock
 con <- dbConnect(RSQLite::SQLite(), ":memory:", dbname="textTable.sqlite")
 
@@ -152,16 +152,17 @@ print(length(moon.words))
 moon.words<- moon.words[which(moon.words!="^’")]
 print(length(moon.words))
 
-moon.title <- rep("theMoonstone", 197366)
-moon.words.type <- rep("word", 197366)
-moon.words.counter <- seq(1, 197366)
+moon.title <- rep("theMoonstone", 197369)
+moon.words.type <- rep("word", 197369)
+moon.words.counter <- seq(1, 197369)
 moon.words.id <- paste0("THE_MOONSTONE", "WORD_", moon.words.counter)
-moon.label<- rep("0", 197366)
+moon.label<- rep("0", 197369)
 moon.words.matrix <- cbind(moon.title, moon.words.type, moon.words.id, moon.words, moon.label)
 
 moon.words.df <- as.data.frame(moon.words.matrix, stringsAsFactors = FALSE)
 
 con <- dbConnect(RSQLite::SQLite(), ":memory:", dbname="textTable.sqlite")
+stock <- c("Title", "Type", "ID", "Unit", "Label")
 colnames(moon.words.df) <- c("Title", "Type", "ID", "Unit", "Label")
 dbWriteTable(con, "textTable", moon.words.df, append=TRUE, row.names=FALSE)
 dbGetQuery(con, "SELECT * FROM textTable WHERE Type= 'word' AND Title='theMoonstone' LIMIT 10")
