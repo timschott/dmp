@@ -96,4 +96,50 @@ hand.sents.df <- as.data.frame(hand.sents, stringsAsFactors = FALSE)
 hand.sents <- hand.sents[hand.sents!=""]
 print(length(hand.sents))
 
+hand.title <- rep("theHandInTheDark", 6216)
+hand.sents.type <- rep("sentence", 6216)
+hand.sents.counter<-seq(1, 6216)
+hand.sents.id <- paste0("THE_HAND_IN_THE_DARK_", "SENT_", hand.sents.counter)
+hand.label <- rep("0", 6216)
+print(length(hand.sents.id))
 
+hand.sents.matrix <- cbind(hand.title, hand.sents.type, hand.sents.id, hand.sents, hand.label)
+hand.sents.df <- as.data.frame(hand.sents.matrix, stringsAsFactors = FALSE)
+stock <- c("Title", "Type", "ID", "Unit", "Label")
+colnames(hand.sents.df) <- stock
+con <- dbConnect(RSQLite::SQLite(), ":memory:", dbname="textTable.sqlite")
+
+dbWriteTable(con, "textTable", hand.sents.df, append=TRUE, row.names=FALSE)
+dbGetQuery(con, "SELECT Unit FROM textTable WHERE Type='sentence' AND Title='theHandInTheDark' LIMIT 2")
+dbDisconnect(con)
+
+# words. 
+hand.temp <- hand
+hand.temp <- paste(hand.temp, collapse=" ")
+hand.temp <-tolower(hand.temp)
+# a better regex that is going to maintain contractions. important! 
+
+hand.temp <- unlist(strsplit(hand.temp, "[^\\w']", perl=TRUE))
+hand.not.blanks <- which(hand.temp != "")
+hand.words <- hand.temp[hand.not.blanks]
+print(length(hand.words))
+
+hand.words<- hand.words[which(hand.words!="'")]
+print(length(hand.words))
+
+hand.title <- rep("theHandInTheDark", 107560)
+hand.words.type <- rep("word", 107560)
+hand.words.counter <- seq(1, 107560)
+hand.words.id <- paste0("THE_HAND_IN_THE_DARK_", "WORD_", hand.words.counter)
+hand.label<- rep("0", 107560)
+hand.words.matrix <- cbind(hand.title, hand.words.type, hand.words.id, hand.words, hand.label)
+
+hand.words.df <- as.data.frame(hand.words.matrix, stringsAsFactors = FALSE)
+
+con <- dbConnect(RSQLite::SQLite(), ":memory:", dbname="textTable.sqlite")
+stock <- c("Title", "Type", "ID", "Unit", "Label")
+colnames(hand.words.df) <- c("Title", "Type", "ID", "Unit", "Label")
+dbWriteTable(con, "textTable", hand.words.df, append=TRUE, row.names=FALSE)
+dbGetQuery(con, "SELECT * FROM textTable WHERE Type= 'word' AND Title='theHandInTheDark' LIMIT 10")
+dbGetQuery(con, "SELECT COUNT(*) FROM textTable WHERE Type='word' and Label='0'")
+dbDisconnect(con)
