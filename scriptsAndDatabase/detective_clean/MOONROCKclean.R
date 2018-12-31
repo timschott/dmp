@@ -135,4 +135,33 @@ dbDisconnect(con)
 
 # words.
 
+moon.temp <- moon
+moon.temp <- paste(moon.temp, collapse=" ")
+moon.temp <-tolower(moon.temp)
+# a better regex that is going to maintain contractions. important! 
 
+moon.temp <- unlist(strsplit(moon.temp, "[^\\w’]", perl=TRUE))
+moon.not.blanks <- which(moon.temp != "")
+moon.words <- moon.temp[moon.not.blanks]
+print(length(moon.words))
+moon.words<- moon.words[which(moon.words!="^’")]
+moon.words<- moon.words[which(moon.words!="’")]
+print(length(moon.words))
+moon.words.df <- as.data.frame(moon.words, stringsAsFactors = FALSE)
+
+moon.title <- rep("theMoonRock", 107804)
+moon.words.type <- rep("word", 107804)
+moon.words.counter <- seq(1, 107804)
+moon.words.id <- paste0("THE_MOON_ROCK_", "WORD_", moon.words.counter)
+moon.label<- rep("0", 107804)
+moon.words.matrix <- cbind(moon.title, moon.words.type, moon.words.id, moon.words, moon.label)
+
+moon.words.df <- as.data.frame(moon.words.matrix, stringsAsFactors = FALSE)
+
+stock <- c("Title", "Type", "ID", "Unit", "Label")
+colnames(moon.words.df) <- c("Title", "Type", "ID", "Unit", "Label")
+con <- dbConnect(RSQLite::SQLite(), ":memory:", dbname="textTable.sqlite")
+dbWriteTable(con, "textTable", moon.words.df, append=TRUE, row.names=FALSE)
+dbGetQuery(con, "SELECT * FROM textTable WHERE Type= 'word' AND Title='theMoonRock' LIMIT 10")
+dbGetQuery(con, "SELECT COUNT(*) FROM textTable WHERE Type='word' and Label='0'")
+dbDisconnect(con)
