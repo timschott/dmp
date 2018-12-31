@@ -60,3 +60,91 @@ dbDisconnect(con)
 
 # sents. 
 
+daff <- daff.paragraphs$paragraphs
+
+first_bite <- daff[1:2300]
+
+daff.sents.first <- paste0(first_bite, collapse = "\n")
+daff.sents.first <- unlist(tokenize_sentences(daff.sents.first))
+
+daff.sents <- c(daff.sents.first)
+daff.sents.df <- as.data.frame(daff.sents, stringsAsFactors = FALSE)
+
+print(length(daff.sents.df$daff.sents))
+
+bad_spots <-c(0)
+for(i in seq(1:length(daff.sents))){
+  #if the sentence ends with a punctuation mark and the next character is a lowercase, combine them,
+  # if the sequence starts with a capital letter... but for eg ha! ha! ha! don't combine
+  # so check if the first sentence starts with a lowercase as well
+  test <- substr(daff.sents[i], nchar(daff.sents[i]), nchar(daff.sents[i]))
+  test2 <- substr(daff.sents[i+1], 1, 1)
+  test3 <- substr(daff.sents[i], 1, 1)
+  if(test2 %in% c(LETTERS, letters)){
+    if(test %in% c('?', '!') && test2==tolower(test2) && test3!=tolower(test3)){
+      #print(i)
+      daff.sents[i] <- paste(daff.sents[i], daff.sents[i+1])
+      bad_spots<-append(bad_spots, i+1)
+    }
+  }
+}
+bad_spots <- bad_spots[-c(1)]
+daff.sents[bad_spots]
+daff.sents <- daff.sents[-c(bad_spots)]
+
+print(length(daff.sents))
+
+daff.sents <- daff.sents[daff.sents!=""]
+print(length(daff.sents))
+daff.sents.df <- as.data.frame(daff.sents, stringsAsFactors = FALSE)
+
+daff.title <- rep("theDaffodilMystery", 4560)
+daff.sents.type <- rep("sentence", 4560)
+daff.sents.counter<-seq(1, 4560)
+daff.sents.id <- paste0("THE_DAFFODIL_MYSTERY_", "SENT_", daff.sents.counter)
+daff.label <- rep("0", 4560)
+print(length(daff.sents.id))
+
+daff.sents.matrix <- cbind(daff.title, daff.sents.type, daff.sents.id, daff.sents, daff.label)
+daff.sents.df <- as.data.frame(daff.sents.matrix, stringsAsFactors = FALSE)
+stock <- c("Title", "Type", "ID", "Unit", "Label")
+colnames(daff.sents.df) <- stock
+con <- dbConnect(RSQLite::SQLite(), ":memory:", dbname="textTable.sqlite")
+
+dbWriteTable(con, "textTable", daff.sents.df, append=TRUE, row.names=FALSE)
+dbGetQuery(con, "SELECT Unit FROM textTable WHERE Type='sentence' AND Title='theDaffodilMystery' LIMIT 2")
+dbDisconnect(con)
+
+# words. 
+daff.temp <- daff
+daff.temp <- paste(daff.temp, collapse=" ")
+daff.temp <-tolower(daff.temp)
+# a better regex that is going to maintain contractions. important! 
+
+daff.temp <- unlist(strsplit(daff.temp, "[^\\w']", perl=TRUE))
+daff.not.blanks <- which(daff.temp != "")
+daff.words <- daff.temp[daff.not.blanks]
+print(length(daff.words))
+
+daff.words<- daff.words[which(daff.words!="'")]
+print(length(daff.words))
+
+# sick! 
+
+daff.title <- rep("theDaffodilMystery", 68379)
+daff.words.type <- rep("word", 68379)
+daff.words.counter <- seq(1, 68379)
+daff.words.id <- paste0("THE_DAFFODIL_MYSTERY_", "WORD_", daff.words.counter)
+daff.label<- rep("0", 68379)
+daff.words.matrix <- cbind(daff.title, daff.words.type, daff.words.id, daff.words, daff.label)
+
+daff.words.df <- as.data.frame(daff.words.matrix, stringsAsFactors = FALSE)
+
+con <- dbConnect(RSQLite::SQLite(), ":memory:", dbname="textTable.sqlite")
+stock <- c("Title", "Type", "ID", "Unit", "Label")
+colnames(daff.words.df) <- c("Title", "Type", "ID", "Unit", "Label")
+dbWriteTable(con, "textTable", daff.words.df, append=TRUE, row.names=FALSE)
+dbGetQuery(con, "SELECT * FROM textTable WHERE Type= 'word' AND Title='theDaffodilMystery' LIMIT 10")
+dbGetQuery(con, "SELECT COUNT(*) FROM textTable WHERE Type='word' and Label='0'")
+dbDisconnect(con)
+# 1.2M detective words. 
