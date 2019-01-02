@@ -144,3 +144,20 @@ print(length(white.words))
 white.words.df <- as.data.frame(white.words, stringsAsFactors = FALSE)
 white.words<- white.words[which(white.words!="''")]
 print(length(white.words))
+
+white.title <- rep("theSpiralStaircase", 70956)
+white.words.type <- rep("word", 70956)
+white.words.counter <- seq(1, 70956)
+white.words.id <- paste0("THE_SPIRAL_STAIRCASE_", "WORD_", white.words.counter)
+white.label<- rep("0", 70956)
+white.words.matrix <- cbind(white.title, white.words.type, white.words.id, white.words, white.label)
+
+white.words.df <- as.data.frame(white.words.matrix, stringsAsFactors = FALSE)
+
+stock <- c("Title", "Type", "ID", "Unit", "Label")
+colnames(white.words.df) <- c("Title", "Type", "ID", "Unit", "Label")
+con <- dbConnect(RSQLite::SQLite(), ":memory:", dbname="textTable.sqlite")
+dbWriteTable(con, "textTable", white.words.df, append=TRUE, row.names=FALSE)
+dbGetQuery(con, "SELECT * FROM textTable WHERE Type= 'word' AND Title='theSpiralStaircase' LIMIT 10")
+dbGetQuery(con, "SELECT COUNT(*) FROM textTable WHERE Type='word' and Label='0'")
+dbDisconnect(con)
