@@ -54,11 +54,11 @@ lock.paragraphs <- lock.paragraphs %>%
   filter(paragraphs!="  ")
 print(length(lock.paragraphs$paragraphs))
 
-lock.title <- rep("aStudyInScarlet", 810)
-lock.para.type <- rep("paragraph",810)
-lock.para.counter<-seq(1, 810)
+lock.title <- rep("aStudyInScarlet", 811)
+lock.para.type <- rep("paragraph",811)
+lock.para.counter<-seq(1, 811)
 lock.para.id <- paste0("A_STUDY_IN_SCARLET_", "PARAGRAPH_", lock.para.counter)
-lock.label <- rep("0", 810)
+lock.label <- rep("0", 811)
 print(length(lock.para.id))
 
 lock.para.matrix <- cbind(lock.title, lock.para.type, lock.para.id, lock.paragraphs, lock.label)

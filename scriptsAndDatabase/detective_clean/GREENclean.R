@@ -6,7 +6,7 @@ library("textclean")
 library("stringr")
 library("tm")
 library(qdap)
-
+rm(list=ls())
 green <- scan("rawTexts/detective/anna-katharine-green-the-leavenworth-case.txt",what="character",sep="\n")
 green.start <- which(green=="I had been a junior partner in the firm of Veeley, Carr & Raymond, attorneys and counsellors at law, for about a year, when one morning, in the temporary absence of both Mr. Veeley and Mr. Carr, there came into our office a young man whose whole appearance was so indicative of haste and agitation that I involuntarily rose at his approach and impetuously inquired:")
 green.stop<- which(green=="And leaving them there, with the light of growing hope and confidence on their faces, we went out again into the night, and so into a dream from which I have never waked, though the shine of her dear eyes have been now the load-star of my life for many happy, happy months.")
@@ -20,8 +20,8 @@ green.chaps<-spots[c(1,3,5,7,9,12,14,16,18,26,28,37,40,42,44,
 green.content<-spots[c(2,4,6,8,11,13,15,17,19,27,30,38,41,43,45,
                      47,49,51,53,55,57,63,65,67,69,72,74,76,
                      79,81,85,88,92,96,98,100,105)]
-green.chaps
-green.content
+# green.chaps
+# green.content
 
 green.remove <- c(39,70,74, 75, 76, 77, 87:92, 331:333, 407:412, 488:492, 518:520,
                   575, 576, 769:774, 847:850, 941:943, 986:994, 1044:1047, 1113:1115,
@@ -30,12 +30,12 @@ green.remove <- c(39,70,74, 75, 76, 77, 87:92, 331:333, 407:412, 488:492, 518:52
                   2256:2260, 2298: 2300, 2363:2365, 2386: 2388, 2444:2445, 2450:2456,
                   2749:2752, 2782: 2786, 3076:3078, 3103:3108, 3145:3153, 3194:3205)
 # hold out. green.bad <- spots[94]
-green.chaps[1]
-green.content[1]
-green[green.chaps[1]:(green.content[1]-1)]
+# green.chaps[1]
+# green.content[1]
+# green[green.chaps[1]:(green.content[1]-1)]
 
-green[green.content]
-green.content
+# green[green.content]
+# green.content
 
 green <- green[-green.remove]
 grep("BOOK IV", green)

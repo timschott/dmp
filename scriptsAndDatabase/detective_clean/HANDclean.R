@@ -22,7 +22,7 @@ hand.paragraphs <- hand.paragraphs %>%
   transmute(paras=  gsub("Mrs\\.", "Mrs", paragraphs))
 
 hand.paragraphs <- hand.paragraphs %>% 
-  transmute(paragraphs=  gsub("\"", "", paras))
+  transmute(paragraphs=  gsub("\"", "'", paras))
 
 hand.paragraphs <- hand.paragraphs %>% 
   transmute(paras=  gsub("CHAPTER.X{0,3}(IX|IV|V?I{0,3}).", "", paragraphs))
@@ -58,6 +58,7 @@ con <- dbConnect(RSQLite::SQLite(), ":memory:", dbname="textTable.sqlite")
 dbWriteTable(con, "textTable", hand.para.df, append=TRUE, row.names=FALSE)
 dbGetQuery(con, "SELECT Unit FROM textTable WHERE Type='paragraph' AND Title='theHandInTheDark' LIMIT 2")
 dbDisconnect(con)
+# dbExecute(con, "DELETE FROM textTable WHERE Type='paragraph' OR Type= 'sentence' AND Title='theHandInTheDark'")
 
 # sents 
 hand <- hand.paragraphs$paragraphs
@@ -83,6 +84,22 @@ for(i in seq(1:length(hand.sents))){
   if(test2 %in% c(LETTERS, letters)){
     if(test %in% c('?', '!') && test2==tolower(test2) && test3!=tolower(test3)){
       #print(i)
+      hand.sents[i] <- paste(hand.sents[i], hand.sents[i+1])
+      bad_spots<-append(bad_spots, i+1)
+    }
+  }
+}
+bad_spots <- bad_spots[-c(1)]
+hand.sents[bad_spots]
+hand.sents <- hand.sents[-c(bad_spots)]
+
+bad_spots <-c(0)
+for(i in seq(1:length(hand.sents))){
+  #if the sentence ends with a punctuation mark and the next character is a lowercase, combine them
+  test <- substr(hand.sents[i], nchar(hand.sents[i])-1, nchar(hand.sents[i]))
+  test2 <- substr(hand.sents[i+1], 1, 1)
+  if(test2 %in% c(LETTERS, letters)){
+    if(test %in% c("?'", "!'") && test2==tolower(test2)){
       hand.sents[i] <- paste(hand.sents[i], hand.sents[i+1])
       bad_spots<-append(bad_spots, i+1)
     }

@@ -10,7 +10,7 @@ install.packages("rJava")
 library(rJava)
 library("openNLPdata")
 
-
+rm(list=ls())
 moon <- scan("rawTexts/detective/wilkie-collins-the-moonstone.txt",what="character",sep="\n")
 # roman numeral chaps
 spots <- grep('[A-Z]{2,}[^a-z]', moon)

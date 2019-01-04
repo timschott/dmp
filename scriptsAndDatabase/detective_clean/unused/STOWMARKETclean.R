@@ -9,14 +9,15 @@ library(qdap)
 
 stow.paragraphs <- read.csv("Python_Scripts/checkCorpus/STOW_paras.csv", stringsAsFactors = FALSE)
 stow.paragraphs$X0[20]
-stow.paragraphs <- stow.paragraphs[-c(1:40,2631:2634),]
+stow.paragraphs <- stow.paragraphs[-c(1:40,2241:2244),]
+
 colnames(stow.paragraphs) <- c("arb", "paragraphs")
 colnames(stow.paragraphs)
 
 spots <- grep('[A-Z]{2,}[^a-z]', stow.paragraphs$paragraphs)
-stow.paragraphs$paragraphs[spots]
-spots <- spots[-c(17:18, 39, 53, 54)]
-stow.paragraphs <- stow.paragraphs[-c(spots),]
+# stow.paragraphs$paragraphs[spots]
+# spots <- spots[-c(17:18, 39, 53, 54)]
+# stow.paragraphs <- stow.paragraphs[-c(spots),]
 colnames(stow.paragraphs) <- c("arb", "paragraphs")
 
 stow.paragraphs$paragraphs[64] <- "\"The Stowmarket Mystery is a strange mixture of the real and the unreal.\nSir Alan Hume-Frazer, fourth baronet, met his death on the hunting-field.\nHis horse blundered at a brook and the rider was impaled on a hidden\nstake, placed in the stream by his own orders to prevent poachers from\nnetting trout. His wife, née Somers, a Bristol family, had pre-deceased\nhim."
@@ -193,4 +194,6 @@ con <- dbConnect(RSQLite::SQLite(), ":memory:", dbname="textTable.sqlite")
 dbWriteTable(con, "textTable", stow.words.df, append=TRUE, row.names=FALSE)
 dbGetQuery(con, "SELECT * FROM textTable WHERE Type= 'word' AND Title='theStowmarketMystery' LIMIT 10")
 dbGetQuery(con, "SELECT COUNT(*) FROM textTable WHERE Type='word' and Label='0'")
+dbExecute(con, "DELETE FROM textTable WHERE Type='word' AND Title='theSpiralStaircase'")
+
 dbDisconnect(con)

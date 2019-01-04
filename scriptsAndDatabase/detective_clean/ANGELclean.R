@@ -8,6 +8,7 @@ library("tm")
 library(qdap)
 
 # let's make one big regex..
+rm(list=ls())
 angel <- scan("rawTexts/detective/edgar-wallace-the-angel-of-terror.txt",what="character",sep="\n")
 angel.start <- which(angel=="The hush of the court, which had been broken when the foreman of the jury returned their verdict, was intensified as the Judge, with a quick glance over his pince-nez at the tall prisoner, marshalled his papers with the precision and method which old men display in tense moments such as these. He gathered them together, white paper and blue and buff and stacked them in a neat heap on a tiny ledge to the left of his desk. Then he took his pen and wrote a few words on a printed paper before him.")
 angel.end <- which(angel=="But Marcus Stepney did not go alone. For the last two miles of the journey he had carried a bag containing the greater part of five million francs that the girl had brought from the boat. Jean did not remember this until she was on her way to the city of the hills, and by that time money did not interest her.")
@@ -20,7 +21,6 @@ angel.paragraphs <- as.data.frame(angel.paragraphs[-c(chaps)], stringsAsFactors=
 colnames(angel.paragraphs) <- c("paras")
 angel.paragraphs <- angel.paragraphs %>% 
   transmute(paragraphs=  gsub("\"", "'", paras))
-
 
 colnames(angel.paragraphs) <- c("paras")
 

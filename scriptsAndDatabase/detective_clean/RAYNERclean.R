@@ -6,8 +6,8 @@ library("textclean")
 library("stringr")
 library("tm")
 library(qdap)
-
-rayn <- scan("rawTexts/detective/Rayn-fletcher-the-rayner-slade-amalgamation.txt",what="character",sep="\n")
+rm(list=ls())
+rayn <- scan("rawTexts/detective/js-fletcher-the-rayner-slade-amalgamation.txt",what="character",sep="\n")
 rayn.start <- which(rayn=="About eleven o'clock on the night of Monday, May 12, 1914, Marshall Allerdyke, a bachelor of forty, a man of great mental and physical activity, well known in Bradford as a highly successful manufacturer of dress goods, alighted at the Central Station in that city from an express which had just arrived from Manchester, where he had spent the day on business. He had scarcely set foot on the platform when he was confronted by his chauffeur, a young man in a neat dark-green livery, who took his master's travelling rug in one hand, while with the other he held out an envelope.")
 rayn.fin <- which(rayn=="***END OF THE PROJECT GUTENBERG EBOOK THE RAYNER-SLADE AMALGAMATION ***")
 rayn <- rayn[rayn.start:rayn.fin-1]
@@ -17,10 +17,16 @@ rayn[spots]
 rayn <- rayn[-c(spots[-c(2,3, 8, 11, 16:20, 46, 49,52,69)])]
 
 rayn.paragraphs <- as.data.frame(rayn, stringsAsFactors=FALSE)
+
+colnames(rayn.paragraphs) <- c("paras")
+rayn.paragraphs <- rayn.paragraphs %>% 
+  transmute(paragraphs=  gsub("\"", "'", paras))
+
 colnames(rayn.paragraphs) <- c("paras")
 
+
 rayn.paragraphs<- rayn.paragraphs %>%
-  transmute(paragraphs=gsub("\"|\\*|(?<=[A-Z])(\\.)(?=[A-Z]|\\.|\\s)", "", perl=TRUE, paras))
+  transmute(paragraphs=gsub("\\*|(?<=[A-Z])(\\.)(?=[A-Z]|\\.|\\s)", "", perl=TRUE, paras))
 
 rayn.paragraphs <- rayn.paragraphs %>% 
   transmute(paras=  gsub("Mrs\\.", "Mrs", paragraphs) )
@@ -64,6 +70,7 @@ colnames(rayn.para.df) <- stock
 con <- dbConnect(RSQLite::SQLite(), ":memory:", dbname="textTable.sqlite")
 dbWriteTable(con, "textTable", rayn.para.df, append=TRUE, row.names=FALSE)
 dbGetQuery(con, "SELECT Unit FROM textTable WHERE Type='paragraph' AND Title='theRaynerSladeAmalgamation' LIMIT 2")
+# dbExecute(con, "DELETE FROM textTable WHERE Type='paragraph' OR Type= 'sentence' AND Title='theScarhavenKeep'")
 dbDisconnect(con)
 
 # sents. 
@@ -102,13 +109,28 @@ rayn.sents <- rayn.sents[-c(bad_spots)]
 
 print(length(rayn.sents))
 rayn.sents <- rayn.sents[rayn.sents!=""]
-rayn.sents.df <- as.data.frame(rayn.sents, stringsAsFactors = FALSE)
 
-rayn.title <- rep("theParadiseMystery", 5075)
-rayn.sents.type <- rep("sentence", 5075)
-rayn.sents.counter<-seq(1, 5075)
-rayn.sents.id <- paste0("THE_PARADISE_MYSTERY_", "SENT_", rayn.sents.counter)
-rayn.label <- rep("0", 5075)
+bad_spots <-c(0)
+for(i in seq(1:length(rayn.sents))){
+  #if the sentence ends with a punctuation mark and the next character is a lowercase, combine them
+  test <- substr(rayn.sents[i], nchar(rayn.sents[i])-1, nchar(rayn.sents[i]))
+  test2 <- substr(rayn.sents[i+1], 1, 1)
+  if(test2 %in% c(LETTERS, letters)){
+    if(test %in% c("?'", "!'") && test2==tolower(test2)){
+      rayn.sents[i] <- paste(rayn.sents[i], rayn.sents[i+1])
+      bad_spots<-append(bad_spots, i+1)
+    }
+  }
+}
+bad_spots <- bad_spots[-c(1)]
+rayn.sents[bad_spots]
+rayn.sents <- rayn.sents[-c(bad_spots)]
+print(length(rayn.sents))
+rayn.title <- rep("theRaynerSladeAmalgamation", 5081)
+rayn.sents.type <- rep("sentence", 5081)
+rayn.sents.counter<-seq(1, 5081)
+rayn.sents.id <- paste0("THE_RAYNER_SLADE_AMALGAMATION_", "SENT_", rayn.sents.counter)
+rayn.label <- rep("0", 5081)
 print(length(rayn.sents.id))
 
 rayn.sents.matrix <- cbind(rayn.title, rayn.sents.type, rayn.sents.id, rayn.sents, rayn.label)
@@ -118,7 +140,7 @@ colnames(rayn.sents.df) <- stock
 con <- dbConnect(RSQLite::SQLite(), ":memory:", dbname="textTable.sqlite")
 
 dbWriteTable(con, "textTable", rayn.sents.df, append=TRUE, row.names=FALSE)
-dbGetQuery(con, "SELECT Unit FROM textTable WHERE Type='sentence' AND Title='theParadiseMystery' LIMIT 2")
+dbGetQuery(con, "SELECT Unit FROM textTable WHERE Type='sentence' AND Title='theRaynerSladeAmalgamation' LIMIT 2")
 dbDisconnect(con)
 
 # words . 

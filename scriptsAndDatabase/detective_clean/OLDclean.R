@@ -6,7 +6,7 @@ library("textclean")
 library("stringr")
 library("tm")
 library(qdap)
-
+rm(list=ls())
 old <- scan("rawTexts/detective/emmuska-orczy-the-old-man-in-the-corner.txt",what="character",sep="\n")
 old.start <- which(old =="The man in the corner pushed aside his glass, and leant across the table.")
 old.fin<-which(old=="\"He has disappeared off the face of the earth. The police are searching for him, and perhaps some day they will find him—then society will be rid of one of the most ingenious men of the age.\"")
@@ -19,9 +19,13 @@ old <- old[-spots]
 
 old.paragraphs <- as.data.frame(old, stringsAsFactors=FALSE)
 colnames(old.paragraphs) <- c("paras")
+old.paragraphs <- old.paragraphs %>% 
+  transmute(paragraphs=  gsub("\"", "'", paras))
+
+colnames(old.paragraphs) <- c("paras")
 
 old.paragraphs<- old.paragraphs %>%
-  transmute(paragraphs=gsub("\"|\\*|(?<=[A-Z])(\\.)(?=[A-Z]|\\.|\\s)", "", perl=TRUE, paras))
+  transmute(paragraphs=gsub("\\*|(?<=[A-Z])(\\.)(?=[A-Z]|\\.|\\s)", "", perl=TRUE, paras))
 
 old.paragraphs <- old.paragraphs %>% 
   transmute(paras=  gsub("Mrs\\.", "Mrs", paragraphs) )
@@ -73,6 +77,7 @@ con <- dbConnect(RSQLite::SQLite(), ":memory:", dbname="textTable.sqlite")
 dbWriteTable(con, "textTable", old.para.df, append=TRUE, row.names=FALSE)
 dbGetQuery(con, "SELECT Unit FROM textTable WHERE Type='paragraph' AND Title='theOldManInTheCorner' LIMIT 2")
 dbDisconnect(con)
+# dbExecute(con, "DELETE FROM textTable WHERE Type='paragraph' OR Type= 'sentence' AND Title='theOldManInTheCorner'")
 
 # sents.
 old <- old.paragraphs$paras
@@ -126,11 +131,11 @@ old.sents <- old.sents[-c(bad_spots)]
 old.sents <- old.sents[old.sents!=""]
 print(length(old.sents))
 
-old.title <- rep("theOldManInTheCorner", 2934)
-old.sents.type <- rep("sentence", 2934)
-old.sents.counter<-seq(1, 2934)
+old.title <- rep("theOldManInTheCorner", 2941)
+old.sents.type <- rep("sentence", 2941)
+old.sents.counter<-seq(1, 2941)
 old.sents.id <- paste0("THE_OLD_MAN_IN_THE_CORNER_", "SENT_", old.sents.counter)
-old.label <- rep("0", 2934)
+old.label <- rep("0", 2941)
 print(length(old.sents.id))
 
 old.sents.matrix <- cbind(old.title, old.sents.type, old.sents.id, old.sents, old.label)

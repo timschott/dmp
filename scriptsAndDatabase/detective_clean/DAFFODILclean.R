@@ -19,6 +19,11 @@ daff <- daff[-c(spots[-c(47)])]
 
 daff.paragraphs <- as.data.frame(daff, stringsAsFactors=FALSE)
 colnames(daff.paragraphs) <- c("paras")
+daff.paragraphs <- daff.paragraphs %>% 
+  transmute(paragraphs=  gsub("\"", "'", paras))
+
+colnames(daff.paragraphs) <- c("paras")
+
 
 daff.paragraphs <- daff.paragraphs %>% 
   transmute(paragraphs=  gsub("Mr\\.", "Mr", paras))
@@ -56,6 +61,9 @@ colnames(daff.para.df) <- stock
 con <- dbConnect(RSQLite::SQLite(), ":memory:", dbname="textTable.sqlite")
 dbWriteTable(con, "textTable", daff.para.df, append=TRUE, row.names=FALSE)
 dbGetQuery(con, "SELECT Unit FROM textTable WHERE Type='paragraph' AND Title='theDaffodilMystery' LIMIT 2")
+# dbExecute(con, "DELETE FROM textTable WHERE Type='paragraph' AND Title='theDaffodilMystery'")
+# dbExecute(con, "DELETE FROM textTable WHERE Type='sentence' AND Title='theDaffodilMystery'")
+
 dbDisconnect(con)
 
 # sents. 
@@ -71,18 +79,13 @@ daff.sents <- c(daff.sents.first)
 daff.sents.df <- as.data.frame(daff.sents, stringsAsFactors = FALSE)
 
 print(length(daff.sents.df$daff.sents))
-
 bad_spots <-c(0)
 for(i in seq(1:length(daff.sents))){
-  #if the sentence ends with a punctuation mark and the next character is a lowercase, combine them,
-  # if the sequence starts with a capital letter... but for eg ha! ha! ha! don't combine
-  # so check if the first sentence starts with a lowercase as well
-  test <- substr(daff.sents[i], nchar(daff.sents[i]), nchar(daff.sents[i]))
+  #if the sentence ends with a punctuation mark and the next character is a lowercase, combine them
+  test <- substr(daff.sents[i], nchar(daff.sents[i])-1, nchar(daff.sents[i]))
   test2 <- substr(daff.sents[i+1], 1, 1)
-  test3 <- substr(daff.sents[i], 1, 1)
   if(test2 %in% c(LETTERS, letters)){
-    if(test %in% c('?', '!') && test2==tolower(test2) && test3!=tolower(test3)){
-      #print(i)
+    if(test %in% c("?'", "!'") && test2==tolower(test2)){
       daff.sents[i] <- paste(daff.sents[i], daff.sents[i+1])
       bad_spots<-append(bad_spots, i+1)
     }
@@ -92,17 +95,15 @@ bad_spots <- bad_spots[-c(1)]
 daff.sents[bad_spots]
 daff.sents <- daff.sents[-c(bad_spots)]
 
-print(length(daff.sents))
-
 daff.sents <- daff.sents[daff.sents!=""]
 print(length(daff.sents))
 daff.sents.df <- as.data.frame(daff.sents, stringsAsFactors = FALSE)
 
-daff.title <- rep("theDaffodilMystery", 4560)
-daff.sents.type <- rep("sentence", 4560)
-daff.sents.counter<-seq(1, 4560)
+daff.title <- rep("theDaffodilMystery", 4561)
+daff.sents.type <- rep("sentence", 4561)
+daff.sents.counter<-seq(1, 4561)
 daff.sents.id <- paste0("THE_DAFFODIL_MYSTERY_", "SENT_", daff.sents.counter)
-daff.label <- rep("0", 4560)
+daff.label <- rep("0", 4561)
 print(length(daff.sents.id))
 
 daff.sents.matrix <- cbind(daff.title, daff.sents.type, daff.sents.id, daff.sents, daff.label)
@@ -145,6 +146,6 @@ stock <- c("Title", "Type", "ID", "Unit", "Label")
 colnames(daff.words.df) <- c("Title", "Type", "ID", "Unit", "Label")
 dbWriteTable(con, "textTable", daff.words.df, append=TRUE, row.names=FALSE)
 dbGetQuery(con, "SELECT * FROM textTable WHERE Type= 'word' AND Title='theDaffodilMystery' LIMIT 10")
-dbGetQuery(con, "SELECT COUNT(*) FROM textTable WHERE Type='word' and Label='0'")
+dbGetQuery(con, "SELECT DISTINCT title FROM textTable WHERE Label='0'")
 dbDisconnect(con)
 # 1.2M detective words. 

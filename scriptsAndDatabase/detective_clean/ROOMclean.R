@@ -17,8 +17,13 @@ colnames(room.paragraphs) <- c("arb", "paragraphs")
 room.paragraphs <- room.paragraphs %>% 
   transmute(paras=  gsub("\n", " ", paragraphs) )
 
+room.paragraphs <- room.paragraphs %>% 
+  transmute(paragraphs=  gsub("\"", "'", paras))
+
+colnames(room.paragraphs) <- c("paras")
+
 room.paragraphs<- room.paragraphs %>%
-  transmute(paragraphs=gsub("\"|\\*|(?<=[A-Z])(\\.)(?=[A-Z]|\\.|\\s)", "", perl=TRUE, paras))
+  transmute(paragraphs=gsub("\\*|(?<=[A-Z])(\\.)(?=[A-Z]|\\.|\\s)", "", perl=TRUE, paras))
 
 room.paragraphs <- room.paragraphs %>% 
   transmute(paras=  gsub("Mrs\\.", "Mrs", paragraphs) )
@@ -70,6 +75,7 @@ colnames(room.para.df) <- stock
 con <- dbConnect(RSQLite::SQLite(), ":memory:", dbname="textTable.sqlite")
 dbWriteTable(con, "textTable", room.para.df, append=TRUE, row.names=FALSE)
 dbGetQuery(con, "SELECT Unit FROM textTable WHERE Type='paragraph' AND Title='theMysteryOfRoom75' LIMIT 2")
+# dbExecute(con, "DELETE FROM textTable WHERE Type='sentence' AND Title='theMysteryOfRoom75'")
 dbDisconnect(con)
 
 room <- room.paragraphs$paragraphs
@@ -110,11 +116,27 @@ print(length(room.sents))
 
 room.sents[1999:2005]
 
-room.title <- rep("theMysteryOfRoom75", 2819)
-room.sents.type <- rep("sentence", 2819)
-room.sents.counter<-seq(1, 2819)
+bad_spots <-c(0)
+for(i in seq(1:length(room.sents))){
+  #if the sentence ends with a punctuation mark and the next character is a lowercase, combine them
+  test <- substr(room.sents[i], nchar(room.sents[i])-1, nchar(room.sents[i]))
+  test2 <- substr(room.sents[i+1], 1, 1)
+  if(test2 %in% c(LETTERS, letters)){
+    if(test %in% c("?'", "!'") && test2==tolower(test2)){
+      room.sents[i] <- paste(room.sents[i], room.sents[i+1])
+      bad_spots<-append(bad_spots, i+1)
+    }
+  }
+}
+bad_spots <- bad_spots[-c(1)]
+room.sents[bad_spots]
+room.sents <- room.sents[-c(bad_spots)]
+print(length(room.sents))
+room.title <- rep("theMysteryOfRoom75", 2818)
+room.sents.type <- rep("sentence", 2818)
+room.sents.counter<-seq(1, 2818)
 room.sents.id <- paste0("THE_MYSTERY_OF_ROOM_75_", "SENT_", room.sents.counter)
-room.label <- rep("0", 2819)
+room.label <- rep("0", 2818)
 print(length(room.sents.id))
 
 room.sents.matrix <- cbind(room.title, room.sents.type, room.sents.id, room.sents, room.label)
@@ -122,7 +144,6 @@ room.sents.df <- as.data.frame(room.sents.matrix, stringsAsFactors = FALSE)
 stock <- c("Title", "Type", "ID", "Unit", "Label")
 colnames(room.sents.df) <- stock
 con <- dbConnect(RSQLite::SQLite(), ":memory:", dbname="textTable.sqlite")
-
 dbWriteTable(con, "textTable", room.sents.df, append=TRUE, row.names=FALSE)
 dbGetQuery(con, "SELECT Unit FROM textTable WHERE Type='sentence' AND Title='theMysteryOfRoom75' LIMIT 2")
 dbDisconnect(con)

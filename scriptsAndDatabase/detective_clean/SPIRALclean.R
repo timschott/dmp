@@ -21,6 +21,10 @@ xe9
 white.paragraphs <- white.paragraphs %>% 
   transmute(paras=  gsub("\n", " ", paragraphs) )
 
+white.paragraphs <- white.paragraphs %>% 
+  transmute(paragraphs=  gsub("\"", "'", paras))
+
+colnames(white.paragraphs) <- c("paras")
 white.paragraphs<- white.paragraphs %>%
   transmute(paragraphs=gsub("\"|\\*|(?<=[A-Z])(\\.)(?=[A-Z]|\\.|\\s)", "", perl=TRUE, paras))
 
@@ -72,6 +76,8 @@ colnames(white.para.df) <- stock
 con <- dbConnect(RSQLite::SQLite(), ":memory:", dbname="textTable.sqlite")
 dbWriteTable(con, "textTable", white.para.df, append=TRUE, row.names=FALSE)
 dbGetQuery(con, "SELECT Unit FROM textTable WHERE Type='paragraph' AND Title='theSpiralStaircase' LIMIT 2")
+# dbExecute(con, "DELETE FROM textTable WHERE Type='sentence' AND Title='theSpiralStaircase'")
+
 dbDisconnect(con)
 
 # sents.
@@ -110,11 +116,27 @@ white.sents <- white.sents[-c(bad_spots)]
 white.sents <- white.sents[white.sents!=""]
 print(length(white.sents))
 
-white.title <- rep("theSpiralStaircase", 6166)
-white.sents.type <- rep("sentence", 6166)
-white.sents.counter<-seq(1, 6166)
+bad_spots <-c(0)
+for(i in seq(1:length(white.sents))){
+  #if the sentence ends with a punctuation mark and the next character is a lowercase, combine them
+  test <- substr(white.sents[i], nchar(white.sents[i])-1, nchar(white.sents[i]))
+  test2 <- substr(white.sents[i+1], 1, 1)
+  if(test2 %in% c(LETTERS, letters)){
+    if(test %in% c("?'", "!'") && test2==tolower(test2)){
+      white.sents[i] <- paste(white.sents[i], white.sents[i+1])
+      bad_spots<-append(bad_spots, i+1)
+    }
+  }
+}
+bad_spots <- bad_spots[-c(1)]
+white.sents[bad_spots]
+white.sents <- white.sents[-c(bad_spots)]
+print(length(white.sents))
+white.title <- rep("theSpiralStaircase", 6163)
+white.sents.type <- rep("sentence", 6163)
+white.sents.counter<-seq(1, 6163)
 white.sents.id <- paste0("THE_SPIRAL_STAIRCASE_", "SENT_", white.sents.counter)
-white.label <- rep("0", 6166)
+white.label <- rep("0", 6163)
 print(length(white.sents.id))
 
 white.sents.matrix <- cbind(white.title, white.sents.type, white.sents.id, white.sents, white.label)
@@ -159,5 +181,6 @@ colnames(white.words.df) <- c("Title", "Type", "ID", "Unit", "Label")
 con <- dbConnect(RSQLite::SQLite(), ":memory:", dbname="textTable.sqlite")
 dbWriteTable(con, "textTable", white.words.df, append=TRUE, row.names=FALSE)
 dbGetQuery(con, "SELECT * FROM textTable WHERE Type= 'word' AND Title='theSpiralStaircase' LIMIT 10")
-dbGetQuery(con, "SELECT COUNT(*) FROM textTable WHERE Type='word' and Label='0'")
+dbGetQuery(con, "SELECT COUNT(*) FROM textTable WHERE Type='word' and Label='1'")
 dbDisconnect(con)
+dbGetQuery(con, "SELECT DISTINCT(Title) FROM textTable WHERE Label='0'")

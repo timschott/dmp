@@ -15,12 +15,18 @@ silence <- silence[silence.start:silence.fin-1]
 spots <- grep('[A-Z]{2,}[^a-z]', silence)
 silence[spots]
 silence <- silence[-spots]
-
 silence.paragraphs <- as.data.frame(silence, stringsAsFactors=FALSE)
+
+colnames(silence.paragraphs) <- c("paras")
+
+silence.paragraphs <- silence.paragraphs %>% 
+  transmute(paragraphs=  gsub("\"", "'", paras))
+
+
 colnames(silence.paragraphs) <- c("paras")
 
 silence.paragraphs<- silence.paragraphs %>%
-  transmute(paragraphs=gsub("\"|\\*|(?<=[A-Z])(\\.)(?=[A-Z]|\\.|\\s)", "", perl=TRUE, paras))
+  transmute(paragraphs=gsub("\\*|(?<=[A-Z])(\\.)(?=[A-Z]|\\.|\\s)", "", perl=TRUE, paras))
 
 silence.paragraphs <- silence.paragraphs %>% 
   transmute(paras=  gsub("Mrs\\.", "Mrs", paragraphs) )
@@ -63,8 +69,9 @@ stock <- c("Title", "Type", "ID", "Unit", "Label")
 colnames(silence.para.df) <- stock
 con <- dbConnect(RSQLite::SQLite(), ":memory:", dbname="textTable.sqlite")
 dbWriteTable(con, "textTable", silence.para.df, append=TRUE, row.names=FALSE)
-dbGetQuery(con, "SELECT Unit FROM textTable WHERE Type='paragraph' AND Title='theBrandOfSilence' LIMIT 2")
+dbGetQuery(con, "SELECT Unit FROM textTable WHERE Type='sentence' AND Title='theBrandOfSilence' LIMIT 2")
 dbDisconnect(con)
+# dbExecute(con, "DELETE FROM textTable WHERE Type='sentence' AND Title='theBrandOfSilence'")
 
 # sents.
 
@@ -102,14 +109,30 @@ bad_spots <- bad_spots[-c(1)]
 silence.sents[bad_spots]
 silence.sents <- silence.sents[-c(bad_spots)]
 
+bad_spots <-c(0)
+for(i in seq(1:length(silence.sents))){
+  #if the sentence ends with a punctuation mark and the next character is a lowercase, combine them
+  test <- substr(silence.sents[i], nchar(silence.sents[i])-1, nchar(silence.sents[i]))
+  test2 <- substr(silence.sents[i+1], 1, 1)
+  if(test2 %in% c(LETTERS, letters)){
+    if(test %in% c("?'", "!'") && test2==tolower(test2)){
+      silence.sents[i] <- paste(silence.sents[i], silence.sents[i+1])
+      bad_spots<-append(bad_spots, i+1)
+    }
+  }
+}
+bad_spots <- bad_spots[-c(1)]
+silence.sents[bad_spots]
+silence.sents <- silence.sents[-c(bad_spots)]
+
 silence.sents <- silence.sents[silence.sents!=""]
 print(length(silence.sents))
 
-silence.title <- rep("theBrandOfSilence", 4746)
-silence.sents.type <- rep("sentence", 4746)
-silence.sents.counter<-seq(1, 4746)
+silence.title <- rep("theBrandOfSilence", 4745)
+silence.sents.type <- rep("sentence", 4745)
+silence.sents.counter<-seq(1, 4745)
 silence.sents.id <- paste0("THE_BRAND_OF_SILENCE_", "SENT_", silence.sents.counter)
-silence.label <- rep("0", 4746)
+silence.label <- rep("0", 4745)
 print(length(silence.sents.id))
 
 silence.sents.matrix <- cbind(silence.title, silence.sents.type, silence.sents.id, silence.sents, silence.label)

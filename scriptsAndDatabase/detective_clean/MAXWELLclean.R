@@ -18,9 +18,14 @@ colnames(max.paragraphs) <- c("arb", "paragraphs")
 
 max.paragraphs <- max.paragraphs %>% 
   transmute(paras=  gsub("\n", " ", paragraphs) )
+max.paragraphs <- max.paragraphs %>% 
+  transmute(paragraphs=  gsub("\"", "'", paras))
+
+colnames(max.paragraphs) <- c("paras")
+
 
 max.paragraphs<- max.paragraphs %>%
-  transmute(paragraphs=gsub("\"|\\*|(?<=[A-Z])(\\.)(?=[A-Z]|\\.|\\s)", "", perl=TRUE, paras))
+  transmute(paragraphs=gsub("\\*|(?<=[A-Z])(\\.)(?=[A-Z]|\\.|\\s)", "", perl=TRUE, paras))
 
 max.paragraphs <- max.paragraphs %>% 
   transmute(paras=  gsub("Mrs\\.", "Mrs", paragraphs) )
@@ -70,6 +75,7 @@ colnames(max.para.df) <- stock
 con <- dbConnect(RSQLite::SQLite(), ":memory:", dbname="textTable.sqlite")
 dbWriteTable(con, "textTable", max.para.df, append=TRUE, row.names=FALSE)
 dbGetQuery(con, "SELECT Unit FROM textTable WHERE Type='paragraph' AND Title='theMaxwellMystery' LIMIT 2")
+# dbExecute(con, "DELETE FROM textTable WHERE Type='sentence' AND Title='theMaxwellMystery'")
 dbDisconnect(con)
 
 # sents. 
@@ -107,11 +113,28 @@ max.sents <- max.sents[-c(bad_spots)]
 max.sents <- max.sents[max.sents!=""]
 print(length(max.sents))
 
-max.title <- rep("theMaxwellMystery", 3497)
-max.sents.type <- rep("sentence", 3497)
-max.sents.counter<-seq(1, 3497)
+bad_spots <-c(0)
+for(i in seq(1:length(max.sents))){
+  #if the sentence ends with a punctuation mark and the next character is a lowercase, combine them
+  test <- substr(max.sents[i], nchar(max.sents[i])-1, nchar(max.sents[i]))
+  test2 <- substr(max.sents[i+1], 1, 1)
+  if(test2 %in% c(LETTERS, letters)){
+    if(test %in% c("?'", "!'") && test2==tolower(test2)){
+      max.sents[i] <- paste(max.sents[i], max.sents[i+1])
+      bad_spots<-append(bad_spots, i+1)
+    }
+  }
+}
+bad_spots <- bad_spots[-c(1)]
+max.sents[bad_spots]
+max.sents <- max.sents[-c(bad_spots)]
+print(length(max.sents))
+
+max.title <- rep("theMaxwellMystery", 3508)
+max.sents.type <- rep("sentence", 3508)
+max.sents.counter<-seq(1, 3508)
 max.sents.id <- paste0("THE_MAXWELL_MYSTERY_", "SENT_", max.sents.counter)
-max.label <- rep("0", 3497)
+max.label <- rep("0", 3508)
 print(length(max.sents.id))
 
 max.sents.matrix <- cbind(max.title, max.sents.type, max.sents.id, max.sents, max.label)
@@ -119,7 +142,6 @@ max.sents.df <- as.data.frame(max.sents.matrix, stringsAsFactors = FALSE)
 stock <- c("Title", "Type", "ID", "Unit", "Label")
 colnames(max.sents.df) <- stock
 con <- dbConnect(RSQLite::SQLite(), ":memory:", dbname="textTable.sqlite")
-
 dbWriteTable(con, "textTable", max.sents.df, append=TRUE, row.names=FALSE)
 dbGetQuery(con, "SELECT Unit FROM textTable WHERE Type='sentence' AND Title='theMaxwellMystery' LIMIT 2")
 dbDisconnect(con)

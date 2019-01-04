@@ -14,7 +14,7 @@ keep <- keep[keep.start:keep.fin]
 print(length(keep))
 spots <- grep('[A-Z]{2,}[^a-z]', keep)
 keep[spots]
-which(spots %in% test)
+# which(spots %in% test)
 keep <- keep[-c(spots[-c(13, 18, 35, 38, 39, 40, 41, 66, 67)])]
 print(length(keep))
 
@@ -24,7 +24,6 @@ keep.paragraphs <- keep.paragraphs %>%
   transmute(paragraphs=  gsub("\"", "'", paras))
 
 colnames(keep.paragraphs) <- c("paras")
-
 
 keep.paragraphs<- keep.paragraphs %>%
   transmute(paragraphs=gsub("\\*|(?<=[A-Z])(\\.)(?=[A-Z]|\\.|\\s)", "", perl=TRUE, paras))
@@ -71,7 +70,7 @@ stock <- c("Title", "Type", "ID", "Unit", "Label")
 colnames(keep.para.df) <- stock
 con <- dbConnect(RSQLite::SQLite(), ":memory:", dbname="textTable.sqlite")
 dbWriteTable(con, "textTable", keep.para.df, append=TRUE, row.names=FALSE)
-dbGetQuery(con, "SELECT Unit FROM textTable WHERE Type='paragraph' AND Title='theScarhavenKeep' LIMIT 2")
+dbGetQuery(con, "SELECT Unit FROM textTable WHERE Type='sentence' AND Title='theScarhavenKeep' LIMIT 2")
 # dbExecute(con, "DELETE FROM textTable WHERE Type='paragraph' OR Type= 'sentence' AND Title='theScarhavenKeep'")
 
 dbDisconnect(con)

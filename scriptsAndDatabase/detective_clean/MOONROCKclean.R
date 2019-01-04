@@ -6,11 +6,11 @@ library("textclean")
 library("stringr")
 library("tm")
 library(qdap)
-
+rm(list=ls())
 moon <- scan("rawTexts/detective/arthur-j-rees-the-moon-rock.txt",what="character",sep="\n")
-moon.start <- which(moon =="The voice of the clergyman intoned the last sad hope of humanity, the final prayer was said, and the mourners turned away, leaving Mrs. Turmoon to take her rest in a bleak Cornish churchyard among strangers, far from the place of her birth and kindred.")
+# moon.start <- which(moon =="The voice of the clergyman intoned the last sad hope of humanity, the final prayer was said, and the mourners turned away, leaving Mrs. Turmoon to take her rest in a bleak Cornish churchyard among strangers, far from the place of her birth and kindred.")
 moon.fin <- which(moon=="His eyes, dwelling on the door of the inner room, revealed the direction of his thought.")
-moon <- moon[moon.start:moon.fin]
+moon <- moon[42:moon.fin]
 
 moon[grep("Chapter.X{0,3}(IX|IV|V?I{0,3}).", moon)]
 
@@ -59,6 +59,7 @@ colnames(moon.para.df) <- stock
 con <- dbConnect(RSQLite::SQLite(), ":memory:", dbname="textTable.sqlite")
 dbWriteTable(con, "textTable", moon.para.df, append=TRUE, row.names=FALSE)
 dbGetQuery(con, "SELECT Unit FROM textTable WHERE Type='paragraph' AND Title='theMoonRock' LIMIT 2")
+# dbExecute(con, "DELETE FROM textTable WHERE Type ='paragraph' and Title='theMoonRock'")
 dbDisconnect(con)
 
 # sents.

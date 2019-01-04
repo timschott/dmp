@@ -15,9 +15,13 @@ ash <- ash[ash.start:ash.fin-1]
 ash[grep("CHAPTER.X{0,3}(IX|IV|V?I{0,3}).", ash)]
 ash.paragraphs <- as.data.frame(ash, stringsAsFactors=FALSE)
 colnames(ash.paragraphs) <- c("paras")
+ash <- ash.paragraphs %>% 
+  transmute(paragraphs=  gsub("\"", "'", paras))
+
+colnames(ash.paragraphs) <- c("paras")
 
 ash.paragraphs<- ash.paragraphs %>%
-  transmute(paragraphs=gsub("\"|\\*|(?<=[A-Z])(\\.)(?=[A-Z]|\\.|\\s)", "", perl=TRUE, paras))
+  transmute(paragraphs=gsub("\\*|(?<=[A-Z])(\\.)(?=[A-Z]|\\.|\\s)", "", perl=TRUE, paras))
 
 ash.paragraphs <- ash.paragraphs %>% 
   transmute(paras=  gsub("Mrs\\.", "Mrs", paragraphs) )
@@ -63,8 +67,11 @@ stock <- c("Title", "Type", "ID", "Unit", "Label")
 colnames(ash.para.df) <- stock
 con <- dbConnect(RSQLite::SQLite(), ":memory:", dbname="textTable.sqlite")
 dbWriteTable(con, "textTable", ash.para.df, append=TRUE, row.names=FALSE)
-dbGetQuery(con, "SELECT Unit FROM textTable WHERE Type='paragraph' AND Title='theAshielMystery' LIMIT 2")
+#dbExecute(con, "DELETE FROM textTable WHERE Type='paragraph' OR Type= 'sentence' AND Title='theAshielMystery'")
+dbGetQuery(con, "SELECT Unit FROM textTable WHERE Type='sentence' AND Title='theAshielMystery' LIMIT 2")
 dbDisconnect(con)
+# dbGetQuery(con, "SELECT * FROM textTable WHERE Type='paragraph' AND Title='theAshielMystery' LIMIT 2")
+# dbGetQuery(con, "SELECT * FROM textTable WHERE Type= 'sentence' AND Title='theAshielMystery' LIMIT 2")
 
 # sents
 ash <- ash.paragraphs$paras
@@ -101,11 +108,28 @@ ash.sents <- ash.sents[-c(bad_spots)]
 ash.sents <- ash.sents[ash.sents!=""]
 print(length(ash.sents))
 
-ash.title <- rep("theAshielMystery", 4511)
-ash.sents.type <- rep("sentence", 4511)
-ash.sents.counter<-seq(1, 4511)
+bad_spots <-c(0)
+for(i in seq(1:length(ash.sents))){
+  #if the sentence ends with a punctuation mark and the next character is a lowercase, combine them
+  test <- substr(ash.sents[i], nchar(ash.sents[i])-1, nchar(ash.sents[i]))
+  test2 <- substr(ash.sents[i+1], 1, 1)
+  if(test2 %in% c(LETTERS, letters)){
+    if(test %in% c("?'", "!'") && test2==tolower(test2)){
+      ash.sents[i] <- paste(ash.sents[i], ash.sents[i+1])
+      bad_spots<-append(bad_spots, i+1)
+    }
+  }
+}
+bad_spots <- bad_spots[-c(1)]
+ash.sents[bad_spots]
+ash.sents <- ash.sents[-c(bad_spots)]
+print(length(ash.sents))
+
+ash.title <- rep("theAshielMystery", 4506)
+ash.sents.type <- rep("sentence", 4506)
+ash.sents.counter<-seq(1, 4506)
 ash.sents.id <- paste0("THE_ASHIEL_MYSTERY_", "SENT_", ash.sents.counter)
-ash.label <- rep("0", 4511)
+ash.label <- rep("0", 4506)
 print(length(ash.sents.id))
 
 ash.sents.matrix <- cbind(ash.title, ash.sents.type, ash.sents.id, ash.sents, ash.label)
