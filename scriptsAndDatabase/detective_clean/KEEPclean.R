@@ -20,9 +20,14 @@ print(length(keep))
 
 keep.paragraphs <- as.data.frame(keep, stringsAsFactors=FALSE)
 colnames(keep.paragraphs) <- c("paras")
+keep.paragraphs <- keep.paragraphs %>% 
+  transmute(paragraphs=  gsub("\"", "'", paras))
+
+colnames(keep.paragraphs) <- c("paras")
+
 
 keep.paragraphs<- keep.paragraphs %>%
-  transmute(paragraphs=gsub("\"|\\*|(?<=[A-Z])(\\.)(?=[A-Z]|\\.|\\s)", "", perl=TRUE, paras))
+  transmute(paragraphs=gsub("\\*|(?<=[A-Z])(\\.)(?=[A-Z]|\\.|\\s)", "", perl=TRUE, paras))
 
 keep.paragraphs <- keep.paragraphs %>% 
   transmute(paras=  gsub("Mrs\\.", "Mrs", paragraphs) )
@@ -67,6 +72,8 @@ colnames(keep.para.df) <- stock
 con <- dbConnect(RSQLite::SQLite(), ":memory:", dbname="textTable.sqlite")
 dbWriteTable(con, "textTable", keep.para.df, append=TRUE, row.names=FALSE)
 dbGetQuery(con, "SELECT Unit FROM textTable WHERE Type='paragraph' AND Title='theScarhavenKeep' LIMIT 2")
+# dbExecute(con, "DELETE FROM textTable WHERE Type='paragraph' OR Type= 'sentence' AND Title='theScarhavenKeep'")
+
 dbDisconnect(con)
 
 # sents. 
@@ -104,16 +111,30 @@ keep.sents <- keep.sents[-c(bad_spots)]
 
 print(length(keep.sents))
 
+bad_spots <-c(0)
+for(i in seq(1:length(keep.sents))){
+  #if the sentence ends with a punctuation mark and the next character is a lowercase, combine them
+  test <- substr(keep.sents[i], nchar(keep.sents[i])-1, nchar(keep.sents[i]))
+  test2 <- substr(keep.sents[i+1], 1, 1)
+  if(test2 %in% c(LETTERS, letters)){
+    if(test %in% c("?'", "!'") && test2==tolower(test2)){
+      keep.sents[i] <- paste(keep.sents[i], keep.sents[i+1])
+      bad_spots<-append(bad_spots, i+1)
+    }
+  }
+}
+bad_spots <- bad_spots[-c(1)]
+keep.sents[bad_spots]
+keep.sents <- keep.sents[-c(bad_spots)]
 keep.sents.df <- as.data.frame(keep.sents, stringsAsFactors = FALSE)
 keep.sents <- keep.sents[keep.sents!=""]
 print(length(keep.sents))
 
-
-keep.title <- rep("theScarhavenKeep", 4837)
-keep.sents.type <- rep("sentence", 4837)
-keep.sents.counter<-seq(1, 4837)
+keep.title <- rep("theScarhavenKeep", 4831)
+keep.sents.type <- rep("sentence", 4831)
+keep.sents.counter<-seq(1, 4831)
 keep.sents.id <- paste0("THE_SCARHAVEN_KEEP_", "SENT_", keep.sents.counter)
-keep.label <- rep("0", 4837)
+keep.label <- rep("0", 4831)
 print(length(keep.sents.id))
 
 keep.sents.matrix <- cbind(keep.title, keep.sents.type, keep.sents.id, keep.sents, keep.label)
@@ -159,6 +180,7 @@ colnames(keep.words.df) <- c("Title", "Type", "ID", "Unit", "Label")
 con <- dbConnect(RSQLite::SQLite(), ":memory:", dbname="textTable.sqlite")
 dbWriteTable(con, "textTable", keep.words.df, append=TRUE, row.names=FALSE)
 dbGetQuery(con, "SELECT * FROM textTable WHERE Type= 'word' AND Title='theScarhavenKeep' LIMIT 10")
+dbGetQuery(con, "SELECT COUNT(*) FROM textTable WHERE Type='word' and Label='0'")
 dbDisconnect(con)
 
 # keep done.

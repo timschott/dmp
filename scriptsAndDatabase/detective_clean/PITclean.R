@@ -22,7 +22,7 @@ pit.paragraphs <- pit.paragraphs %>%
   transmute(paras=  gsub("Mrs\\.", "Mrs", paragraphs))
 
 pit.paragraphs <- pit.paragraphs %>% 
-  transmute(paragraphs=  gsub("\"", "", paras))
+  transmute(paragraphs=  gsub("\"", "'", paras))
 
 pit.paragraphs <- pit.paragraphs %>% 
   transmute(paras=  gsub("CHAPTER.X{0,3}(IX|IV|V?I{0,3}).", "", paragraphs))
@@ -59,6 +59,7 @@ con <- dbConnect(RSQLite::SQLite(), ":memory:", dbname="textTable.sqlite")
 dbWriteTable(con, "textTable", pit.para.df, append=TRUE, row.names=FALSE)
 dbGetQuery(con, "SELECT Unit FROM textTable WHERE Type='paragraph' AND Title='theShriekingPit' LIMIT 2")
 dbDisconnect(con)
+# dbExecute(con, "DELETE FROM textTable WHERE Type='paragraph' OR Type= 'sentence' AND Title='theShriekingPit'")
 
 # sents 
 
@@ -92,7 +93,7 @@ for(i in seq(1:length(pit.sents))){
   }
 }
 bad_spots <- bad_spots[-c(1)]
-# pit.sents[bad_spots]
+pit.sents[bad_spots]
 pit.sents <- pit.sents[-c(bad_spots)]
 
 
@@ -102,7 +103,7 @@ for(i in seq(1:length(pit.sents))){
   test <- substr(pit.sents[i], nchar(pit.sents[i])-1, nchar(pit.sents[i]))
   test2 <- substr(pit.sents[i+1], 1, 1)
   if(test2 %in% c(LETTERS, letters)){
-    if((test %in% c('?"', '!"') && test2==tolower(test2) && test2!='I')|| (test %in% c('?”', '!”') && test2=='I')){
+    if((test %in% c("?'", "!'") && test2==tolower(test2) && test2!='I')|| (test %in% c('?”', '!”') && test2=='I')){
       #print(i)
       pit.sents[i] <- paste(pit.sents[i], pit.sents[i+1])
       bad_spots<-append(bad_spots, i+1)
@@ -113,15 +114,15 @@ for(i in seq(1:length(pit.sents))){
 pit.sents[bad_spots]
 pit.sents <- pit.sents[-c(bad_spots)]
 
-
 pit.sents.df <- as.data.frame(pit.sents, stringsAsFactors = FALSE)
 pit.sents <- pit.sents[pit.sents!=""]
 print(length(pit.sents))
-pit.title <- rep("theShriekingPit", 5195)
-pit.sents.type <- rep("sentence", 5195)
-pit.sents.counter<-seq(1, 5195)
+
+pit.title <- rep("theShriekingPit", 5194)
+pit.sents.type <- rep("sentence", 5194)
+pit.sents.counter<-seq(1, 5194)
 pit.sents.id <- paste0("THE_SHRIEKING_PIT_", "SENT_", pit.sents.counter)
-pit.label <- rep("0", 5195)
+pit.label <- rep("0", 5194)
 print(length(pit.sents.id))
 
 pit.sents.matrix <- cbind(pit.title, pit.sents.type, pit.sents.id, pit.sents, pit.label)

@@ -18,9 +18,13 @@ red <- red[-spots]
 
 red.paragraphs <- as.data.frame(red, stringsAsFactors=FALSE)
 colnames(red.paragraphs) <- c("paras")
+red.paragraphs <- red.paragraphs %>% 
+  transmute(paragraphs=  gsub("\"", "'", paras))
+
+colnames(red.paragraphs) <- c("paras")
 
 red.paragraphs<- red.paragraphs %>%
-  transmute(paragraphs=gsub("\"|\\*|(?<=[A-Z])(\\.)(?=[A-Z]|\\.|\\s)", "", perl=TRUE, paras))
+  transmute(paragraphs=gsub("\\*|(?<=[A-Z])(\\.)(?=[A-Z]|\\.|\\s)", "", perl=TRUE, paras))
 
 red.paragraphs <- red.paragraphs %>% 
   transmute(paras=  gsub("Mrs\\.", "Mrs", paragraphs) )
@@ -67,6 +71,8 @@ dbWriteTable(con, "textTable", red.para.df, append=TRUE, row.names=FALSE)
 dbGetQuery(con, "SELECT Unit FROM textTable WHERE Type='paragraph' AND Title='theRedThumbMark' LIMIT 2")
 dbDisconnect(con)
 
+# dbExecute(con, "DELETE FROM textTable WHERE Type='paragraph' OR Type= 'sentence' AND Title='theRedThumbMark'")
+
 red <- red.paragraphs$paragraphs
 
 first_bite <- red[1:1747]
@@ -104,12 +110,28 @@ red.sents.df <- as.data.frame(red.sents, stringsAsFactors = FALSE)
 red.sents <- red.sents[red.sents!=""]
 print(length(red.sents))
 
+bad_spots <-c(0)
+for(i in seq(1:length(red.sents))){
+  #if the sentence ends with a punctuation mark and the next character is a lowercase, combine them
+  test <- substr(red.sents[i], nchar(red.sents[i])-1, nchar(red.sents[i]))
+  test2 <- substr(red.sents[i+1], 1, 1)
+  if(test2 %in% c(LETTERS, letters)){
+    if(test %in% c("?'", "!'") && test2==tolower(test2)){
+      red.sents[i] <- paste(red.sents[i], red.sents[i+1])
+      bad_spots<-append(bad_spots, i+1)
+    }
+  }
+}
+bad_spots <- bad_spots[-c(1)]
+red.sents[bad_spots]
+red.sents <- red.sents[-c(bad_spots)]
+print(length(red.sents))
 
-red.title <- rep("theRedThumbMark", 3464)
-red.sents.type <- rep("sentence", 3464)
-red.sents.counter<-seq(1, 3464)
+red.title <- rep("theRedThumbMark", 3474)
+red.sents.type <- rep("sentence", 3474)
+red.sents.counter<-seq(1, 3474)
 red.sents.id <- paste0("THE_RED_THUMB_MARK_", "SENT_", red.sents.counter)
-red.label <- rep("0", 3464)
+red.label <- rep("0", 3474)
 print(length(red.sents.id))
 
 red.sents.matrix <- cbind(red.title, red.sents.type, red.sents.id, red.sents, red.label)
