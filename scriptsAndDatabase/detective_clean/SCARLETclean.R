@@ -7,7 +7,6 @@ library("stringr")
 library("tm")
 library(qdap)
 
-
 lock <- scan("rawTexts/detective/arthur-conan-doyle-a-study-in-scarlet.txt",what="character",sep="\n")
 lock.start <- which(lock=="IN the year 1878 I took my degree of Doctor of Medicine of the University of London, and proceeded to Netley to go through the course prescribed for surgeons in the army. Having completed my studies there, I was duly attached to the Fifth Northumberland Fusiliers as Assistant Surgeon. The regiment was stationed in India at the time, and before I could join it, the second Afghan war had broken out. On landing at Bombay, I learned that my corps had advanced through the passes, and was already deep in the enemy’s country. I followed, however, with many other officers who were in the same situation as myself, and succeeded in reaching Candahar in safety, where I found my regiment, and at once entered upon my new duties.")
 lock.fin <- which(lock=="“Never mind,” I answered, “I have all the facts in my journal, and the public shall know them. In the meantime you must make yourself contented by the consciousness of success, like the Roman miser—")
@@ -55,11 +54,11 @@ lock.paragraphs <- lock.paragraphs %>%
   filter(paragraphs!="  ")
 print(length(lock.paragraphs$paragraphs))
 
-lock.title <- rep("aStudyInScarlet", 811)
-lock.para.type <- rep("paragraph",811)
-lock.para.counter<-seq(1, 811)
+lock.title <- rep("aStudyInScarlet", 810)
+lock.para.type <- rep("paragraph",810)
+lock.para.counter<-seq(1, 810)
 lock.para.id <- paste0("A_STUDY_IN_SCARLET_", "PARAGRAPH_", lock.para.counter)
-lock.label <- rep(811)
+lock.label <- rep("0", 810)
 print(length(lock.para.id))
 
 lock.para.matrix <- cbind(lock.title, lock.para.type, lock.para.id, lock.paragraphs, lock.label)
