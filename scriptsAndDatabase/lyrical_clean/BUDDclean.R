@@ -11,9 +11,9 @@ library(qdap)
 
 ## Billy Budd
 ## Delete the Rest. 
-
-stock <- c("Title", "Type", "ID", "Unit")
-bud <- scan("rawTexts/herman-melville-billy-budd.txt",what="character",sep="\n")
+rm(list=ls())
+stock <- c("Title", "Type", "ID", "Unit", "Label")
+bud <- scan("rawTexts/lyrical/herman-melville-billy-budd.txt",what="character",sep="\n")
 bud.start <- which(bud=="In the time before steamships, or then more frequently than now, a")
 bud.fin <- which(bud=="I am sleepy, and the oozy weeds about me twist.")
 bud<-bud[bud.start:bud.fin]
@@ -24,9 +24,10 @@ bud <- bud[-c(grep('Chapter [0-9]+', bud, perl = TRUE))]
 bud <- gsub('Mrs.', 'Mrs', perl=TRUE,bud)
 bud <- gsub('MRS.', 'MRS', perl=TRUE,bud)
 bud <- gsub('Mr.', 'Mr', perl=TRUE,bud)
-bud <- gsub('\\\\', '',bud)
+# bud <- gsub('\\\\', '',bud)
 bud <- gsub('Camo\xebns', 'CamoÎns', perl=TRUE, bud)
 bud <- replace_abbreviation(bud)
+bud <- gsub('\"', "'", perl=TRUE,bud)
 
 
 print(length(bud))
@@ -70,13 +71,15 @@ bud.sents <- bud.sents[-c(460)]
 bud.title <- rep("billyBudd", 1137)
 bud.sents.type <- rep("sentence", 1137)
 bud.sents.counter<-seq(1, 1137)
+bud.label <- rep("1", 1137)
 bud.sents.id <- paste0("BILLY_BUDD_", "SENT_", bud.sents.counter)
 print(length(bud.sents.id))
-bud.sents.matrix <- cbind(bud.title, bud.sents.type, bud.sents.id, bud.sents)
+bud.sents.matrix <- cbind(bud.title, bud.sents.type, bud.sents.id, bud.sents, bud.label)
 bud.sents.df <- as.data.frame(bud.sents.matrix, stringsAsFactors = FALSE)
 colnames(bud.sents.df) <- stock
 
 con <- dbConnect(RSQLite::SQLite(), ":memory:", dbname="textTable.sqlite")
+# dbExecute(con, "DELETE FROM textTable WHERE Type='sentence' AND Title='billyBudd'")
 
 dbWriteTable(con, "textTable", bud.sents.df, append=TRUE, row.names=FALSE)
 dbGetQuery(con, "SELECT Unit FROM textTable WHERE Type='sentence' AND Title='billyBudd' LIMIT 2")
@@ -100,7 +103,6 @@ bud <- gsub('Mr.', 'Mr', perl=TRUE,bud)
 bud <- gsub('\\\\', '',bud)
 bud <- gsub('Camo\xebns', 'CamoÎns', perl=TRUE, bud)
 bud <- replace_abbreviation(bud)
-
 
 print(length(bud))
 
@@ -131,7 +133,6 @@ dbGetQuery(con, "SELECT * FROM textTable WHERE Type= 'word' AND Title='billyBudd
 dbDisconnect(con)
 
 # paras.
-
 bud.paragraphs <- read.csv("Python_Scripts/checkCorpus/BUDD_paras.csv", stringsAsFactors = FALSE)
 bud.paragraphs <- bud.paragraphs[-c(1:9, 329:332),]
 colnames(bud.paragraphs) <- c("arb", "paras")
@@ -153,8 +154,9 @@ bud.title <- rep("billyBudd", 288)
 bud.para.type <- rep("paragraph", 288)
 bud.para.counter<-seq(1, 288)
 bud.para.id <- paste0("BILLY_BUDD_", "PARAGRAPH_", bud.para.counter)
+bud.label <- rep("1", 288)
 print(length(bud.para.id))
-bud.para.matrix <- cbind(bud.title, bud.para.type, bud.para.id, bud.paragraphs)
+bud.para.matrix <- cbind(bud.title, bud.para.type, bud.para.id, bud.paragraphs, bud.label)
 bud.para.df <- as.data.frame(bud.para.matrix, stringsAsFactors = FALSE)
 colnames(bud.para.df) <- stock
 

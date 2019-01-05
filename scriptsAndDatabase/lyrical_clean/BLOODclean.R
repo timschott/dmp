@@ -11,7 +11,7 @@ library(rJava)
 library("openNLPdata")
 
 # blood meridian.
-
+rm(list=ls())
 blood <- scan("rawTexts/lyrical/cormac-mccarthy-blood-meridian.txt",what="character",sep="\n")
 stock <- c("Title", "Type", "ID", "Unit", "Label")
 

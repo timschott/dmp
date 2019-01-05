@@ -25,9 +25,16 @@ ab[1] <- gsub("FROM", "From", ab[1])
 # get rid of chap.
 chaps <- grep("^—[0-9]—", ab)
 ab <- ab[-chaps]
-
+ab[grep("\"", ab)]
 ab.paragraphs <- as.data.frame(ab, stringsAsFactors=FALSE)
+
 colnames(ab.paragraphs) <- c("paras")
+ab.paragraphs <- ab.paragraphs %>% 
+  transmute(paragraphs=  gsub("\"", "'", paras))
+
+colnames(ab.paragraphs) <- c("paras")
+
+
 ab.paragraphs <- ab.paragraphs %>% 
   transmute(paragraphs=  gsub("Mr\\.", "Mr", paras))
 ab.paragraphs <- ab.paragraphs %>% 
@@ -42,7 +49,6 @@ ab.para.counter<-seq(1, 569)
 ab.para.id <- paste0("ABSALOM_ABSALOM_", "PARAGRAPH_", ab.para.counter)
 ab.label <- rep("1", 569)
 print(length(ab.para.id))
-test <- c("Mrs.", "Mr.")
 ab.para.matrix <- cbind(ab.title, ab.para.type, ab.para.id, ab.paragraphs, ab.label)
 ab.para.df <- as.data.frame(ab.para.matrix, stringsAsFactors = FALSE)
 colnames(ab.para.df) <- stock
@@ -50,6 +56,7 @@ colnames(ab.para.df) <- stock
 con <- dbConnect(RSQLite::SQLite(), ":memory:", dbname="textTable.sqlite")
 dbWriteTable(con, "textTable", ab.para.df, append=TRUE, row.names=FALSE)
 dbGetQuery(con, "SELECT Unit FROM textTable WHERE Type='paragraph' AND Title='absalomAbsalom' LIMIT 2")
+dbExecute(con, "DELETE FROM textTable WHERE Type='sentence' AND Title='absalomAbsalom'")
 dbDisconnect(con)
 
 # sents.
@@ -84,10 +91,25 @@ ab.sents <- ab.sents[-c(bad_spots)]
 
 # sick.
 
+bad_spots <-c(0)
+for(i in seq(1:length(ab.sents))){
+  #if the sentence ends with a punctuation mark and the next character is a lowercase, combine them
+  test <- substr(ab.sents[i], nchar(ab.sents[i])-1, nchar(ab.sents[i]))
+  test2 <- substr(ab.sents[i+1], 1, 1)
+  if(test2 %in% c(LETTERS, letters)){
+    if(test %in% c("?'", "!'") && test2==tolower(test2)){
+      ab.sents[i] <- paste(ab.sents[i], ab.sents[i+1])
+      bad_spots<-append(bad_spots, i+1)
+    }
+  }
+}
+bad_spots <- bad_spots[-c(1)]
+ab.sents[bad_spots]
+ab.sents <- ab.sents[-c(bad_spots)]
+
 ab.sents.df <- as.data.frame(ab.sents, stringsAsFactors = FALSE)
 ab.sents[2706] <- paste(ab.sents[2706], ab.sents[2707])
 ab.sents[2707] <- ""
-ab.sents <- gsub("\"", "",ab.sents)
 ab.sents[1100] <- paste(ab.sents[1100], ab.sents[1101])
 ab.sents[1101] <- ""
 ab.sents[1100] <-gsub("4nd", "And", ab.sents[1100])
@@ -112,15 +134,13 @@ bad_spots <- bad_spots[-c(1)]
 ab.sents[bad_spots]
 ab.sents <- ab.sents[-c(bad_spots)]
 ab.sents <- ab.sents[ab.sents!=""]
-ab.sents[2641] <- paste(ab.sents[2641], ab.sents[2642])
-ab.sents[2642] <- ""
 # sew tg
 print(length(ab.sents))
-ab.title <- rep("absalomAbsalom", 2969)
-ab.sents.type <- rep("sentence", 2969)
-ab.sents.counter<-seq(1, 2969)
+ab.title <- rep("absalomAbsalom", 3027)
+ab.sents.type <- rep("sentence", 3027)
+ab.sents.counter<-seq(1, 3027)
 ab.sents.id <- paste0("ABSALOM_ABSALOM_", "SENT_", ab.sents.counter)
-ab.label <- rep("1", 2969)
+ab.label <- rep("1", 3027)
 print(length(ab.sents.id))
 
 ab.sents.matrix <- cbind(ab.title, ab.sents.type, ab.sents.id, ab.sents, ab.label)

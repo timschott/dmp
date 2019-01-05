@@ -23,7 +23,7 @@ dali <- gsub('Mr\\.', 'Mr', perl=TRUE, dali)
 dali <- gsub('St\\.', 'St', perl=TRUE, dali)
 dali <- gsub("t?te-?-t?tes", "tête-à-tête", perl=TRUE, dali)
 dali <- gsub("caf?", "café", perl=TRUE,dali)
-dali <- gsub('\"', '', perl=TRUE, dali)
+dali <- gsub('\"', "'", perl=TRUE, dali)
 # bad diacritics! 
 dali[167] <- "knowledge Fräulein Daniels gave them she could not think. She knew"
 dali[3266] <- "somehow right. So she let Hugh eat his soufflé; asked after poor"
@@ -73,9 +73,27 @@ for(i in seq(1:length(dali.sents))){
 dali.sents[bad_spots]
 dali.sents <- dali.sents[-c(bad_spots)]
 print(length(dali.sents))
-
+bad_spots <-c(0)
+for(i in seq(1:length(dali.sents))){
+  #if the sentence ends with a punctuation mark and the next character is a lowercase, combine them
+  test <- substr(dali.sents[i], nchar(dali.sents[i])-1, nchar(dali.sents[i]))
+  test2 <- substr(dali.sents[i+1], 1, 1)
+  if(test2 %in% c(LETTERS, letters)){
+    if(test %in% c("?'", "!'") && test2==tolower(test2)){
+      dali.sents[i] <- paste(dali.sents[i], dali.sents[i+1])
+      bad_spots<-append(bad_spots, i+1)
+    }
+  }
+}
+bad_spots <- bad_spots[-c(1)]
+dali.sents[bad_spots]
+dali.sents <- dali.sents[-c(bad_spots)]
+print(length(dali.sents))
 dali.sents.df <- as.data.frame(dali.sents, stringsAsFactors = FALSE)
-
+dali.sents[1069] <- paste(dali.sents[1069], dali.sents[1070])
+dali.sents[1070] <- ""
+dali.sents <- dali.sents[dali.sents!=""]
+print(length(dali.sents))
 
 dali.title <- rep("mrsDalloway", 3405)
 dali.sents.type <- rep("sentence", 3405)
@@ -88,7 +106,7 @@ dali.sents.df <- as.data.frame(dali.sents.matrix, stringsAsFactors = FALSE)
 colnames(dali.sents.df) <- stock
 
 con <- dbConnect(RSQLite::SQLite(), ":memory:", dbname="textTable.sqlite")
-
+# dbExecute(con, "DELETE FROM textTable WHERE Type='sentence' AND Title='mrsDalloway'")
 dbWriteTable(con, "textTable", dali.sents.df, append=TRUE, row.names=FALSE)
 dbGetQuery(con, "SELECT Unit FROM textTable WHERE Type='sentence' AND Title='mrsDalloway' LIMIT 2")
 dbDisconnect(con)
@@ -170,7 +188,6 @@ dali.paragraphs <- dali.paragraphs %>%
 
 dali.paragraphs <- dali.paragraphs %>%
   transmute(paras = gsub('\n', ' ', perl=TRUE, paragraph))
-
 
 bads <- grep("<", dali.paragraphs$paras)
 dali.paragraphs$paras[bads[1]] <- gsub("Fr<e4>ulein", "Fräulein", dali.paragraphs$paras[bads[1]])
