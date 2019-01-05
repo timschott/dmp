@@ -11,8 +11,8 @@ library(qdap)
 
 # gravity's rainbow
 
-stock <- c("Title", "Type", "ID", "Unit")
-grav <- scan("rawTexts/thomas-pynchon-gravitys-rainbow.txt",what="character", sep="\n")
+stock <- c("Title", "Type", "ID", "Unit", "Label")
+grav <- scan("rawTexts/lyrical/thomas-pynchon-gravitys-rainbow.txt",what="character", sep="\n")
 
 # what to sub, what to sub. 
 # Capt.; Mr. Mrs;
@@ -28,10 +28,10 @@ grav.paragraphs <- as.data.frame(grav, stringsAsFactors=FALSE)
 colnames(grav.paragraphs) <- c("paras")
 
 grav.paragraphs <- grav.paragraphs %>% 
-  transmute(paragraphs=  gsub("Mr.", "Mr", paras))
+  transmute(paragraphs=  gsub("Mr\\.", "Mr", paras))
 
 grav.paragraphs <- grav.paragraphs %>% 
-  transmute(paras=  gsub("Mrs.", "Mr", paragraphs))
+  transmute(paras=  gsub("Mrs\\.", "Mrs", paragraphs))
 
 grav.paragraphs <- grav.paragraphs %>% 
   transmute(paragraphs=  gsub("W.C.s.", "W C s", paras))
@@ -46,25 +46,25 @@ grav.paragraphs <- grav.paragraphs %>%
   transmute(paragraphs=  replace_abbreviation(paras))
 
 grav.paragraphs <- grav.paragraphs %>%
-  transmute(paras = gsub("Lt.", "Lt", paragraphs))
+  transmute(paras = gsub("Lt\\.", "Lt", paragraphs))
 
 grav.paragraphs <- grav.paragraphs %>%
-  transmute(paragraphs = gsub("Z.", "Z", paras))
+  transmute(paragraphs = gsub("Z\\.", "Z", paras))
 
 grav.paragraphs <- grav.paragraphs %>%
-  transmute(paras = gsub("A.F.", "A F", paragraphs))
+  transmute(paras = gsub("A\\.F\\.", "A F", paragraphs))
 
 grav.paragraphs <- grav.paragraphs %>%
   transmute(paragraphs = gsub('(?<=[A-Z])(\\.)(?=[A-Z]|\\.|\\s)', '',perl=TRUE, paras))
 
 grav.paragraphs <- grav.paragraphs %>%
-  transmute(paras = gsub("d. 1812", "d 1812", paragraphs))
+  transmute(paras = gsub("d\\. 1812", "d 1812", paragraphs))
 
 grav.paragraphs <- grav.paragraphs %>%
-  transmute(paragraphs = gsub("pg.", "pg", paras))
+  transmute(paragraphs = gsub("pg\\.", "pg", paras))
 
 grav.paragraphs <- grav.paragraphs %>%
-  transmute(paras = gsub("Cecil B. De Mille", "Cecil B De Mille", paragraphs))
+  transmute(paras = gsub("Cecil B\\. De Mille", "Cecil B De Mille", paragraphs))
   
 colnames(grav.paragraphs) <- c("paragraphs")
 
@@ -80,10 +80,11 @@ print(length(grav.paragraphs$paragraphs))
 grav.title <- rep("gravitysRainbow", 5669)
 grav.para.type <- rep("paragraph", 5669)
 grav.para.counter<-seq(1, 5669)
+grav.label <- rep("1", 5669)
 grav.para.id <- paste0("GRAVITYS_RAINBOW_", "PARAGRAPH_", grav.para.counter)
 print(length(grav.para.id))
 
-grav.para.matrix <- cbind(grav.title, grav.para.type, grav.para.id, grav.paragraphs)
+grav.para.matrix <- cbind(grav.title, grav.para.type, grav.para.id, grav.paragraphs, grav.label)
 grav.para.df <- as.data.frame(grav.para.matrix, stringsAsFactors = FALSE)
 colnames(grav.para.df) <- stock
 
@@ -162,10 +163,11 @@ print(length(grav.sents))
 grav.title <- rep("gravitysRainbow", 18847)
 grav.sents.type <- rep("sentence", 18847)
 grav.sents.counter<-seq(1, 18847)
+grav.label <- rep("1", 18847)
 grav.sents.id <- paste0("GRAVITYS_RAINBOW_", "SENT_", grav.sents.counter)
 print(length(grav.sents.id))
 
-grav.sents.matrix <- cbind(grav.title, grav.sents.type, grav.sents.id, grav.sents)
+grav.sents.matrix <- cbind(grav.title, grav.sents.type, grav.sents.id, grav.sents, grav.label)
 grav.sents.df <- as.data.frame(grav.sents.matrix, stringsAsFactors = FALSE)
 colnames(grav.sents.df) <- stock
 con <- dbConnect(RSQLite::SQLite(), ":memory:", dbname="textTable.sqlite")
@@ -214,9 +216,9 @@ grav.words<- grav.words[which(grav.words!="^’")]
 print(length(grav.words))
 
 # sheesh. 333k words.
-gravitys.title <- rep("gravitysRainbow", 333370)
-gravitys.words.type <- rep("word", 333370)
-gravitys.words.counter <- seq(1, 333370)
+gravitys.title <- rep("gravitysRainbow", 333359)
+gravitys.words.type <- rep("word", 333359)
+gravitys.words.counter <- seq(1, 333359)
 gravitys.words.id <- paste0("GRAVITYS_RAINBOW_", "WORD_", gravitys.words.counter)
 
 gravitys.words.matrix <- cbind(gravitys.title, gravitys.words.type, gravitys.words.id, grav.words)
@@ -227,12 +229,13 @@ con <- dbConnect(RSQLite::SQLite(), ":memory:", dbname="textTable.sqlite")
 colnames(gravitys.words.df) <- c("Title", "Type", "ID", "Unit")
 dbWriteTable(con, "textTable", gravitys.words.df, append=TRUE, row.names=FALSE)
 dbGetQuery(con, "SELECT * FROM textTable WHERE Type= 'word' AND Title='gravitysRainbow' LIMIT 10")
-dbGetQuery(con, "SELECT COUNT(*) FROM textTable WHERE Type='word'")
-dbGetQuery(con, "SELECT COUNT(*) FROM textTable WHERE Type='sentence'")
-dbGetQuery(con, "SELECT COUNT(*) FROM textTable WHERE Type='paragraph'")
-dbExecute(con, "ALTER TABLE textTable ADD 'Label' INT")
-dbExecute(con, "UPDATE textTable SET 'Label' = 1")
-# 3 million "lyrical". 
+dbGetQuery(con, "SELECT COUNT(*) FROM textTable WHERE Type='word' and Label='0'")
+dbGetQuery(con, "SELECT COUNT(*) FROM textTable WHERE Type='sentence' and Label='1'")
+dbGetQuery(con, "SELECT COUNT(*) FROM textTable WHERE Type='paragraph' and Label='1'")
+dbGetQuery(con, "SELECT DISTINCT Title FROM textTable")
+# dbExecute(con, "ALTER TABLE textTable ADD 'Label' INT")
+# dbExecute(con, "UPDATE textTable SET 'Label' = 1")
 dbDisconnect(con)
+# okay so we're shooting for 2.4 mill non lyrical words. 
 
 

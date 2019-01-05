@@ -11,8 +11,8 @@ library(qdap)
 # library("openNLPdata")
 
 # the pedersen kid
-stock <- c("Title", "Type", "ID", "Unit")
-gas <- scan("rawTexts/william-h-gass-in-the-heart-of-the-heart-of-the-country.txt",what="character",sep="\n")
+stock <- c("Title", "Type", "ID", "Unit", "Label")
+gas <- scan("rawTexts/lyrical/william-h-gass-in-the-heart-of-the-heart-of-the-country.txt",what="character",sep="\n")
 gas.start<-which(gas=="Big Hans yelled, so I came out. The barn was dark, but the sun burned on the snow. Hans was carrying something from the crib. I yelled, but Big Hans didn’t hear. He was in the house with what he had before I reached the steps.")
 gas.fin<-which(gas=="It was pleasant not to have to stamp the snow off my boots, and the fire was speaking pleasantly and the kettle was sounding softly. There was no need for me to grieve. I had been the brave one and now I was free. The snow would keep me. I would bury pa and the Pedersens and Hans and even ma if I wanted to bother. I hadn’t wanted to come but now I didn’t mind. The kid and me, we’d done brave things well worth remembering. The way that fellow had come so mysteriously through the snow and done us such a glorious turn—well it made me think how I was told to feel in church. The winter time had finally got them all, and I really did hope that the kid was as warm as I was now, warm inside and out, burning up, inside and out, with joy.")
 gas<-gas[gas.start:gas.fin]
@@ -22,10 +22,10 @@ gas<-gas[gas.start:gas.fin]
 
 gas <- gsub('Part One|Part Two|Part Three|_|(?<=[A-Z])(\\.)(?=[A-Z]|\\.|\\s)|For Joanne, Oliver, and Allan', '', perl=TRUE,gas)
 gas <- gas[-c(grep('^[1-9]$', gas, perl = TRUE))]
+gas[grep('Mrs.', perl=TRUE, gas)]
 gas <- gsub('Mrs.', 'Mrs', perl=TRUE,gas)
 gas <- gsub('MRS.', 'MRS', perl=TRUE,gas)
 gas <- gsub('Mr.', 'Mr', perl=TRUE,gas)
-
 ## sents
 print(length(gas))
 
@@ -156,8 +156,9 @@ gas.title <- rep("thePedersenKid", 789)
 gas.para.type <- rep("paragraph", 789)
 gas.para.counter<-seq(1, 789)
 gas.para.id <- paste0("THE_PEDERSEN_KID_", "PARAGRAPH_", gas.para.counter)
+gas.label <- rep("1", 789)
 print(length(gas.para.id))
-gas.para.matrix <- cbind(gas.title, gas.para.type, gas.para.id, gas.paragraphs)
+gas.para.matrix <- cbind(gas.title, gas.para.type, gas.para.id, gas.paragraphs, gas.label)
 gas.para.df <- as.data.frame(gas.para.matrix, stringsAsFactors = FALSE)
 colnames(gas.para.df) <- stock
 

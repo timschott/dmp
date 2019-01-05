@@ -10,8 +10,8 @@ install.packages("rJava")
 library(rJava)
 library("openNLPdata")
 
-stock <- c("Title", "Type", "ID", "Unit")
-gatsby <- scan("rawTexts/fscott-fitzergald-the-great-gatsby.txt",what="character", sep="\n")
+stock <- c("Title", "Type", "ID", "Unit", "Label")
+gatsby <- scan("rawTexts/lyrical/fscott-fitzergald-the-great-gatsby.txt",what="character", sep="\n")
 # clean headmatter
 gatsby.start <- which(gatsby=="Chapter 1")
 gatsby.end<- which(gatsby=="the past.")
@@ -33,39 +33,57 @@ gatsby.sents.second <- paste0(second_half, collapse = "\n")
 gatsby.sents.second <- unlist(tokenize_sentences(gatsby.sents.second))
 
 gatsby.sents <- c(gatsby.sents.first, gatsby.sents.second)
-gatsby.sents <- gsub('\"', '' , gatsby.sents, fixed=TRUE)
-
+# gatsby.sents <- gsub('\"', '' , gatsby.sents, fixed=TRUE)
 # inspect here the punctuation funny business. 
-
-bad_spots<-c(0)
-
+bad_spots <- c(0)
+## standalone, you need the third condition. 
 for(i in seq(1:length(gatsby.sents))){
-  #if the sentence ends with a punctuation mark and the next character is a lowercase, combine them
+  #if the sentence ends with a punctuation mark and the next sentence starts with a lowercase, combine them
   test <- substr(gatsby.sents[i], nchar(gatsby.sents[i]), nchar(gatsby.sents[i]))
   test2 <- substr(gatsby.sents[i+1], 1, 1)
-  if(test %in% c('?', '!') && test2==tolower(test2)){
+  test3 <- substr(gatsby.sents[i], 1, 1)
+  if(test %in% c('?', '!') && test2==tolower(test2) && test3!=tolower(test3)){
     gatsby.sents[i] <- paste(gatsby.sents[i], gatsby.sents[i+1])
+    # print(fury.sents[i])
     bad_spots<-append(bad_spots, i+1)
   }
 }
-gatsby.sents[bad_spots]
+bad_spots <- bad_spots[-c(1)]
 gatsby.sents <- gatsby.sents[-bad_spots]
+print(length(gatsby.sents))
+
+bad_spots <-c(0)
+for(i in seq(1:length(gatsby.sents))){
+  #if the sentence ends with a punctuation mark and the next character is a lowercase, combine them
+  test <- substr(gatsby.sents[i], nchar(gatsby.sents[i])-1, nchar(gatsby.sents[i]))
+  test2 <- substr(gatsby.sents[i+1], 1, 1)
+  if(test2 %in% c(LETTERS, letters)){
+    if(test %in% c("?'", "!'") && test2==tolower(test2)){
+      gatsby.sents[i] <- paste(gatsby.sents[i], gatsby.sents[i+1])
+      bad_spots<-append(bad_spots, i+1)
+    }
+  }
+}
+bad_spots <- bad_spots[-c(1)]
+gatsby.sents[bad_spots]
+gatsby.sents <- gatsby.sents[-c(bad_spots)]
 print(length(gatsby.sents))
 gatsby.temp <- as.data.frame(gatsby.sents, stringsAsFactors = FALSE)
 # back to good. 
-gatsby.title <- rep("theGreatGatsby", 3289)
-gatsby.sents.type <- rep("sentence", 3289)
-gatsby.sents.id <- paste0("THE_GREAT_GATSBY_", "SENTENCE_", seq(1,3289))
+gatsby.title <- rep("theGreatGatsby", 3296)
+gatsby.sents.type <- rep("sentence", 3296)
+gatsby.label <- rep("1", 3296)
+gatsby.sents.id <- paste0("THE_GREAT_GATSBY_", "SENTENCE_", seq(1,3296))
 
 # make matrix. 
 
-gatsby.sents.matrix <- cbind(gatsby.title, gatsby.sents.type, gatsby.sents.id, gatsby.sents)
+gatsby.sents.matrix <- cbind(gatsby.title, gatsby.sents.type, gatsby.sents.id, gatsby.sents, gatsby.label)
 gatsby.sents.df <- as.data.frame(gatsby.sents.matrix)
 colnames(gatsby.sents.df) <- stock
 
 
 con <- dbConnect(RSQLite::SQLite(), ":memory:", dbname="textTable.sqlite")
-#dbExecute(con, "DELETE * from textTable WHERE Type='sentence' AND Title ='theGreatGatsby'")
+dbExecute(con, "DELETE FROM textTable WHERE Type='sentence' AND Title='theGreatGatsby'")
 
 dbWriteTable(con, "textTable", gatsby.sents.df, append=TRUE, row.names=FALSE)
 dbGetQuery(con, "SELECT Unit FROM textTable WHERE Type='sentence' AND Title='theGreatGatsby' LIMIT 2")
@@ -75,7 +93,7 @@ dbDisconnect(con)
 # should be easier. 
 # read in from python. 
 
-g.paragraphs <- read.csv("../Python_Scripts/checkCorpus/GATBSY_paras.csv", stringsAsFactors = FALSE)
+g.paragraphs <- read.csv("Python_Scripts/checkCorpus/GATSBY_paras.csv", stringsAsFactors = FALSE)
 g.paragraphs <- g.paragraphs[-c(1:20, 174, 225, 309, 473, 646, 805, 942, 1353, 1366,1619:1674),]
 
 g.paragraphs$X0 <- replace_abbreviation(g.paragraphs$X0)
@@ -87,10 +105,10 @@ g.title <- rep("theGreatGatsby", 1589)
 g.paragraphs.type <- rep("paragraph", 1589)
 g.paragraphs.counter <- seq(1, 1589)
 g.paragraphs.id <- paste0("THE_GREAT_GATSBY_", "PARAGRAPH_", g.paragraphs.counter)
-
-g.paragraphs.matrix <- cbind(g.title, g.paragraphs.type, g.paragraphs.id, g.paragraphs$para)
+g.label <- rep("1", 1589)
+g.paragraphs.matrix <- cbind(g.title, g.paragraphs.type, g.paragraphs.id, g.paragraphs$para, g.label)
 g.paragraphs.df <- as.data.frame(g.paragraphs.matrix, stringsAsFactors = FALSE)
-colnames(g.paragraphs.df) <- c("Title", "Type", "ID", "Unit")
+colnames(g.paragraphs.df) <- c("Title", "Type", "ID", "Unit", "Label")
 
 con <- dbConnect(RSQLite::SQLite(), ":memory:", dbname="textTable.sqlite")
 ### Columns. 

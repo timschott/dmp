@@ -10,11 +10,11 @@ install.packages("rJava")
 library(rJava)
 library("openNLPdata")
 
-stock <- c("Title", "Type", "ID", "Unit")
+stock <- c("Title", "Type", "ID", "Unit", "Label")
 
 #output <- unlist(tokenize_sentences(test_sentence))
 # Mr. Mrs. 
-heartOfDarkness <- scan("rawTexts/conrad-heart-of-darkness.txt",what="character",sep="\n")
+heartOfDarkness <- scan("rawTexts/lyrical/conrad-heart-of-darkness.txt",what="character",sep="\n")
 
 heartOfDarkness.start<- which(heartOfDarkness == "I")
 heartOfDarkness.end <- which(heartOfDarkness == "sky--seemed to lead into the heart of an immense darkness.")
@@ -43,43 +43,82 @@ heartOfDarkness.sents.second <- unlist(tokenize_sentences(heartOfDarkness.sents.
 #recombine
 heartOfDarkness.sents <- c(heartOfDarkness.sents.first,heartOfDarkness.sents.second)
 
-heartOfDarkness.sents <- gsub('([\\])', '', heartOfDarkness.sents)
+heartOfDarkness.sents <- gsub('\"', "'", heartOfDarkness.sents)
 
 #Mrs doesn't actually occur but well keep the pattern. heartOfDarkness.sents <- gsub('Mrs\\.', 'Mrs', heartOfDarkness.sents)
 ### ToDo: Fix the puncutation lowercase problem
-heartOfDarkness.title <- rep("heartOfDarkness", 2451)
-heartOfDarkness.sents.type <- rep("sentence", 2451)
 
+bad_spots <-c(0)
+for(i in seq(1:length(heartOfDarkness.sents))){
+  #if the sentence ends with a punctuation mark and the next character is a lowercase, combine them,
+  # if the sequence starts with a capital letter... but for eg ha! ha! ha! don't combine
+  # so check if the first sentence starts with a lowercase as well
+  test <- substr(heartOfDarkness.sents[i], nchar(heartOfDarkness.sents[i]), nchar(heartOfDarkness.sents[i]))
+  test2 <- substr(heartOfDarkness.sents[i+1], 1, 1)
+  test3 <- substr(heartOfDarkness.sents[i], 1, 1)
+  if(test2 %in% c(LETTERS, letters)){
+    if(test %in% c('?', '!') && test2==tolower(test2) && test3!=tolower(test3)){
+      #print(i)
+      heartOfDarkness.sents[i] <- paste(heartOfDarkness.sents[i], heartOfDarkness.sents[i+1])
+      bad_spots<-append(bad_spots, i+1)
+    }
+  }
+}
+bad_spots <- bad_spots[-c(1)]
+heartOfDarkness.sents[bad_spots]
+heartOfDarkness.sents <- heartOfDarkness.sents[-c(bad_spots)]
+
+bad_spots <-c(0)
+for(i in seq(1:length(heartOfDarkness.sents))){
+  #if the sentence ends with a punctuation mark and the next character is a lowercase, combine them
+  test <- substr(heartOfDarkness.sents[i], nchar(heartOfDarkness.sents[i])-1, nchar(heartOfDarkness.sents[i]))
+  test2 <- substr(heartOfDarkness.sents[i+1], 1, 1)
+  if(test2 %in% c(LETTERS, letters)){
+    if(test %in% c("?'", "!'") && test2==tolower(test2)){
+      #print(i)
+      heartOfDarkness.sents[i] <- paste(heartOfDarkness.sents[i], heartOfDarkness.sents[i+1])
+      bad_spots<-append(bad_spots, i+1)
+    }
+  }
+}
+
+heartOfDarkness.sents[bad_spots]
+heartOfDarkness.sents <- heartOfDarkness.sents[-c(bad_spots)]
+
+heartOfDarkness.title <- rep("heartOfDarkness", 2402)
+heartOfDarkness.sents.type <- rep("sentence", 2402)
+print(length(heartOfDarkness.sents))
 # now put those into a matrix 
 
-heartOfDarkness.sents.counter <- seq(1, 2451)
-
+heartOfDarkness.sents.counter <- seq(1, 2402)
+heartOfDarkness.label <- rep("1", 2402)
 # paste together HOD_SENT_COUNTER
 
-heartOfDarkness.sents.id <- paste0("HOD_", "SENT_", heartOfDarkness.sents.counter)
+heartOfDarkness.sents.id <- paste0("HEART_OF_DARKNESS_", "SENT_", heartOfDarkness.sents.counter)
 
-heartOfDarkness.sents.matrix <- cbind(heartOfDarkness.title, heartOfDarkness.sents.type, heartOfDarkness.sents.id, heartOfDarkness.sents)
+heartOfDarkness.sents.matrix <- cbind(heartOfDarkness.title, heartOfDarkness.sents.type, heartOfDarkness.sents.id, heartOfDarkness.sents, heartOfDarkness.label)
 
 heartOfDarkness.sents.df <- as.data.frame(heartOfDarkness.sents.matrix)
-colnames(heartOfDarkness.sents.df) <- c("Title", "Type", "ID", "Unit")
+colnames(heartOfDarkness.sents.df) <- c("Title", "Type", "ID", "Unit", "Label")
 
 #write to database. 
 
 con <- dbConnect(RSQLite::SQLite(), ":memory:", dbname="textTable.sqlite")
+# dbExecute(con, "DELETE FROM textTable WHERE Type='sentence' AND Title='heartOfDarkness'")
+
 ### Columns. 
 # we should no longer need to set the column names
-dbWriteTable(con, "textTable", heartOfDarkness.sents.df[0, ])
+# dbWriteTable(con, "textTable", heartOfDarkness.sents.df[0, ])
 dbWriteTable(con, "textTable", heartOfDarkness.sents.df, append=TRUE, row.names=FALSE)
 
-#dbGetQuery(con, "SELECT * FROM textTable LIMIT 10")
+dbGetQuery(con, "SELECT Unit FROM textTable WHERE Type='sentence' AND Title='heartOfDarkness' LIMIT 2")
 
 dbListTables(con)
-summary(con)
 
 dbDisconnect(con)
 
 #### into words. 
-heartOfDarkness <- scan("rawTexts/conrad-heart-of-darkness.txt",what="character",sep="\n")
+heartOfDarkness <- scan("rawTexts/lyrical/conrad-heart-of-darkness.txt",what="character",sep="\n")
 heartOfDarkness.start<- which(heartOfDarkness == "I")
 heartOfDarkness.end <- which(heartOfDarkness == "sky--seemed to lead into the heart of an immense darkness.")
 
@@ -138,22 +177,23 @@ heartOfDarkness.paragraphs <- heartOfDarkness.paragraphs[-c(1:12, 75, 113, 212:2
 colnames(heartOfDarkness.paragraphs) <- c("arbitrary", "para")
 
 heartOfDarkness.paragraphs <- heartOfDarkness.paragraphs %>%
-  mutate(para = str_replace_all(para, "[\n]", " ")) %>%
-  select(para)
+  transmute(paragraph = str_replace_all(para, "[\n]", " "))
+heartOfDarkness.paragraphs <- heartOfDarkness.paragraphs %>% 
+  transmute(para=  gsub("\"", "'", paragraph))
 
 heartOfDarkness.title <- rep("heartOfDarkness", 197)
 heartOfDarkness.paragraphs.type <- rep("paragraph", 197)
 heartOfDarkness.paragraphs.counter <- seq(1, 197)
-heartOfDarkness.paragraphs.id <- paste0("HOD_", "PARAGRAPH_", heartOfDarkness.paragraphs.counter)
-
-heartOfDarkness.paragraphs.matrix <- cbind(heartOfDarkness.title, heartOfDarkness.paragraphs.type, heartOfDarkness.paragraphs.id, heartOfDarkness.paragraphs$para)
+heartOfDarkness.paragraphs.id <- paste0("HEART_OF_DARKNESS_", "PARAGRAPH_", heartOfDarkness.paragraphs.counter)
+heartOfDarkness.label <- rep("1", 197)
+heartOfDarkness.paragraphs.matrix <- cbind(heartOfDarkness.title, heartOfDarkness.paragraphs.type, heartOfDarkness.paragraphs.id, heartOfDarkness.paragraphs$para, heartOfDarkness.label)
 heartOfDarkness.paragraphs.df <- as.data.frame(heartOfDarkness.paragraphs.matrix)
-colnames(heartOfDarkness.paragraphs.df) <- c("Title", "Type", "ID", "Unit")
+colnames(heartOfDarkness.paragraphs.df) <- c("Title", "Type", "ID", "Unit", "Label")
 
 con <- dbConnect(RSQLite::SQLite(), ":memory:", dbname="textTable.sqlite")
 ### Columns. 
 # we should no longer need to set the column names
 dbWriteTable(con, "textTable", heartOfDarkness.paragraphs.df, append=TRUE, row.names=FALSE)
-dbGetQuery(con, "SELECT Unit FROM textTable WHERE Type='paragraph' LIMIT 2")
+dbGetQuery(con, "SELECT Unit FROM textTable WHERE Type='paragraph' and Title = 'heartOfDarkness' LIMIT 2")
 summary(con)
 dbDisconnect(con)

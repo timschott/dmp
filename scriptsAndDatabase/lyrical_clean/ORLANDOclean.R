@@ -10,8 +10,8 @@ library(qdap)
 # library("openNLPdata")
 
 ## Woolf, Orlando. 
-stock <- c("Title", "Type", "ID", "Unit")
-orlando <- scan("rawTexts/virginia-woolf-orlando.txt",what="character", sep="\n")
+stock <- c("Title", "Type", "ID", "Unit", "Label")
+orlando <- scan("rawTexts/lyrical/virginia-woolf-orlando.txt",what="character", sep="\n")
 orlando.start <- which(orlando=="He--for there could be no doubt of his sex, though the fashion of the")
 orlando.end<- which(orlando=="Eight.")
 # no head matter 
@@ -173,9 +173,10 @@ print(length(orlando.paragraphs$paragraphs))
 orlando.title <- rep("orlando", 451)
 orlando.para.type <- rep("paragraph", 451)
 orlando.para.counter<-seq(1, 451)
+orlando.label <- rep("1", 451)
 orlando.para.id <- paste0("ORLANDO_", "PARAGRAPH_", orlando.para.counter)
 print(length(orlando.para.id))
-orlando.para.matrix <- cbind(orlando.title, orlando.para.type, orlando.para.id, orlando.paragraphs)
+orlando.para.matrix <- cbind(orlando.title, orlando.para.type, orlando.para.id, orlando.paragraphs, orlando.label)
 orlando.para.df <- as.data.frame(orlando.para.matrix, stringsAsFactors = FALSE)
 colnames(orlando.para.df) <- stock
 

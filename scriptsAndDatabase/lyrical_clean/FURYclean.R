@@ -10,8 +10,8 @@ library(qdap)
 # library("openNLPdata")
 
 
-stock <- c("Title", "Type", "ID", "Unit")
-fury <- scan("rawTexts/william-faulkner-the-sound-and-the-fury.txt",what="character",sep="\n")
+stock <- c("Title", "Type", "ID", "Unit", "Label")
+fury <- scan("rawTexts/lyrical/william-faulkner-the-sound-and-the-fury.txt",what="character",sep="\n")
 fury.start <- which(fury=="Through the fence, between the curling flower spaces, I could see them")
 fury.fin <- which(fury=="window and doorway, and signboard, each in its ordered place.")
 fury<-fury[fury.start:fury.fin]
@@ -154,7 +154,6 @@ dbGetQuery(con, "SELECT * FROM textTable WHERE Type= 'word' AND Title='theSoundA
 dbDisconnect(con)
 
 # paras. 
-
 fury.paragraphs <- read.csv("Python_Scripts/checkCorpus/FURY_paras.csv", stringsAsFactors = FALSE)
 fury.paragraphs <- fury.paragraphs[-c(1:20, 3232:3235),]
 colnames(fury.paragraphs) <- c("arb", "paras")
@@ -189,8 +188,9 @@ fury.title <- rep("theSoundAndTheFury", 3208)
 fury.para.type <- rep("paragraph", 3208)
 fury.para.counter<-seq(1, 3208)
 fury.para.id <- paste0("THE_SOUND_AND_THE_FURY_", "PARAGRAPH_", fury.para.counter)
+fury.label <- rep("1", 3208)
 print(length(fury.para.id))
-fury.para.matrix <- cbind(fury.title, fury.para.type, fury.para.id, fury.paragraphs)
+fury.para.matrix <- cbind(fury.title, fury.para.type, fury.para.id, fury.paragraphs, fury.label)
 fury.para.df <- as.data.frame(fury.para.matrix, stringsAsFactors = FALSE)
 colnames(fury.para.df) <- stock
 

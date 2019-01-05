@@ -10,12 +10,12 @@ install.packages("rJava")
 library(rJava)
 library("openNLPdata")
 
-stock <- c("Title", "Type", "ID", "Unit")
+stock <- c("Title", "Type", "ID", "Unit", "Label")
 
 ################
 ## MOBY DICK ##
 
-moby <- scan("rawTexts/herman-melville-moby-dick.txt",what="character",sep="\n")
+moby <- scan("rawTexts/lyrical/herman-melville-moby-dick.txt",what="character",sep="\n")
 
 moby.start<- which(moby == "Call me Ishmael. Some years ago—never mind how long precisely—having")
 moby.end <- which(moby == "children, only found another orphan.")
@@ -32,14 +32,14 @@ moby <- moby[moby.not.blanks]
 
 length(moby)
 
-# moby is 18256 lines. so really big. so have to split it a lot. 
+# moby is 18951 lines. so really big. so have to split it a lot. 
 first_bite <- moby[1:2499]
 second_bite<- moby[2500:4999]
 third_bite <- moby[5000:7499]
 fourth_bite<- moby[7500:9999]
 fifth_bite <- moby[10000:12499]
 sixth_bite<- moby[15000:17499]
-seventh_bite<- moby[17500:18256]
+seventh_bite<- moby[17500:18951]
 
 moby.sents.first <- paste0(first_bite, collapse = "\n")
 moby.sents.first <- unlist(tokenize_sentences(moby.sents.first))
@@ -63,8 +63,8 @@ moby.sents.seventh <- paste0(seventh_bite, collapse = "\n")
 moby.sents.seventh <- unlist(tokenize_sentences(moby.sents.seventh))
 
 moby.sents <- c(moby.sents.first, moby.sents.second, moby.sents.third, moby.sents.fourth, moby.sents.fifth, moby.sents.sixth, moby.sents.seventh)
-moby.sents <- gsub('\"', '' , moby.sents, fixed=TRUE)
-
+# moby.sents <- gsub('\"', '' , moby.sents, fixed=TRUE)
+grep('\"', moby.sents)
 # need to get rid of folio etc business from the Cetalogy chapter
 moby.sents <- gsub('\\([A-z]+\\),.CHAPTER.[A-z]{1,}\\.', "", perl=TRUE,moby.sents)
 
@@ -182,11 +182,11 @@ colnames(moby.paragraphs) <- c("para")
 moby.title <- rep("mobyDick", 2434)
 moby.paras.type <- rep("paragraph", 2434)
 moby.paras.counter<-seq(1, 2434)
+moby.label <- rep("1", 2434)
 moby.paras.id <- paste0("MOBY_DICK_", "PARAGRAPH_", moby.paras.counter)
-moby.paras.matrix <- cbind(moby.title, moby.paras.type, moby.paras.id, moby.paragraphs)
+moby.paras.matrix <- cbind(moby.title, moby.paras.type, moby.paras.id, moby.paragraphs, moby.label)
 moby.paras.df <- as.data.frame(moby.paras.matrix, stringsAsFactors = FALSE)
 colnames(moby.paras.df) <- stock
-
 
 con <- dbConnect(RSQLite::SQLite(), ":memory:", dbname="textTable.sqlite")
 

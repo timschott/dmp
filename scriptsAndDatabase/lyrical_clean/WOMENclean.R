@@ -15,7 +15,7 @@ stock <- c("Title", "Type", "ID", "Unit")
 #######################
 #####Women IN Love Clean
 
-women <- scan("rawTexts/dh-lawrence-women-in-love.txt",what="character",sep="\n")
+women <- scan("rawTexts/lyrical/dh-lawrence-women-in-love.txt",what="character",sep="\n")
 
 women.start<- which(women == "Ursula and Gudrun Brangwen sat one morning in the window-bay of their")
 women.end <- which(women == "“I don’t believe that,” he answered.")

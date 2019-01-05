@@ -10,9 +10,9 @@ install.packages("rJava")
 library(rJava)
 library("openNLPdata")
 
-stock <- c("Title", "Type", "ID", "Unit")
+stock <- c("Title", "Type", "ID", "Unit", "Label")
 
-lita <- scan("rawTexts/vladimir-nabokov-lolita-2.txt",what="character",sep="\n")
+lita <- scan("rawTexts/lyrical/vladimir-nabokov-lolita-2.txt",what="character",sep="\n")
 
 lita.start<- which(lita == "Lolita, light of my life, fire of my loins. My sin, my soul. Lo-lee-ta:")
 lita.end <- which(lita == "share, my Lolita.")
@@ -23,10 +23,9 @@ lita <- gsub('_', '', perl=TRUE, lita)
 
 lita <- gsub('^[0-9]+', '', perl=TRUE, lita)
 lita <- gsub('(?<=[A-Z])(\\.)(?=[A-Z]|\\.|\\s)', '', perl=TRUE, lita)
-
+length(lita)
 lita.not.blanks <- which(lita != "")
 lita <- lita[lita.not.blanks]
-
 
 first_bite <- lita[1:2499]
 second_bite<- lita[2500:4999]
@@ -49,26 +48,45 @@ lita.sents <- c(lita.sents.first, lita.sents.second, lita.sents.third, lita.sent
 length(lita.sents)
 # punctuation loop.
 
-bad_spots<-c(0)
-substr(lita.sents[750], nchar(lita.sents[750]), nchar(lita.sents[750]))
-
+bad_spots <-c(0)
 for(i in seq(1:length(lita.sents))){
-  #if the sentence ends with a punctuation mark and the next character is a lowercase, combine them
+  #if the sentence ends with a punctuation mark and the next character is a lowercase, combine them,
+  # if the sequence starts with a capital letter... but for eg ha! ha! ha! don't combine
+  # so check if the first sentence starts with a lowercase as well
   test <- substr(lita.sents[i], nchar(lita.sents[i]), nchar(lita.sents[i]))
   test2 <- substr(lita.sents[i+1], 1, 1)
-  if(test %in% c('?', '!') && test2==tolower(test2)){
-    lita.sents[i] <- paste(lita.sents[i], lita.sents[i+1])
-    # print(lita.sents[i])
-    bad_spots<-append(bad_spots, i+1)
+  test3 <- substr(lita.sents[i], 1, 1)
+  if(test2 %in% c(LETTERS, letters)){
+    if(test %in% c('?', '!') && test2==tolower(test2) && test3!=tolower(test3)){
+      #print(i)
+      lita.sents[i] <- paste(lita.sents[i], lita.sents[i+1])
+      bad_spots<-append(bad_spots, i+1)
+    }
   }
 }
-bad_spots
-
-lita.sents <- lita.sents[-bad_spots]
-
+bad_spots <- bad_spots[-c(1)]
+lita.sents <- lita.sents[-c(bad_spots)]
 print(length(lita.sents))
-# first person fun.
 
+bad_spots <-c(0)
+for(i in seq(1:length(lita.sents))){
+  #if the sentence ends with a punctuation mark and the next character is a lowercase, combine them
+  test <- substr(lita.sents[i], nchar(lita.sents[i])-1, nchar(lita.sents[i]))
+  test2 <- substr(lita.sents[i+1], 1, 1)
+  if(test2 %in% c(LETTERS, letters)){
+    if(test %in% c("?'", "!'") && test2==tolower(test2)){
+      lita.sents[i] <- paste(lita.sents[i], lita.sents[i+1])
+      bad_spots<-append(bad_spots, i+1)
+    }
+  }
+}
+bad_spots <- bad_spots[-c(1)]
+lita.sents[bad_spots]
+lita.sents <- lita.sents[-c(bad_spots)]
+print(length(lita.sents))
+
+# first person fun.
+bad_spots <- c(0)
 for(i in seq(1:length(lita.sents))){
   #if the sentence ends with a punctuation mark and the next character is a lowercase, combine them
   test <- substr(lita.sents[i], nchar(lita.sents[i]), nchar(lita.sents[i]))
@@ -85,12 +103,22 @@ lita.sents <- lita.sents[-bad_spots]
 
 print(length(lita.sents))
 
-lita.title <- rep("lolita", 5063)
-lita.sents.type <- rep("sentence", 5063)
-lita.sents.counter<-seq(1, 5063)
+lita.sents[1300]<- paste(lita.sents[1300],lita.sents[1301],lita.sents[1302])
+lita.sents[1301] <- ""
+lita.sents[1302] <- ""
+lita.sents[3959] <- paste(lita.sents[3959], lita.sents[3960])
+lita.sents[3960] <- ""
+lita.sents[1768] <- paste(lita.sents[1768], lita.sents[1769])
+lita.sents[1769] <- ""
+print(length(lita.sents))
+
+lita.title <- rep("lolita", 5169)
+lita.sents.type <- rep("sentence", 5169)
+lita.sents.counter<-seq(1, 5169)
 lita.sents.id <- paste0("LOLITA_", "SENT_", lita.sents.counter)
+lita.label <- rep("1", 5169)
 print(length(lita.sents.id))
-lita.sents.matrix <- cbind(lita.title, lita.sents.type, lita.sents.id, lita.sents)
+lita.sents.matrix <- cbind(lita.title, lita.sents.type, lita.sents.id, lita.sents, lita.label)
 lita.sents.df <- as.data.frame(lita.sents.matrix, stringsAsFactors = FALSE)
 colnames(lita.sents.df) <- stock
 # okay i think it's good now.
@@ -99,6 +127,7 @@ colnames(lita.sents.df) <- stock
 con <- dbConnect(RSQLite::SQLite(), ":memory:", dbname="textTable.sqlite")
 
 dbWriteTable(con, "textTable", lita.sents.df, append=TRUE, row.names=FALSE)
+# dbExecute(con, "DELETE FROM textTable WHERE Type='sentence' AND Title='lolita'")
 dbGetQuery(con, "SELECT Unit FROM textTable WHERE Type='sentence' AND Title='lolita' LIMIT 2")
 dbDisconnect(con)
 
@@ -145,68 +174,85 @@ dbGetQuery(con, "SELECT * FROM textTable WHERE Type= 'word' AND Title='lolita' L
 dbDisconnect(con)
 
 ### LOLITA, PARAGRAPHS.
-lita <- scan("rawTexts/vladimir-nabokov-lolita-2.txt",what="character", sep="\n")
+
+### LOLITA, PARAGRAPHS.
+lita <- scan("rawTexts/lyrical/vladimir-nabokov-lolita-2.txt",what="character", sep="\n")
+lita <- read.csv("Python_Scripts/checkCorpus/LOLITA_paras.csv", stringsAsFactors = FALSE)
+colnames(lita) <- c("arb", "para")
 # lets kill the line number 
-lita <- gsub('^[0-9]+', '', perl=TRUE, lita)
-lita <- gsub('(?<=[A-Z])(\\.)(?=[A-Z]|\\.|\\s)', '', perl=TRUE, lita)
-lita.not.blanks <- which(lita != "")
-lita <- replace_abbreviation(lita)
+lita <- lita %>%
+  transmute(paragraphs = gsub('^[0-9]+', '', perl=TRUE, para))
 
-lita <- lita[lita.not.blanks]
-lita <- gsub('\"', '', perl=TRUE, lita)
+lita <- lita %>%
+  transmute(para = gsub('(?<=[A-Z])(\\.)(?=[A-Z]|\\.|\\s)', '', perl=TRUE, paragraphs))
 
-#tiny <- lita[1:10]
-#tiny_test <- paste(tiny, "\n", sep="")
-#tiny_test
-#print(length(lita))
-#test <- paste(lita[7148:7150],"\n", collapse="")
-#test2<-paste(test, collapse="\n")
-#test3 <- gsub("\n", "", perl=TRUE, test2)
+lita <- lita %>% filter(para!="")
+lita <- lita %>%
+  transmute(paragraph = gsub('\n', ' ', perl=TRUE, para))
 
-lita_ind <- lita[1:9177]
-lita_slash <- paste(lita_ind, "\n", sep="")
+lita <- lita %>%
+  transmute(para = gsub('\"', "'", perl=TRUE, paragraph))
 
-# procedure: 
-# add \n to end of every line.
-# collapse index-- end of index on "\n" 
-# append to para vec
-# for all in para vec, sub "" for \n .
-paras_ind <- grep("     ", lita)
-paras <- c('')
-
-for(i in seq(1:length(lita))){
-  #if the sentence ends with a punctuation mark and the next character is a lowercase, combine them
-  #test <- substr(lita.sents[i], nchar(lita.sents[i]), nchar(lita.sents[i]))
-  if(i<1211){
-    paragraph <- paste(lita_slash[paras_ind[i]:(paras_ind[i+1]-1)], collapse="\n")
-    paras <- append(paras, paragraph)
-  }
-}
-paras <- paras[-c(1)]
-first_para <- c("Lolita, light of my life, fire of my loins. My sin, my soul. Lo-lee-ta: the tip  of  the tongue taking a trip of three steps down the palate to tap, at three, on the teeth. Lo. Lee. Ta.")
-last_para <- c("Thus, neither of us is alive when the reader opens this book. But while the blood  still  throbs through my writing hand, you are still as much part of blessed matter as I am, and I can still talk to you from here to  Alaska. Be  true  to  your  Dick. Do not let other fellows touch you. Do not talk to strangers. I hope you will love your baby. I hope it will  be  a  boy.  That husband  of  yours, I hope, will always treat you well, because otherwise my specter shall come at him, like black smoke, like a demented giant, and pull him apart nerve by nerve. And do not pity C. Q. One had  to  choose  between him  and  H.H.,  and  one  wanted  H.H. to exist at least a couple of months longer, so as to have him make you live in the minds of later generations. I am thinking of aurochs and angels, the secret of durable pigments, prophetic sonnets, the refuge of art. And this is the only immortality you and  I  may share, my Lolita.")
-# okay, so let's just build our own paragraphs...
-
-## okay take out the new lines. double and single. 
-paras_out <- gsub('\n\n', ' ', perl=TRUE, paras)
-paras <- gsub('\n', '', perl=TRUE, paras_out)
-paras_out<- gsub('     ', '', perl=TRUE, paras)
-paras <- gsub('  ', ' ', perl=TRUE, paras_out)
-
-# okay finally. 
-print(length(paras))
-
-lita.paras <- c(first_para, paras, last_para)
+lita <- lita %>%
+  transmute(paragraph = gsub('  ', " ", perl=TRUE, para))
+print(length(lita$paragraph))
 
 # phew.. 
+# verse connections..
+1159:1162
+lita$paragraph[1158] <- paste(lita$paragraph[1158], lita$paragraph[1159], lita$paragraph[1160], lita$paragraph[1161])
+lita$paragraph[1159] <-""
+lita$paragraph[1160] <- ""
+lita$paragraph[1161] <- ""
+lita$paragraph[1163] <- paste(lita$paragraph[1163], lita$paragraph[1164])
+lita$paragraph[1164] <- ""
+# lita$paragraph[1163:1164]
+lita$paragraph[1166] <- paste(lita$paragraph[1166], lita$paragraph[1167],lita$paragraph[1168],lita$paragraph[1168], lita$paragraph[1169], lita$paragraph[1170])
+lita$paragraph[1167] <- ""
+lita$paragraph[1168] <- ""
+lita$paragraph[1169] <- ""
+lita$paragraph[1170] <- ""
+lita$paragraph[1172] <- paste(lita$paragraph[1172], lita$paragraph[1173], lita$paragraph[1174])
+lita$paragraph[1173] <- ""
+lita$paragraph[1174] <- ""
+# lita$paragraph[1172:1174]
+lita$paragraph[1176] <- paste(lita$paragraph[1176], lita$paragraph[1177], lita$paragraph[1178], lita$paragraph[1179])
+lita$paragraph[1177] <- ""
+lita$paragraph[1178] <- ""
+lita$paragraph[1179] <- ""
+# lita$paragraph[1176:1179]
 
-lita.title <- rep("lolita", 1212)
-lita.para.type <- rep("paragraph", 1212)
-lita.para.counter<-seq(1, 1212)
+lita$paragraph[1181:1195]
+lita$paragraph[1181] <- paste(lita$paragraph[1181], lita$paragraph[1182], lita$paragraph[1183],
+                              lita$paragraph[1184], lita$paragraph[1185], lita$paragraph[1186],
+                              lita$paragraph[1187], lita$paragraph[1188], lita$paragraph[1189],
+                              lita$paragraph[1190], lita$paragraph[1191], lita$paragraph[1192],
+                              lita$paragraph[1193], lita$paragraph[1194], lita$paragraph[1195])
+lita$paragraph[1182] <- ""
+lita$paragraph[1183]<- ""
+lita$paragraph[1184]<- ""
+lita$paragraph[1185]<- ""
+lita$paragraph[1186]<- ""
+lita$paragraph[1187]<- ""
+lita$paragraph[1188]<- ""
+lita$paragraph[1189]<- ""
+lita$paragraph[1190]<- ""
+lita$paragraph[1191]<- ""
+lita$paragraph[1192]<- ""
+lita$paragraph[1193]<- ""
+lita$paragraph[1194]<- ""
+lita$paragraph[1195]<- ""
+lita <- lita %>% filter(paragraph!="")
+length(lita$paragraph)
+lita.title <- rep("lolita", 1189)
+lita.para.type <- rep("paragraph", 1189)
+lita.para.counter<-seq(1, 1189)
+lita.label <- rep("1", 1189)
 lita.para.id <- paste0("LOLITA_", "PARAGRAPH_", lita.para.counter)
 print(length(lita.para.id))
-lita.para.matrix <- cbind(lita.title, lita.para.type, lita.para.id, lita.paras)
+lita.para.matrix <- cbind(lita.title, lita.para.type, lita.para.id, lita, lita.label)
 lita.para.df <- as.data.frame(lita.para.matrix, stringsAsFactors = FALSE)
+stock <- c("Title", "Type", "ID", "Unit", "Label")
 colnames(lita.para.df) <- stock
 
 con <- dbConnect(RSQLite::SQLite(), ":memory:", dbname="textTable.sqlite")

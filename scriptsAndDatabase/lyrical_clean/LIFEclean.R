@@ -38,7 +38,7 @@ colnames(life.para.df) <- stock
 
 con <- dbConnect(RSQLite::SQLite(), ":memory:", dbname="textTable.sqlite")
 dbWriteTable(con, "textTable", life.para.df, append=TRUE, row.names=FALSE)
-dbGetQuery(con, "SELECT Unit FROM textTable WHERE Type='paragraph' AND Title='lifeAndTimesOfMichaelK' LIMIT 2")
+dbGetQuery(con, "SELECT Unit FROM textTable WHERE Type='sentence' AND Title='lifeAndTimesOfMichaelK' LIMIT 150")
 # the saddest query there ever was.
  # dbExecute(con, "DELETE FROM textTable WHERE Title='gravitysRainbow' OR Title='absalomAbsalom' OR Title='bloodMeridian' OR Title= 'somethingHappened' OR Title= 'wideSargassoSea' OR Title= 'lifeAndTimesOfMichaelK' OR Title='mrsDalloway' OR Title= 'theShriekingPit' OR Title= 'theMoonstone'")
 dbDisconnect(con)
@@ -150,8 +150,6 @@ colnames(life.words.df) <- c("Title", "Type", "ID", "Unit", "Label")
 dbWriteTable(con, "textTable", life.words.df, append=TRUE, row.names=FALSE)
 dbGetQuery(con, "SELECT * FROM textTable WHERE Type= 'word' AND Title='lifeAndTimesOfMichaelK' LIMIT 10")
 dbDisconnect(con)
-
-
 
 
 

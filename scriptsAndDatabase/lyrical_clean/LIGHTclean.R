@@ -10,22 +10,22 @@ library(qdap)
 # library("openNLPdata")
 
 # mOOre wolf.
-stock <- c("Title", "Type", "ID", "Unit")
-light <- scan("rawTexts/virginia-woolf-to-the-lighthouse.txt",what="character", sep="\n")
+stock <- c("Title", "Type", "ID", "Unit", "Label")
+light <- scan("rawTexts/lyrical/virginia-woolf-to-the-lighthouse.txt",what="character", sep="\n")
 light.start <- 37
 light.end<- which(light=="I have had my vision.")
 light <- light[light.start:light.end]
 
-# need to grep out "\"
+# need to grep out "\" --> PSYCH (love, future tim.)
 chaps<- grep('[0-9+]', light)
 chaps <- chaps[-c(5)]
 light <- light[-c(chaps)]
 # more. 
 light <- gsub('(?<=[A-Z])(\\.)(?=[A-Z]|\\.|\\s)|_', '', perl=TRUE, light)
-light <- gsub('\"', '', perl=TRUE, light)
+light <- gsub('\"', "'", perl=TRUE, light)
 
 light <- gsub('Mrs.', 'Mrs', perl=TRUE, light)
-light <- gsub('Mr.', 'Mr', perl=TRUE, light)
+light <- gsub('Mr\\.', 'Mr', perl=TRUE, light)
 
 light.temp <- which(light != "")
 light <- light[light.temp]
@@ -69,25 +69,39 @@ bad_spots <- bad_spots[-c(1)]
 light.sents <- light.sents[-c(bad_spots)]
 print(length(light.sents))
 
-
-light.title <- rep("toTheLighthouse", 3402)
-light.sents.type <- rep("sentence", 3402)
-light.sents.counter<-seq(1, 3402)
+bad_spots <-c(0)
+for(i in seq(1:length(light.sents))){
+  #if the sentence ends with a punctuation mark and the next character is a lowercase, combine them
+  test <- substr(light.sents[i], nchar(light.sents[i])-1, nchar(light.sents[i]))
+  test2 <- substr(light.sents[i+1], 1, 1)
+  if(test2 %in% c(LETTERS, letters)){
+    if(test %in% c("?'", "!'") && test2==tolower(test2)){
+      light.sents[i] <- paste(light.sents[i], light.sents[i+1])
+      bad_spots<-append(bad_spots, i+1)
+    }
+  }
+}
+bad_spots <- bad_spots[-c(1)]
+light.sents[bad_spots]
+light.sents <- light.sents[-c(bad_spots)]
+print(length(light.sents))
+light.title <- rep("toTheLighthouse", 3401)
+light.sents.type <- rep("sentence", 3401)
+light.sents.counter<-seq(1, 3401)
 light.sents.id <- paste0("TO_THE_LIGHTHOUSE_", "SENT_", light.sents.counter)
+light.label <- rep("1", 3401)
 print(length(light.sents.id))
-light.sents.matrix <- cbind(light.title, light.sents.type, light.sents.id, light.sents)
+light.sents.matrix <- cbind(light.title, light.sents.type, light.sents.id, light.sents, light.label)
 light.sents.df <- as.data.frame(light.sents.matrix, stringsAsFactors = FALSE)
 
 colnames(light.sents.df) <- stock
 con <- dbConnect(RSQLite::SQLite(), ":memory:", dbname="textTable.sqlite")
-
+# dbExecute(con, "DELETE FROM textTable WHERE Type='sentence' AND Title='toTheLighthouse'")
 dbWriteTable(con, "textTable", light.sents.df, append=TRUE, row.names=FALSE)
 dbGetQuery(con, "SELECT Unit FROM textTable WHERE Type='sentence' AND Title='toTheLighthouse' LIMIT 2")
-
 dbDisconnect(con)
 
 ########### words...
-
 
 stock <- c("Title", "Type", "ID", "Unit")
 light <- scan("rawTexts/virginia-woolf-to-the-lighthouse.txt",what="character", sep="\n")
@@ -145,13 +159,13 @@ colnames(light.paragraphs) <- c("arb", "paras")
 light.paragraphs <- light.paragraphs %>%
   transmute(paragraph = gsub('(?<=[A-Z])(\\.)(?=[A-Z]|\\.|\\s)|_', '', perl=TRUE, paras))
 light.paragraphs <- light.paragraphs %>%
-  transmute(paras = gsub('\"', '', perl=TRUE, paragraph))
+  transmute(paras = gsub('\"', "'", perl=TRUE, paragraph))
 light.paragraphs <- light.paragraphs %>%
   transmute(paragraph = gsub('[0-9]+', '', perl=TRUE, paras))
 light.paragraphs <- light.paragraphs %>%
-  transmute(paras = gsub('Mr.', 'Mr', perl=TRUE, paragraph))
+  transmute(paras = gsub('Mr\\.', 'Mr', perl=TRUE, paragraph))
 light.paragraphs <- light.paragraphs %>%
-  transmute(paragraph = gsub('Mrs.', 'Mrs', perl=TRUE, paras))
+  transmute(paragraph = gsub('Mrs\\.', 'Mrs', perl=TRUE, paras))
 light.paragraphs <- light.paragraphs %>% filter(paragraph!="")
 light.paragraphs <- light.paragraphs %>%
   transmute(paras = gsub('\n', ' ', perl=TRUE, paragraph))
@@ -160,8 +174,9 @@ light.title <- rep("toTheLighthouse", 495)
 light.para.type <- rep("paragraph", 495)
 light.para.counter<-seq(1, 495)
 light.para.id <- paste0("TO_THE_LIGHTHOUSE_", "PARAGRAPH_", light.para.counter)
+light.label<- rep("1", 495)
 print(length(light.para.id))
-light.para.matrix <- cbind(light.title, light.para.type, light.para.id, light.paragraphs)
+light.para.matrix <- cbind(light.title, light.para.type, light.para.id, light.paragraphs, light.label)
 light.para.df <- as.data.frame(light.para.matrix, stringsAsFactors = FALSE)
 colnames(light.para.df) <- stock
 

@@ -11,8 +11,8 @@ library(qdap)
 # library("openNLPdata")
 
 # eureaka, poe. 
-stock <- c("Title", "Type", "ID", "Unit")
-poe <- scan("rawTexts/edgar-allen-poe-eureka.txt",what="character",sep="\n")
+stock <- c("Title", "Type", "ID", "Unit", "Label")
+poe <- scan("rawTexts/lyrical/edgar-allen-poe-eureka.txt",what="character",sep="\n")
 
 poe.start <- 6
 poe.end <- 269
@@ -20,10 +20,9 @@ poe <- poe[poe.start:poe.end]
 
 poe <- gsub('_', '', perl=TRUE, poe)
 poe<-  gsub('(?<=[A-Z])(\\.)(?=[A-Z]|\\.|\\s)', '', perl=TRUE, poe)
-poe <- gsub('\"', '', perl=TRUE, poe)
+poe <- gsub('\"', "'", perl=TRUE, poe)
 
 length(poe)
-
 
 first_bite <- poe[1:264]
 
@@ -35,20 +34,21 @@ poe.sents <- c(poe.sents.first)
 poe.sents <- poe.sents[-c(1:4)]
 poe.sents <- poe.sents[-c(1)]
 poe.sents <- gsub("EUREKA: AN ESSAY ON THE MATERIAL AND SPIRITUAL UNIVERSE IT", "It", poe.sents)
-
-
+print(length(poe.sents))
 poe.title <- rep("eureka", 1088)
 poe.sents.type <- rep("sentence", 1088)
 poe.sents.counter<-seq(1, 1088)
 poe.sents.id <- paste0("EUREKA_", "SENT_", poe.sents.counter)
+poe.label <- rep("1", 1088)
 print(length(poe.sents.id))
-poe.sents.matrix <- cbind(poe.title, poe.sents.type, poe.sents.id, poe.sents)
+poe.sents.matrix <- cbind(poe.title, poe.sents.type, poe.sents.id, poe.sents, poe.label)
 poe.sents.df <- as.data.frame(poe.sents.matrix, stringsAsFactors = FALSE)
 colnames(poe.sents.df) <- stock
 
 con <- dbConnect(RSQLite::SQLite(), ":memory:", dbname="textTable.sqlite")
 
 dbWriteTable(con, "textTable", poe.sents.df, append=TRUE, row.names=FALSE)
+# dbExecute(con, "DELETE FROM textTable WHERE Type='sentence' AND Title='eureka'")
 dbGetQuery(con, "SELECT Unit FROM textTable WHERE Type='sentence' AND Title='eureka' LIMIT 2")
 dbDisconnect(con)
 
@@ -103,19 +103,21 @@ poe.paragraphs <- as.data.frame(unlist(strsplit(poe.paragraphs$X0, "\n", perl=TR
 colnames(poe.paragraphs) <- ("paras")
 poe.paragraphs <- as.data.frame(poe.paragraphs[-c(1:16,272),],stringsAsFactors=FALSE)
 colnames(poe.paragraphs) <- ("paras")
+grep("\'", poe.paragraphs$paras)
+poe.paragraphs$paras[20:22]
 poe.paragraphs <- poe.paragraphs %>%
-  transmute(paragraph = gsub('\"', 'Mrs', perl=TRUE, paras))
+  transmute(paragraph = gsub('\"', "'", perl=TRUE, paras))
 poe.paragraphs <- poe.paragraphs %>%
   transmute(paras = gsub('_', '', perl=TRUE, paragraph))
 print(length(poe.paragraphs$paras))
-
 
 poe.title <- rep("eureka", 255)
 poe.para.type <- rep("paragraph", 255)
 poe.para.counter<-seq(1, 255)
 poe.para.id <- paste0("EUREKA_", "PARAGRAPH_", poe.para.counter)
 print(length(poe.para.id))
-poe.para.matrix <- cbind(poe.title, poe.para.type, poe.para.id, poe.paragraphs)
+poe.label <- rep("1", 255)
+poe.para.matrix <- cbind(poe.title, poe.para.type, poe.para.id, poe.paragraphs, poe.label)
 poe.para.df <- as.data.frame(poe.para.matrix, stringsAsFactors = FALSE)
 colnames(poe.para.df) <- stock
 
