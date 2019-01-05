@@ -9,9 +9,9 @@ library(qdap)
 # library(rJava)
 # library("openNLPdata")
 
-stock <- c("Title", "Type", "ID", "Unit")
+stock <- c("Title", "Type", "ID", "Unit", "Label")
 
-poe <- scan("rawTexts/edgar-allen-poe-narrative-of-arthur-gordon-pym.txt",what="character",sep="\n")
+poe <- scan("rawTexts/lyrical/edgar-allen-poe-narrative-of-arthur-gordon-pym.txt",what="character",sep="\n")
 
 poe.start<- 55
 poe.end <- which(poe == "UNCLE: “My eyes!—well, Kate—well, Bobby!—this is a judgment upon me, as you say. But I am a man of my word—mark that! you shall have her, boy, (plum and all), when you please. Done up, by Jove! Three Sundays all in a row! I’ll go, and take Dubble L. Dee’s opinion upon that.”")
@@ -25,7 +25,7 @@ length(poe)
 
 poe.sents.first <- paste0(poe, collapse = "\n")
 poe.sents.first <- unlist(tokenize_sentences(poe.sents.first))
-poe.sents <- gsub('\"', '' , poe.sents.first, fixed=TRUE)
+poe.sents <- gsub('\"', "'" , poe.sents.first, fixed=TRUE)
 
 poe.sents.df <- as.data.frame(poe.sents, stringsAsFactors = FALSE)
 poe.sents.df <- poe.sents.df[-c(16,2721)]
@@ -144,12 +144,10 @@ test <- as.data.frame(unlist(strsplit(pym.paragraphs$X0[8:86], "\n\n", perl=TRUE
 pym.paragraphs <- test
 colnames(pym.paragraphs) <- c("para")
 
-
 pym.paragraphs <- pym.paragraphs %>%
   mutate(paragraph = gsub('CHAPTER [0-9]+..*|(?<=[A-Z])(\\.)(?=[A-Z]|\\.|\\s)', '', perl=TRUE, para))
 pym.paragraphs <- pym.paragraphs %>% 
   transmute(para = gsub('CHAPTER [0-9]', '', perl=TRUE,paragraph))
-
 
 pym.paragraphs <- as.data.frame(pym.paragraphs[-c(1),], stringsAsFactors = FALSE)
 
@@ -165,10 +163,11 @@ print(length(pym.paragraphs$paragraph))
 pym.title <- rep("pym", 625)
 pym.para.type <- rep("paragraph", 625)
 pym.para.counter<-seq(1, 625)
+pym.label <- rep("1", 625)
 pym.para.id <- paste0("PYM_", "PARAGRAPH_", pym.para.counter)
 print(length(pym.para.id))
 
-pym.para.matrix <- cbind(pym.title, pym.para.type, pym.para.id, pym.paragraphs)
+pym.para.matrix <- cbind(pym.title, pym.para.type, pym.para.id, pym.paragraphs, pym.label)
 pym.para.df <- as.data.frame(pym.para.matrix, stringsAsFactors = FALSE)
 colnames(pym.para.df) <- stock
 

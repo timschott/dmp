@@ -9,11 +9,11 @@ library(qdap)
 # library(rJava)
 # library("openNLPdata")
 
-stock <- c("Title", "Type", "ID", "Unit")
+stock <- c("Title", "Type", "ID", "Unit", "Label")
 
 #### the Rainbow cleaning. 
 
-rainbow <- scan("rawTexts/dh-lawrence-the-rainbow.txt",what="character",sep="\n")
+rainbow <- scan("rawTexts/lyrical/dh-lawrence-the-rainbow.txt",what="character",sep="\n")
 
 rainbow.start<- which(rainbow == "The Brangwens had lived for generations on the Marsh Farm, in")
 rainbow.end <- which(rainbow == "Truth, fitting to the over-arching heaven.")
@@ -22,7 +22,7 @@ rainbow <- rainbow[rainbow.start:rainbow.end]
 
 rainbow <- gsub('CHAPTER.X{0,3}(IX|IV|V?I{0,3}).|[A-Z]{2,}|_|EXEUNT', '', perl=TRUE, rainbow)
 
-rainbow <- gsub('\"', '' , rainbow, fixed=TRUE)
+rainbow <- gsub('\"', "'" , rainbow, fixed=TRUE)
 # lets just look for the line number. 
 rainbow <- replace_abbreviation(rainbow)
 # okay sentences. 
@@ -67,28 +67,30 @@ rainbow.sents <- c(rainbow.sents.first, rainbow.sents.second, rainbow.sents.thir
 bad_spots <-c(0)
 for(i in seq(1:length(rainbow.sents))){
   #if the sentence ends with a punctuation mark and the next character is a lowercase, combine them
-  test <- substr(rainbow.sents[i], nchar(rainbow.sents[i]), nchar(rainbow.sents[i]))
+  test <- substr(rainbow.sents[i], nchar(rainbow.sents[i])-1, nchar(rainbow.sents[i]))
   test2 <- substr(rainbow.sents[i+1], 1, 1)
   if(test2 %in% c(LETTERS, letters)){
-    if(test %in% c('?', '!') && test2==tolower(test2)){
-      print(i)
+    if(test %in% c("?'", "!'") && test2==tolower(test2)){
       rainbow.sents[i] <- paste(rainbow.sents[i], rainbow.sents[i+1])
       bad_spots<-append(bad_spots, i+1)
     }
   }
 }
-
-# rainbow.sents[bad_spots]
+bad_spots <- bad_spots[-c(1)]
+rainbow.sents[bad_spots]
 rainbow.sents <- rainbow.sents[-c(bad_spots)]
-# print(length(rainbow.sents))
+
+
+print(length(rainbow.sents))
 # print(length(rainbow.sents))
 
-rainbow.title <- rep("theRainbow", 12372)
-rainbow.sents.type <- rep("sentence", 12372)
-rainbow.sents.counter<-seq(1, 12372)
+rainbow.title <- rep("theRainbow", 12278)
+rainbow.sents.type <- rep("sentence", 12278)
+rainbow.sents.counter<-seq(1, 12278)
+rainbow.label <- rep("1", 12278)
 rainbow.sents.id <- paste0("THE_RAINBOW_", "SENT_", rainbow.sents.counter)
 print(length(rainbow.sents.id))
-rainbow.sents.matrix <- cbind(rainbow.title, rainbow.sents.type, rainbow.sents.id, rainbow.sents)
+rainbow.sents.matrix <- cbind(rainbow.title, rainbow.sents.type, rainbow.sents.id, rainbow.sents, rainbow.label)
 rainbow.sents.df <- as.data.frame(rainbow.sents.matrix, stringsAsFactors = FALSE)
 colnames(rainbow.sents.df) <- stock
 
@@ -96,7 +98,7 @@ con <- dbConnect(RSQLite::SQLite(), ":memory:", dbname="textTable.sqlite")
 
 dbWriteTable(con, "textTable", rainbow.sents.df, append=TRUE, row.names=FALSE)
 dbGetQuery(con, "SELECT Unit FROM textTable WHERE Type='sentence' AND Title='theRainbow' LIMIT 2")
-# dbExecute(con, "DELETE FROM textTable WHERE Title='theRainbow'")
+# dbExecute(con, "DELETE FROM textTable WHERE Type='sentence' AND Title='theRainbow'")
 
 dbDisconnect(con)
 
@@ -163,12 +165,16 @@ rainbow.paragraphs <- as.data.frame(rainbow.paragraphs[-which(rainbow.paragraphs
 print(length(rainbow.paragraphs$`rainbow.paragraphs[-which(rainbow.paragraphs$para == ""), ]`))
 colnames(rainbow.paragraphs) <-c("paragraph")
 
+rainbow.paragraphs <- rainbow.paragraphs %>%
+  transmute(paras = gsub('\"', "'", perl=TRUE, paragraph))
+
 rainbow.title <- rep("theRainbow", 4524)
 rainbow.para.type <- rep("paragraph", 4524)
 rainbow.para.counter<-seq(1, 4524)
 rainbow.para.id <- paste0("THE_RAINBOW_", "PARAGRAPH_", rainbow.para.counter)
 print(length(rainbow.para.id))
-rainbow.para.matrix <- cbind(rainbow.title, rainbow.para.type, rainbow.para.id, rainbow.paragraphs)
+rainbow.label <- rep("1", 4524)
+rainbow.para.matrix <- cbind(rainbow.title, rainbow.para.type, rainbow.para.id, rainbow.paragraphs, rainbow.label)
 rainbow.para.df <- as.data.frame(rainbow.para.matrix, stringsAsFactors = FALSE)
 colnames(rainbow.para.df) <- stock
 

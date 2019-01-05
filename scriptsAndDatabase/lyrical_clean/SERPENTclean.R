@@ -9,7 +9,7 @@ library(qdap)
 # library(rJava)
 # library("openNLPdata")
 
-stock <- c("Title", "Type", "ID", "Unit")
+stock <- c("Title", "Type", "ID", "Unit", "Label")
 
 ### serpent sents. 
 
@@ -136,10 +136,11 @@ print(length(serpent.paragraphs$paragraphs))# 4984
 serpent.title <- rep("theSerpent", 4984)
 serpent.para.type <- rep("paragraph", 4984)
 serpent.para.counter<-seq(1, 4984)
+serpent.label <- rep("1", 4984)
 serpent.para.id <- paste0("THE_SERPENT_", "PARAGRAPH_", serpent.para.counter)
 print(length(serpent.para.id))
 
-serpent.para.matrix <- cbind(serpent.title, serpent.para.type, serpent.para.id, serpent.paragraphs)
+serpent.para.matrix <- cbind(serpent.title, serpent.para.type, serpent.para.id, serpent.paragraphs, serpent.label)
 serpent.para.df <- as.data.frame(serpent.para.matrix, stringsAsFactors = FALSE)
 colnames(serpent.para.df) <- stock
 

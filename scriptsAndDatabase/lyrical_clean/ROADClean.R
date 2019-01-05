@@ -6,15 +6,13 @@ library("textclean")
 library("stringr")
 library("tm")
 library(qdap)
-install.packages("rJava")
-library(rJava)
-library("openNLPdata")
 
-stock <- c("Title", "Type", "ID", "Unit")
+
+stock <- c("Title", "Type", "ID", "Unit", "Label")
 
 ###NEXT, the Road####
 
-theRoad <- scan("rawTexts/cormac-mccarthy-the-road.txt",what="character", sep="\n")
+theRoad <- scan("rawTexts/lyrical/cormac-mccarthy-the-road.txt",what="character", sep="\n")
 #get rid of all numbers
 theRoad <- gsub("[0-9]", '', theRoad)
 road.not.blanks <- which(theRoad != "")
@@ -37,17 +35,17 @@ theRoad <- theRoad[-bad]
 theRoad <- theRoad[-c(1:6)]
 theRoad <- theRoad[-c(2469:2484)]
 theRoad<- theRoad[-c(2468)]
-
+length(theRoad)
 theRoad.paragraphs <- theRoad
 theRoad.title <- rep("theRoad", 2467)
 theRoad.paragraphs.type <- rep("paragraph", 2467)
 theRoad.paragraphs.counter <- seq(1, 2467)
-
+theRoad.label <- rep("1", 2467)
 theRoad.paragraphs.id <- paste0("THE_ROAD_", "PARAGRAPH_", theRoad.paragraphs.counter)
 
-theRoad.paragraphs.matrix <- cbind(theRoad.title, theRoad.paragraphs.type, theRoad.paragraphs.id, theRoad.paragraphs)
+theRoad.paragraphs.matrix <- cbind(theRoad.title, theRoad.paragraphs.type, theRoad.paragraphs.id, theRoad.paragraphs, theRoad.label)
 theRoad.paragraphs.df <- as.data.frame(theRoad.paragraphs.matrix)
-colnames(theRoad.paragraphs.df) <- c("Title", "Type", "ID", "Unit")
+colnames(theRoad.paragraphs.df) <- c("Title", "Type", "ID", "Unit", "Label")
 
 con <- dbConnect(RSQLite::SQLite(), ":memory:", dbname="textTable.sqlite")
 ### Columns. 

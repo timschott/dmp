@@ -10,7 +10,7 @@ install.packages("rJava")
 library(rJava)
 library("openNLPdata")
 
-stock <- c("Title", "Type", "ID", "Unit")
+stock <- c("Title", "Type", "ID", "Unit", "Label")
 
 #######################
 #####Women IN Love Clean
@@ -116,15 +116,16 @@ women.paragraphs <- women.paragraphs %>%
 women.paragraphs <- as.data.frame(women.paragraphs[-c(4364),], stringsAsFactors = FALSE)
 colnames(women.paragraphs) <- c("paras")
 women.paragraphs <- as.data.frame(women.paragraphs[-which(women.paragraphs$para==""),], stringsAsFactors = FALSE)
-
+length(women.paragraphs$`women.paragraphs[-which(women.paragraphs$para == ""), ]`)
 6012
 
 women.title <- rep("womenInLove", 6012)
 women.para.type <- rep("paragraph", 6012)
 women.para.counter<-seq(1, 6012)
+women.label <- rep("1", 6012)
 women.para.id <- paste0("WOMEN_IN_LOVE_", "PARAGRAPH_", women.para.counter)
 print(length(women.para.id))
-women.para.matrix <- cbind(women.title, women.para.type, women.para.id, women.paragraphs)
+women.para.matrix <- cbind(women.title, women.para.type, women.para.id, women.paragraphs, women.label)
 women.para.df <- as.data.frame(women.para.matrix, stringsAsFactors = FALSE)
 colnames(women.para.df) <- stock
 

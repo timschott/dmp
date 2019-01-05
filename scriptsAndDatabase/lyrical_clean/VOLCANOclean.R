@@ -11,15 +11,15 @@ library(qdap)
 
 ## Malcolm Lowry, Under the Volcano. 
 
-stock <- c("Title", "Type", "ID", "Unit")
-volc <- scan("rawTexts/malcolm-lowry-under-the-volcano.txt",what="character",sep="\n")
+stock <- c("Title", "Type", "ID", "Unit", "Label")
+volc <- scan("rawTexts/lyrical/malcolm-lowry-under-the-volcano.txt",what="character",sep="\n")
 volc_start <- 65
 volc_end <- 12346
 volc <- volc[volc_start:volc_end]
 volc <- replace_abbreviation(volc)
 volc <- gsub('_', '', perl=TRUE, volc)
 #volc <- gsub('I\n|II\n|III\n|IV\n|V\n|VI\n|VII\n', '', perl=TRUE, volc)
-volc <- gsub('M. Laruelle', 'M Laruelle', perl=TRUE, volc)
+volc <- gsub('M\\. Laruelle', 'M Laruelle', perl=TRUE, volc)
 
 first_bite <- volc[1:2499]
 second_bite<- volc[2500:4999]
@@ -43,7 +43,7 @@ volc.sents.fifth <- paste0(fifth_bite, collapse = "\n")
 volc.sents.fifth <- unlist(tokenize_sentences(volc.sents.fifth))
 
 volc.sents <- c(volc.sents.first, volc.sents.second, volc.sents.third, volc.sents.fourth, volc.sents.fifth)
-volc.sents <- gsub('\"', '' , volc.sents, fixed=TRUE)
+volc.sents <- gsub('\"', "'" , volc.sents, fixed=TRUE)
 
 
 bad_spots <-c(0)
@@ -148,13 +148,12 @@ dbGetQuery(con, "SELECT * FROM textTable WHERE Type= 'word' AND Title='underTheV
 dbDisconnect(con)
 
 ## paras. 
-
 volc.paragraphs <- read.csv("Python_Scripts/checkCorpus/VOLC_paras.csv", stringsAsFactors = FALSE)
 volc.paragraphs <- volc.paragraphs[-c(1:49,162, 2144:2148),]
 
 colnames(volc.paragraphs) <- c("arb", "para")
 volc.paragraphs <- volc.paragraphs %>%
-  transmute(paragraph = gsub('M. Laruelle', 'M Laruelle', perl=TRUE, para))
+  transmute(paragraph = gsub('M\\. Laruelle', 'M Laruelle', perl=TRUE, para))
 
 colnames(volc.paragraphs)
 volc.paragraphs <- as.data.frame(volc.paragraphs[-c(1,257,420,917, 1111,1265, 1956),], stringsAsFactors=FALSE)
@@ -162,16 +161,18 @@ colnames(volc.paragraphs) <- c("para")
 colnames(volc.paragraphs)
 colnames(volc.paragraphs) <- c("para")
 
-
 volc.paragraphs <- volc.paragraphs %>%
-  transmute(paragraph = str_replace_all(para, "[\n]", " "))
+  transmute(paragraph = gsub("\n", " ", para))
 print(length(volc.paragraphs$paragraph))
+volc.paragraphs <- volc.paragraphs %>%
+  transmute(para = gsub("_", " ", paragraph))
 
 volc.title <- rep("underTheVolcano", 2086)
 volc.paras.type <- rep("paragraph", 2086)
 volc.paras.counter<-seq(1, 2086)
+volc.label <- rep("1", 2086)
 volc.paras.id <- paste0("UNDER_THE_VOLCANO_", "PARAGRAPH_", volc.paras.counter)
-volc.paras.matrix <- cbind(volc.title, volc.paras.type, volc.paras.id, volc.paragraphs)
+volc.paras.matrix <- cbind(volc.title, volc.paras.type, volc.paras.id, volc.paragraphs, volc.label)
 volc.paras.df <- as.data.frame(volc.paras.matrix, stringsAsFactors = FALSE)
 colnames(volc.paras.df) <- stock
 

@@ -6,13 +6,10 @@ library("textclean")
 library("stringr")
 library("tm")
 library(qdap)
-install.packages("rJava")
-library(rJava)
-library("openNLPdata")
 
-stock <- c("Title", "Type", "ID", "Unit")
+stock <- c("Title", "Type", "ID", "Unit", "Label")
 
-portrait <- scan("rawTexts/james-joyce-portrait-of-the-artist.txt",what="character",sep="\n")
+portrait <- scan("rawTexts/lyrical/james-joyce-portrait-of-the-artist.txt",what="character",sep="\n")
 
 portrait.start<- which(portrait == "Once upon a time and a very good time it was there was a moocow coming")
 portrait.end <- which(portrait == "stead.")
@@ -139,14 +136,55 @@ portrait.paragraphs <- portrait.paragraphs %>%
 
 portrait.paragraphs <- portrait.paragraphs %>%
   transmute(paras = gsub('\n', ' ', perl=TRUE, paragraph))
+portrait.paragraphs$paras[1773:1775]
 
+# join stephen's villanelle
 
-portrait.title <- rep("portraitOfTheArtist", 2227)
-portrait.para.type <- rep("paragraph", 2227)
-portrait.para.counter<-seq(1, 2227)
+portrait.paragraphs$paras[1773] <- paste(portrait.paragraphs$paras[1773], portrait.paragraphs$paras[1774], portrait.paragraphs$paras[1775])
+portrait.paragraphs$paras[1774:1775] <-""
+
+grep("ardent ways", portrait.paragraphs$paras)
+portrait.paragraphs$paras[1777:1779]
+portrait.paragraphs$paras[1777] <- paste(portrait.paragraphs$paras[1777], portrait.paragraphs$paras[1778], portrait.paragraphs$paras[1779])
+portrait.paragraphs$paras[1778:1779] <- ""
+
+portrait.paragraphs$paras[1804:1809]
+portrait.paragraphs$paras[1804] <- paste(portrait.paragraphs$paras[1804], portrait.paragraphs$paras[1805], portrait.paragraphs$paras[1806], portrait.paragraphs$paras[1807], portrait.paragraphs$paras[1808], portrait.paragraphs$paras[1809], portrait.paragraphs$paras[1810])
+portrait.paragraphs$paras[1805:1810] <- ""
+
+portrait.paragraphs$paras[1804] <- "Our broken cries and mournful lays Rise in one eucharistic hymn Are you not weary of ardent ways?"
+portrait.paragraphs$paras[1805] <- "While sacrificing hands upraise The chalice flowing to the brim Tell no more of enchanted days."
+portrait.paragraphs$paras[1806] <- "He spoke the verses aloud from the first lines till the music and rhythm suffused his mind, turning it to quiet indulgence; then copied them painfully to feel them the better by seeing them; then lay back on his bolster."
+
+# portrait.paragraphs$paras[1819] <- paste(portrait.paragraphs$paras[1819], )
+
+portrait.paragraphs$paras[1819] <- paste(portrait.paragraphs$paras[1819], portrait.paragraphs$paras[1820], portrait.paragraphs$paras[1821])
+portrait.paragraphs$paras[1820:1821] <- ""
+
+portrait.paragraphs$paras[1822] <- paste(portrait.paragraphs$paras[1822], portrait.paragraphs$paras[1823], portrait.paragraphs$paras[1824])
+portrait.paragraphs$paras[1823:1824] <- ""
+
+portrait.paragraphs$paras[1825] <- paste(portrait.paragraphs$paras[1825],portrait.paragraphs$paras[1826], portrait.paragraphs$paras[1827])
+portrait.paragraphs$paras[1826:1827] <-""
+
+portrait.paragraphs$paras[1828] <- paste(portrait.paragraphs$paras[1828], portrait.paragraphs$paras[1829], portrait.paragraphs$paras[1830])
+portrait.paragraphs$paras[1829:1830] <-""
+
+portrait.paragraphs$paras[1831] <- paste(portrait.paragraphs$paras[1831], portrait.paragraphs$paras[1832], portrait.paragraphs$paras[1833])
+portrait.paragraphs$paras[1832:1833] <- ""
+
+portrait.paragraphs$paras[1834] <- paste(portrait.paragraphs$paras[1834], portrait.paragraphs$paras[1835], portrait.paragraphs$paras[1836], portrait.paragraphs$paras[1837])
+portrait.paragraphs$paras[1835:1837] <- ""
+
+portrait.paragraphs <- portrait.paragraphs %>% filter(paras!="")
+
+portrait.title <- rep("portraitOfTheArtist", 2208)
+portrait.para.type <- rep("paragraph", 2208)
+portrait.para.counter<-seq(1, 2208)
+portrait.label <- rep("1", 2208)
 portrait.para.id <- paste0("PORTRAIT_OF_THE_ARTIST_", "PARAGRAPH_", portrait.para.counter)
 print(length(portrait.para.id))
-portrait.para.matrix <- cbind(portrait.title, portrait.para.type, portrait.para.id, portrait.paragraphs)
+portrait.para.matrix <- cbind(portrait.title, portrait.para.type, portrait.para.id, portrait.paragraphs, portrait.label)
 portrait.para.df <- as.data.frame(portrait.para.matrix, stringsAsFactors = FALSE)
 colnames(portrait.para.df) <- stock
 
