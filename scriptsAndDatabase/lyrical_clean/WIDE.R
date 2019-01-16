@@ -39,8 +39,6 @@ dbGetQuery(con, "SELECT Unit FROM textTable WHERE Type='paragraph' AND Title='wi
 dbDisconnect(con)
 
 ## sents.
-
-
 first_bite <- sea[1:1175]
 
 sea.sents.first <- paste0(first_bite, collapse = "\n")
@@ -97,9 +95,10 @@ sea.title <- rep("wideSargassoSea", 4278)
 sea.sents.type <- rep("sentence", 4278)
 sea.sents.counter<-seq(1, 4278)
 sea.sents.id <- paste0("WIDE_SARGASSO_SEA_", "SENT_", sea.sents.counter)
+sea.label <- rep("1", 4278)
 print(length(sea.sents.id))
 
-sea.sents.matrix <- cbind(sea.title, sea.sents.type, sea.sents.id, sea.sents)
+sea.sents.matrix <- cbind(sea.title, sea.sents.type, sea.sents.id, sea.sents, sea.label)
 sea.sents.df <- as.data.frame(sea.sents.matrix, stringsAsFactors = FALSE)
 colnames(sea.sents.df) <- stock
 con <- dbConnect(RSQLite::SQLite(), ":memory:", dbname="textTable.sqlite")
@@ -126,17 +125,17 @@ sea.words[23392]
 sea.words<- sea.words[which(sea.words!="’")]
 print(length(sea.words))
 
-sea.title <- rep("wideSargassoSea", 47302)
-sea.words.type <- rep("word", 47302)
-sea.words.counter <- seq(1, 47302)
+sea.title <- rep("wideSargassoSea", 47349)
+sea.words.type <- rep("word", 47349)
+sea.words.counter <- seq(1, 47349)
 sea.words.id <- paste0("WIDE_SARGASSO_SEA_", "WORD_", sea.words.counter)
-
-sea.words.matrix <- cbind(sea.title, sea.words.type, sea.words.id, sea.words)
+sea.label <- rep("1", 47349)
+sea.words.matrix <- cbind(sea.title, sea.words.type, sea.words.id, sea.words, sea.label)
 
 sea.words.df <- as.data.frame(sea.words.matrix, stringsAsFactors = FALSE)
 
 con <- dbConnect(RSQLite::SQLite(), ":memory:", dbname="textTable.sqlite")
-colnames(sea.words.df) <- c("Title", "Type", "ID", "Unit")
+colnames(sea.words.df) <- c("Title", "Type", "ID", "Unit", "Label")
 dbWriteTable(con, "textTable", sea.words.df, append=TRUE, row.names=FALSE)
 dbGetQuery(con, "SELECT * FROM textTable WHERE Type= 'word' AND Title='wideSargassoSea' LIMIT 10")
 dbDisconnect(con)
