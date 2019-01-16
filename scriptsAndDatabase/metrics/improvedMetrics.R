@@ -1,0 +1,120 @@
+library(scales)
+setwd("~/Documents/7thSemester/dmp/corpus")
+library("RSQLite")
+library("tokenizers")
+library("dplyr")
+library("textclean")
+library("stringr")
+library("tm")
+library(qdap)
+## a much cleaner metrics script. 
+
+con <- dbConnect(RSQLite::SQLite(), ":memory:", dbname="textTable.sqlite")
+# pull out lyrical and detective sentences. 
+detective_word_df <- dbGetQuery(con, "SELECT Unit,ID,Title  FROM textTable WHERE Type='word' AND Label ='0'")
+detective_sent_df <- dbGetQuery(con, "SELECT Unit,ID,Title  FROM textTable WHERE Type='sentence' AND Label ='0'")
+detective_para_df <- dbGetQuery(con, "SELECT Unit,ID,Title  FROM textTable WHERE Type='paragraph' AND Label ='0'")
+
+# lyrical_word_df <- dbGetQuery(con, "SELECT Unit,ID,Title  FROM textTable WHERE Type='word' AND Label ='1'")
+# dbExecute(con, "UPDATE textTable SET (Title) = ('theCircularStaircase') WHERE Title = 'thecircularStaircase'")
+dbDisconnect(con)
+
+detective_titles <- sort(unique(detective_sent_df$Title))
+
+# the number of commas is fixed. so let's achieve this readout in one, collective loop. 
+
+detective_commas <- c(0)
+detective_sent_counts <- c(0)
+detective_para_counts <- c(0)
+detective_word_counts <- c(0)
+
+for(i in seq(1:24)){
+  sents <- filter(detective_sent_df, Title==detective_titles[i])
+  paras <- filter(detective_para_df, Title==detective_titles[i])
+  words <- filter(detective_word_df, Title==detective_titles[i])
+  comma_count <- sum(str_count(sents$Unit, ","))
+  detective_commas <- append(detective_commas, comma_count)
+  detective_sent_counts <- append(detective_sent_counts, length(sents$Unit))
+  detective_para_counts <- append(detective_para_counts, length(paras$Unit))
+  detective_word_counts <- append(detective_word_counts, length(words$Unit))
+}
+detective_commas <- detective_commas[-c(1)] 
+detective_sent_counts <- detective_sent_counts[-c(1)] 
+detective_para_counts <- detective_para_counts[-c(1)] 
+detective_word_counts <- detective_word_counts[-c(1)] 
+
+# commas per sentence, detective. 
+detective_sent_comma_freq <- detective_commas/detective_sent_counts
+detective_para_comma_freq <- detective_commas/detective_para_counts
+
+# flip - more useful! how many words can I go without seeing a comma?
+# gotta be some kind of weighting to apply to this, like....
+# average sentence length
+detective_words_per_sentence <- (detective_word_counts / detective_sent_counts)
+detective_words_per_paragraph <- (detective_word_counts / detective_para_counts)
+detective_sent_per_paragraph <- (detective_sent_counts / detective_para_counts)
+
+######## Lyrical
+
+con <- dbConnect(RSQLite::SQLite(), ":memory:", dbname="textTable.sqlite")
+# pull out lyrical and lyrical sentences. 
+lyrical_word_df <- dbGetQuery(con, "SELECT Unit,ID,Title  FROM textTable WHERE Type='word' AND Label ='1'")
+lyrical_sent_df <- dbGetQuery(con, "SELECT Unit,ID,Title  FROM textTable WHERE Type='sentence' AND Label ='1'")
+lyrical_para_df <- dbGetQuery(con, "SELECT Unit,ID,Title  FROM textTable WHERE Type='paragraph' AND Label ='1'")
+
+dbDisconnect(con)
+
+lyrical_titles <- sort(unique(lyrical_sent_df$Title))
+
+# the number of commas is fixed. so let's achieve this readout in one, collective loop. 
+
+lyrical_commas <- c(0)
+lyrical_sent_counts <- c(0)
+lyrical_para_counts <- c(0)
+lyrical_word_counts <- c(0)
+
+for(i in seq(1:26)){
+  sents <- filter(lyrical_sent_df, Title==lyrical_titles[i])
+  paras <- filter(lyrical_para_df, Title==lyrical_titles[i])
+  words <- filter(lyrical_word_df, Title==lyrical_titles[i])
+  comma_count <- sum(str_count(sents$Unit, ","))
+  lyrical_commas <- append(lyrical_commas, comma_count)
+  lyrical_sent_counts <- append(lyrical_sent_counts, length(sents$Unit))
+  lyrical_para_counts <- append(lyrical_para_counts, length(paras$Unit))
+  lyrical_word_counts <- append(lyrical_word_counts, length(words$Unit))
+}
+lyrical_commas <- lyrical_commas[-c(1)] 
+lyrical_sent_counts <- lyrical_sent_counts[-c(1)] 
+lyrical_para_counts <- lyrical_para_counts[-c(1)] 
+lyrical_word_counts <- lyrical_word_counts[-c(1)] 
+
+# commas per sentence, lyrical. 
+lyrical_sent_comma_freq <- lyrical_commas/lyrical_sent_counts
+lyrical_para_comma_freq <- lyrical_commas/lyrical_para_counts
+
+# flip - more useful! how many words can I go without seeing a comma?
+# gotta be some kind of weighting to apply to this, like....
+# average sentence length
+lyrical_words_per_sentence <- (lyrical_word_counts / lyrical_sent_counts)
+lyrical_words_per_paragraph <- (lyrical_word_counts / lyrical_para_counts)
+
+lyrical_sents_per_paragraph <- (lyrical_sent_counts / lyrical_para_counts)
+
+lyrical_labels <- rep("lyrical", 26)
+detective_labels <- rep("detective", 24)
+
+# bundle. 
+titles_vec <- c(lyrical_titles, detective_titles)
+labels_vec <- c(lyrical_labels, detective_labels)
+word_counts_vec <- c(lyrical_word_counts, detective_word_counts)
+sent_counts_vec <- c(lyrical_sent_counts, detective_sent_counts)
+para_counts_vec <- c(lyrical_para_counts, detective_para_counts)
+commas_vec <- c(lyrical_commas, detective_commas)
+sent_comma_freq_vec <- c(lyrical_sent_comma_freq, detective_sent_comma_freq)
+para_comma_freq_vec <- c(lyrical_para_comma_freq, detective_para_comma_freq)
+words_per_sentence_vec <- c(lyrical_words_per_sentence, detective_words_per_sentence)
+words_per_paragraph_vec <- c(lyrical_words_per_paragraph, detective_words_per_paragraph)
+sents_per_paragraph_vec <- c(lyrical_sents_per_paragraph, detective_sent_per_paragraph)
+
+
+# next --> choppines.. let's look at stops.
