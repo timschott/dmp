@@ -34,7 +34,7 @@ grav.paragraphs <- grav.paragraphs %>%
   transmute(paras=  gsub("Mrs\\.", "Mrs", paragraphs))
 
 grav.paragraphs <- grav.paragraphs %>% 
-  transmute(paragraphs=  gsub("W.C.s.", "W C s", paras))
+  transmute(paragraphs=  gsub("W\\.C\\.s\\.", "W C s", paras))
 
 grav.paragraphs <- grav.paragraphs %>% 
   transmute(pagraphs=  gsub("[\t\t\t\t]", "", paragraphs))
@@ -213,20 +213,22 @@ grav.words <- c(grav.words.1,grav.words.2,grav.words.3,grav.words.4,grav.words.5
 
 print(length(grav.words))
 grav.words<- grav.words[which(grav.words!="^’")]
+grav.words<- grav.words[which(grav.words!="")]
+
 print(length(grav.words))
 
-# sheesh. 333k words.
-gravitys.title <- rep("gravitysRainbow", 333359)
-gravitys.words.type <- rep("word", 333359)
-gravitys.words.counter <- seq(1, 333359)
+# sheesh. 330k words.
+gravitys.title <- rep("gravitysRainbow", 330351)
+gravitys.words.type <- rep("word", 330351)
+gravitys.words.counter <- seq(1, 330351)
 gravitys.words.id <- paste0("GRAVITYS_RAINBOW_", "WORD_", gravitys.words.counter)
-
-gravitys.words.matrix <- cbind(gravitys.title, gravitys.words.type, gravitys.words.id, grav.words)
+gravitys.label <- rep("1", 330351)
+gravitys.words.matrix <- cbind(gravitys.title, gravitys.words.type, gravitys.words.id, grav.words, gravitys.label)
 
 gravitys.words.df <- as.data.frame(gravitys.words.matrix, stringsAsFactors = FALSE)
 # 37.1 MB!!! "yuge!"
 con <- dbConnect(RSQLite::SQLite(), ":memory:", dbname="textTable.sqlite")
-colnames(gravitys.words.df) <- c("Title", "Type", "ID", "Unit")
+colnames(gravitys.words.df) <- c("Title", "Type", "ID", "Unit", "Label")
 dbWriteTable(con, "textTable", gravitys.words.df, append=TRUE, row.names=FALSE)
 dbGetQuery(con, "SELECT * FROM textTable WHERE Type= 'word' AND Title='gravitysRainbow' LIMIT 10")
 dbGetQuery(con, "SELECT COUNT(*) FROM textTable WHERE Type='word' and Label='0'")
