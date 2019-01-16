@@ -24,7 +24,6 @@ circ.paragraphs <- circ.paragraphs %>%
 
 colnames(circ.paragraphs) <- c("paras")
 
-
 circ.paragraphs<- circ.paragraphs %>%
   transmute(paragraphs=gsub("\\*|(?<=[A-Z])(\\.)(?=[A-Z]|\\.|\\s)", "", perl=TRUE, paras))
 
@@ -62,7 +61,7 @@ circ.paragraphs <- circ.paragraphs %>%
 circ.title <- rep("thecircularStaircase", 1623)
 circ.para.type <- rep("paragraph",1623)
 circ.para.counter<-seq(1, 1623)
-circ.para.id <- paste0("THE_circULAR_STAIRCASE_", "PARAGRAPH_", circ.para.counter)
+circ.para.id <- paste0("THE_CIRCULAR_STAIRCASE_", "PARAGRAPH_", circ.para.counter)
 circ.label <- rep("0", 1623)
 print(length(circ.para.id))
 
