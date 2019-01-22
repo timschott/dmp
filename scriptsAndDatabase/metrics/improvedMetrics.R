@@ -1,5 +1,5 @@
-library(scales)
 setwd("~/Documents/7thSemester/dmp/corpus")
+library(scales)
 library("RSQLite")
 library("tokenizers")
 library("dplyr")
@@ -115,6 +115,70 @@ para_comma_freq_vec <- c(lyrical_para_comma_freq, detective_para_comma_freq)
 words_per_sentence_vec <- c(lyrical_words_per_sentence, detective_words_per_sentence)
 words_per_paragraph_vec <- c(lyrical_words_per_paragraph, detective_words_per_paragraph)
 sents_per_paragraph_vec <- c(lyrical_sents_per_paragraph, detective_sent_per_paragraph)
+# next --> lexical variety (unique words, )
+# going to calculate type-token ratio (# total unique / # total tokens)
+# mean word frequency (# total tokens / total unique )
+lyrical_unique_counts <- c(0)
+
+for(i in seq(1:26)){
+  words <- filter(lyrical_word_df, Title==lyrical_titles[i])
+  lyrical_unique_counts <- append(lyrical_unique_counts, length(unique(words$Unit)))
+}
+lyrical_unique_counts <- lyrical_unique_counts[-c(1)]
+lyrical_type_token <- lyrical_unique_counts/ lyrical_word_counts
+lyrical_mean_usage_freq <- 1/lyrical_type_token
+
+# consecutive sentences that start with the same word 
+
+# pre lim munging
+testing <- c("Hello how are you?")
+testing2 <- c("Hello are you okay?")
+
+a<- gsub('^[[:punct:] ]|[[:punct:] ]$','',word(testing))
+b<-  gsub('^[[:punct:] ]|[[:punct:] ]$','',word(testing2))
+a==b
+
+just_scarlet <- filter(detective_sent_df, Title==detective_titles[1])
+the_length <- length(just_scarlet$Unit)
+length(seq(1:the_length-1))
+
+detective_consecutive_count <- 0
+sents_length_less_one <- 0
+detective_consecutive_counts <- c(0)
+sent_one_word <- ""
+sent_two_word <- ""
+
+# start loop 
+for(i in seq(1:24)){
+  sents <- filter(detective_sent_df, Title==detective_titles[i])
+  sents_length_less_one <- length(sents$Unit)-1
+  print("at the moment")
+  print(detective_titles[i])
+  for(j in seq(1:sents_length_less_one)){
+    sent_one_word <- gsub('^[[:punct:] ]|[[:punct:] ]$','',word(sents$Unit[j]))
+    sent_two_word <- gsub('^[[:punct:] ]|[[:punct:] ]$','',word(sents$Unit[j+1]))
+    if (is.null(sent_one_word)==TRUE | is.null(sent_two_word) ==TRUE) {
+      next
+    }
+    if((sent_one_word == sent_two_word)==TRUE) {
+      detective_consecutive_count <- detective_consecutive_count+1
+    }
+    sent_one_word <- ""
+    sent_two_word <- ""
+  }
+  detective_consecutive_counts <- append(detective_consecutive_counts, detective_consecutive_count)
+  detective_consecutive_count <- 0
+  sents_length_less_one <- 0
+}
+detective_consecutive_counts <- detective_consecutive_counts[-c(1)]
+detective_consecutive_repeat_freq <- detective_consecutive_counts / detective_sent_counts 
+
+# syllables per word. sheesh! 
 
 
-# next --> choppines.. let's look at stops.
+
+
+
+
+
+
