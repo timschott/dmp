@@ -173,10 +173,56 @@ for(i in seq(1:24)){
 detective_consecutive_counts <- detective_consecutive_counts[-c(1)]
 detective_consecutive_repeat_freq <- detective_consecutive_counts / detective_sent_counts 
 
+# perhaps we could combine these two strains of logic in order
+# to create, % of words with identical consecutive syllables... 
+# a la Melville.
 # syllables per word. sheesh! 
+# qdap baby
+x <- c("Hello there delicious", "My name is 89898", "1975", "Edward")
+j <- syllable_sum(x)
+polysyllable_sum(x)
+sum(syllable_sum(x), na.rm=T)
+# syllables per sentence is just going to tell us how many 
+# words are in a sentence.. syllables per word though 
+# is not correlated with anything so let's use that 
+# but polysyllables per sentence is actually kind of insightful.
+# polysylls / sentence length ? 
 
+# pull out all words, unleash the script.
+# note: strip punctuation, numbers. 
+syllable_sum(x)
+detective_syll_counts <- c(0)
+detective_polysyll_counts <- c(0)
 
+words <- filter(detective_word_df, Title==detective_titles[1])
+syllable_amount <- sum(syllable_sum(words$Unit), na.rm=TRUE)
+polysyllable_amount <- sum(polysyllable_sum(words$Unit), na.rm=TRUE)
+detective_syll_counts <- append(detective_syll_counts, syllable_amount)
+detective_polysyll_counts <- append(detective_polysyll_counts, polysyllable_amount)
 
+one_count <- 0
+poly_count <- 0
+mine <- combo_syllable_sum("delicious")
+
+for(i in seq(1:24)){
+  print("at the moment")
+  print(detective_titles[i])
+  words <- filter(detective_word_df, Title==detective_titles[i])
+  for(j in seq(1:length(words))) {
+    counts <- combo_syllable_sum(words[j])
+    # total sylls
+    one_count <- one_count + counts$syllable.count
+    # is it a poly
+    poly_count <- one_count + counts$polysyllable.count
+  }
+  # syllable_amount <- sum(syllable_sum(words$Unit), na.rm=TRUE)
+  # polysyllable_amount <- sum(polysyllable_sum(words$Unit), na.rm=TRUE)
+  detective_syll_counts <- append(detective_syll_counts, one_count)
+  detective_polysyll_counts <- append(detective_polysyll_counts, poly_count)
+}
+
+detective_syll_counts
+detective_polysyll_counts
 
 
 
