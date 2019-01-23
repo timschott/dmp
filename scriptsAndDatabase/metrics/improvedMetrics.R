@@ -210,7 +210,9 @@ poly_count <- counts$polysyllable.count
 detective_syll_counts <- append(detective_syll_counts, sum(one_count, na.rm=TRUE))
 detective_polysyll_counts <- append(detective_polysyll_counts, sum(poly_count, na.rm=TRUE))
 
+write(detective_syll_counts, "syllcounts.txt")
 
+write(detective_polysyll_counts, "polysyllcounts.txt")
 
 
 
