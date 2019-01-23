@@ -193,10 +193,10 @@ sum(syllable_sum(x), na.rm=T)
 # note: strip punctuation, numbers. 
 
 # gotta do this per book and record it because it takes forever. 
-detective_syll_counts <- c(0)
-detective_polysyll_counts <- c(0)
+# detective_syll_counts <- c(0)
+# detective_polysyll_counts <- c(0)
 # and using a loop did not work.. 
-words <- filter(detective_word_df, Title==detective_titles[2])
+words <- filter(detective_word_df, Title==detective_titles[14])
 
 # does not work
 #testing_no_accents <- iconv(words$Unit,from="UTF-8",to="ASCII//TRANSLIT")
