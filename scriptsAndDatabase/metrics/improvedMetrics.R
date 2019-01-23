@@ -5,6 +5,7 @@ library("tokenizers")
 library("dplyr")
 library("textclean")
 library("stringr")
+library(stringi)
 library("tm")
 library(qdap)
 ## a much cleaner metrics script. 
@@ -190,39 +191,25 @@ sum(syllable_sum(x), na.rm=T)
 
 # pull out all words, unleash the script.
 # note: strip punctuation, numbers. 
-syllable_sum(x)
+
+# gotta do this per book and record it because it takes forever. 
 detective_syll_counts <- c(0)
 detective_polysyll_counts <- c(0)
+# and using a loop did not work.. 
+words <- filter(detective_word_df, Title==detective_titles[2])
 
-words <- filter(detective_word_df, Title==detective_titles[1])
-syllable_amount <- sum(syllable_sum(words$Unit), na.rm=TRUE)
-polysyllable_amount <- sum(polysyllable_sum(words$Unit), na.rm=TRUE)
-detective_syll_counts <- append(detective_syll_counts, syllable_amount)
-detective_polysyll_counts <- append(detective_polysyll_counts, polysyllable_amount)
+# does not work
+#testing_no_accents <- iconv(words$Unit,from="UTF-8",to="ASCII//TRANSLIT")
+no_accents <- stri_trans_general(words$Unit,"Latin-ASCII")
+counts <- combo_syllable_sum(no_accents)
+# total sylls
+one_count <- counts$syllable.count
+# is it a poly (more than 2.)
+poly_count <- counts$polysyllable.count
 
-one_count <- 0
-poly_count <- 0
-mine <- combo_syllable_sum("delicious")
+detective_syll_counts <- append(detective_syll_counts, sum(one_count, na.rm=TRUE))
+detective_polysyll_counts <- append(detective_polysyll_counts, sum(poly_count, na.rm=TRUE))
 
-for(i in seq(1:24)){
-  print("at the moment")
-  print(detective_titles[i])
-  words <- filter(detective_word_df, Title==detective_titles[i])
-  for(j in seq(1:length(words))) {
-    counts <- combo_syllable_sum(words[j])
-    # total sylls
-    one_count <- one_count + counts$syllable.count
-    # is it a poly
-    poly_count <- one_count + counts$polysyllable.count
-  }
-  # syllable_amount <- sum(syllable_sum(words$Unit), na.rm=TRUE)
-  # polysyllable_amount <- sum(polysyllable_sum(words$Unit), na.rm=TRUE)
-  detective_syll_counts <- append(detective_syll_counts, one_count)
-  detective_polysyll_counts <- append(detective_polysyll_counts, poly_count)
-}
-
-detective_syll_counts
-detective_polysyll_counts
 
 
 
