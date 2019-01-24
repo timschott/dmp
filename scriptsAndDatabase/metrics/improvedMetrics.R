@@ -65,7 +65,7 @@ lyrical_para_df <- dbGetQuery(con, "SELECT Unit,ID,Title  FROM textTable WHERE T
 
 dbDisconnect(con)
 
-lyrical_titles <- sort(unique(lyrical_sent_df$Title))
+lyrical_titles <- sort(unique(lyrical_word_df$Title))
 
 # the number of commas is fixed. so let's achieve this readout in one, collective loop. 
 
@@ -196,7 +196,7 @@ sum(syllable_sum(x), na.rm=T)
 # detective_syll_counts <- c(0)
 # detective_polysyll_counts <- c(0)
 # and using a loop did not work.. 
-words <- filter(detective_word_df, Title==detective_titles[14])
+words <- filter(detective_word_df, Title==detective_titles[25])
 
 # does not work
 #testing_no_accents <- iconv(words$Unit,from="UTF-8",to="ASCII//TRANSLIT")
@@ -206,6 +206,8 @@ counts <- combo_syllable_sum(no_accents)
 one_count <- counts$syllable.count
 # is it a poly (more than 2.)
 poly_count <- counts$polysyllable.count
+#detective_syll_counts <- scan("syllcounts.txt")
+#detective_polysyll_counts <- scan("polysyllcounts.txt")
 
 detective_syll_counts <- append(detective_syll_counts, sum(one_count, na.rm=TRUE))
 detective_polysyll_counts <- append(detective_polysyll_counts, sum(poly_count, na.rm=TRUE))
@@ -214,6 +216,26 @@ write(detective_syll_counts, "syllcounts.txt")
 
 write(detective_polysyll_counts, "polysyllcounts.txt")
 
+# lyrical syllables 
 
+lyrical_words <- filter(lyrical_word_df, Title==lyrical_titles[13])
+# to do - 14 - 26
+# lyrical_syll_counts <- c(0)
+# lyrical_polysyll_counts <- c(0)
+# does not work
+#testing_no_accents <- iconv(words$Unit,from="UTF-8",to="ASCII//TRANSLIT")
+lyrical_no_accents <- stri_trans_general(lyrical_words$Unit,"Latin-ASCII")
+lyrical_counts <- combo_syllable_sum(lyrical_no_accents)
+# total sylls
+lyrical_one_count <- lyrical_counts$syllable.count
+# is it a poly (more than 2.)
+lyrical_poly_count <- lyrical_counts$polysyllable.count
+#detective_syll_counts <- scan("syllcounts.txt")
+#detective_polysyll_counts <- scan("polysyllcounts.txt")
 
+lyrical_syll_counts <- append(lyrical_syll_counts, sum(lyrical_one_count, na.rm=TRUE))
+lyrical_polysyll_counts <- append(lyrical_polysyll_counts, sum(lyrical_poly_count, na.rm=TRUE))
 
+write(lyrical_syll_counts, "lyricalsyllcounts.txt")
+
+write(lyrical_polysyll_counts, "lyricalpolysyllcounts.txt")
