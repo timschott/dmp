@@ -3,8 +3,8 @@ import regex as re
 import os.path
 import pandas as pd
 import sqlite3
-
-## in this file i'm going to attempt to get the moving average type token ratio per book going.
+import csv
+# MATTR Python Implementation
 
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -83,34 +83,48 @@ unique_container = []
 
 for j in range(0, 50):
      unique_counts = []
+
      for i in range(0, len(big_list[j]), 64):
+
           unique=set(big_list[j][i: i+63])
-          unique_counts.append(unique)
-          #for i in range(0, len(big_list[j]), 64):
-          # unique = set(row[i:i + 64])
-      #    print(len(row))  # print(j)  # unique_counts[j].append(len(unique))
+          unique_counts.append(len(unique))
+
      unique_container.append(unique_counts)
 
 print(len(unique_container))
 
-for x in unique_container:
-     print(len(x))
+moving_aves_container = []
 
 N = 16
 cumsum, moving_aves = [0.0], []
 
-print(len(moving_aves))
+# https://stackoverflow.com/questions/13728392/moving-average-or-running-mean
 
-for row in unique_counts:
-     print(len(row))
 
-for row in unique_counts:
-     for i, x in enumerate(row, 1):
+for j in range(0,50):
+
+     for i, x in enumerate(unique_container[j], 1):
+          print(j)
           cumsum.append(cumsum[i - 1] + x)
+
           if i >= N:
                moving_ave = (cumsum[i] - cumsum[i - N]) / N
-               # can do stuff with moving_ave here
                moving_aves.append(moving_ave)
 
-for row in moving_aves:
-     print(len(row))
+     moving_aves_container.append(moving_aves)
+     moving_aves = []
+     cumsum, moving_aves = [0.0], []
+
+
+# https://stackoverflow.com/questions/14037540/writing-a-python-list-of-lists-to-a-csv-file
+
+with open("mattr.csv", "wb") as f:
+     writer = csv.writer(f)
+     writer.writerows(moving_aves_container)
+
+
+with open("unique.csv", "wb") as f:
+     writer = csv.writer(f)
+     writer.writerows(unique_container)
+
+
