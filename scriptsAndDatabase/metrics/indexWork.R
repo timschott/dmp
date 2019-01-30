@@ -3,6 +3,8 @@ big_boy <- read.csv('starts.csv', stringsAsFactors = FALSE)
 con <- dbConnect(RSQLite::SQLite(), ":memory:", dbname="textTable.sqlite")
 word_df <- dbGetQuery(con, "SELECT Unit,ID,Title  FROM textTable WHERE Type='word'")
 grav <- dbGetQuery(con, "SELECT Unit,ID,Title  FROM textTable WHERE Type='word' AND Title='gravitysRainbow'")
+ped <- dbGetQuery(con, "SELECT Unit,ID,Title  FROM textTable WHERE Type='word' AND Title='thePedersenKid'")
+ped$Unit
 # dbExecute(con, "DELETE FROM textTable WHERE Label IS NULL")
 
 dbDisconnect(con)
@@ -78,12 +80,24 @@ lengths <- c(big_boy$word_counts_vec[6],
 print(titles)
 print(lengths)
 count <- 1
+count2<-0
+starts <- c(0)
+ends <- c(0)
+
 for(i in seq(1:50)){
   print(titles[i])
-  print(lengths[i])
-  count <- count + lengths[i]
-  print(count)
+  starts <- append(starts, count)
+  count <- (count + lengths[i]) 
+  count2 <- count-1
+  ends <- append(ends, count2)
 }
 
+starts <- starts[-c(1)]
+starts <- starts - 1
+ends <- ends - 1
+
+cbind(titles,as.numeric(starts),as.numeric(ends))
+
+for_py <- paste0(titles, collapse=",")
 
 
