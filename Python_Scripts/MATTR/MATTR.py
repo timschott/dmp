@@ -1,9 +1,8 @@
-import numpy as np
-import regex as re
 import os.path
-import pandas as pd
+from itertools import izip
 import sqlite3
 import csv
+
 # MATTR Python Implementation
 
 
@@ -126,5 +125,8 @@ with open("mattr.csv", "wb") as f:
 with open("unique.csv", "wb") as f:
      writer = csv.writer(f)
      writer.writerows(unique_container)
+
+a = izip(*csv.reader(open("mattr.csv", "rb")))
+csv.writer(open("mattr_t.csv", "wb")).writerows(a)
 
 
