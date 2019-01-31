@@ -22,6 +22,7 @@ median(mattr_data[1:26])
 median(mattr_data[27:50])
 
 big_boy <- as.data.frame(cbind(big_boy, mattr_data), stringsAsFactors = FALSE)
+colnames(big_boy)[23] <- c("median_MATTR")
 write.csv(big_boy,'starts.csv')
 
 
