@@ -20,7 +20,16 @@ with open("mattr.csv") as f:
 
             container.append(dummy)
 
-titles = ['heartOfDarkness','theRoad','theGreatGatsby','womenInLove','portraitOfTheArtist','lolita','theRainbow','mobyDick','theSerpent','pym','underTheVolcano','orlando','toTheLighthouse','eureka','paleFire','billyBudd','theSoundAndTheFury','thePedersenKid','theAngelOfTerror','lifeAndTimesOfMichaelK','absalomAbsalom','bloodMeridian','mrsDalloway','somethingHappened','theMoonstone','theSecretAdversary','theScarhavenKeep','theRedThumbMark','theParadiseMystery','theRaynerSladeAmalgamation','theLeavenworthCase','theOldManInTheCorner','theMoonRock','theHandInTheDark','theDaffodilMystery','theInnocenceOfFatherBrown','theBrandOfSilence','theCircularStaircase','theAshielMystery','theMysteryOfRoom75','theLadyInBlue','theMaxwellMystery','aStudyInScarlet','theBigSleep','theShriekingPit','thePictureOfDorianGray','theSignOfFour','wideSargassoSea','gravitysRainbow','theSpiralStaircase']
+titles = ['absalomAbsalom', 'billyBudd', 'bloodMeridian', 'eureka', 'gravitysRainbow', 'heartOfDarkness',
+          'lifeAndTimesOfMichaelK', 'lolita', 'mobyDick', 'mrsDalloway', 'orlando', 'paleFire', 'portraitOfTheArtist',
+          'pym', 'somethingHappened', 'theGreatGatsby', 'thePedersenKid', 'thePictureOfDorianGray', 'theRainbow',
+          'theRoad', 'theSerpent', 'theSoundAndTheFury', 'toTheLighthouse', 'underTheVolcano', 'wideSargassoSea',
+          'womenInLove', 'aStudyInScarlet', 'theAngelOfTerror', 'theAshielMystery', 'theBigSleep', 'theBrandOfSilence',
+          'theCircularStaircase', 'theDaffodilMystery', 'theHandInTheDark', 'theInnocenceOfFatherBrown',
+          'theLadyInBlue', 'theLeavenworthCase', 'theMaxwellMystery', 'theMoonRock', 'theMoonstone',
+          'theMysteryOfRoom75', 'theOldManInTheCorner', 'theParadiseMystery', 'theRaynerSladeAmalgamation',
+          'theRedThumbMark', 'theScarhavenKeep', 'theSecretAdversary', 'theShriekingPit', 'theSignOfFour',
+          'theSpiralStaircase']
 
 for i,x in enumerate(container):
     row = np.array(x)

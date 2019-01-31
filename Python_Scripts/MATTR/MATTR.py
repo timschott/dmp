@@ -73,7 +73,16 @@ theSpiralStaircase = words[4618051:4689006]
 
 # thank you paste0 -- > with love, from R! paste0(titles, collapse=",")
 [1]
-big_list = [heartOfDarkness,theRoad,theGreatGatsby,womenInLove,portraitOfTheArtist,lolita,theRainbow,mobyDick,theSerpent,pym,underTheVolcano,orlando,toTheLighthouse,eureka,paleFire,billyBudd,theSoundAndTheFury,thePedersenKid,theAngelOfTerror,lifeAndTimesOfMichaelK,absalomAbsalom,bloodMeridian,mrsDalloway,somethingHappened,theMoonstone,theSecretAdversary,theScarhavenKeep,theRedThumbMark,theParadiseMystery,theRaynerSladeAmalgamation,theLeavenworthCase,theOldManInTheCorner,theMoonRock,theHandInTheDark,theDaffodilMystery,theInnocenceOfFatherBrown,theBrandOfSilence,theCircularStaircase,theAshielMystery,theMysteryOfRoom75,theLadyInBlue,theMaxwellMystery,aStudyInScarlet,theBigSleep,theShriekingPit,thePictureOfDorianGray,theSignOfFour,wideSargassoSea,gravitysRainbow,theSpiralStaircase]
+# big_list = [heartOfDarkness,theRoad,theGreatGatsby,womenInLove,portraitOfTheArtist,lolita,theRainbow,mobyDick,theSerpent,pym,underTheVolcano,orlando,toTheLighthouse,eureka,paleFire,billyBudd,theSoundAndTheFury,thePedersenKid,theAngelOfTerror,lifeAndTimesOfMichaelK,absalomAbsalom,bloodMeridian,mrsDalloway,somethingHappened,theMoonstone,theSecretAdversary,theScarhavenKeep,theRedThumbMark,theParadiseMystery,theRaynerSladeAmalgamation,theLeavenworthCase,theOldManInTheCorner,theMoonRock,theHandInTheDark,theDaffodilMystery,theInnocenceOfFatherBrown,theBrandOfSilence,theCircularStaircase,theAshielMystery,theMysteryOfRoom75,theLadyInBlue,theMaxwellMystery,aStudyInScarlet,theBigSleep,theShriekingPit,thePictureOfDorianGray,theSignOfFour,wideSargassoSea,gravitysRainbow,theSpiralStaircase]
+big_list = [absalomAbsalom, billyBudd, bloodMeridian, eureka, gravitysRainbow, heartOfDarkness, lifeAndTimesOfMichaelK,
+            lolita, mobyDick, mrsDalloway, orlando, paleFire, portraitOfTheArtist, pym, somethingHappened,
+            theGreatGatsby, thePedersenKid, thePictureOfDorianGray, theRainbow, theRoad, theSerpent, theSoundAndTheFury,
+            toTheLighthouse, underTheVolcano, wideSargassoSea, womenInLove, aStudyInScarlet, theAngelOfTerror,
+            theAshielMystery, theBigSleep, theBrandOfSilence, theCircularStaircase, theDaffodilMystery,
+            theHandInTheDark, theInnocenceOfFatherBrown, theLadyInBlue, theLeavenworthCase, theMaxwellMystery,
+            theMoonRock, theMoonstone, theMysteryOfRoom75, theOldManInTheCorner, theParadiseMystery,
+            theRaynerSladeAmalgamation, theRedThumbMark, theScarhavenKeep, theSecretAdversary, theShriekingPit,
+            theSignOfFour, theSpiralStaircase]
 
 print(len(big_list[0]))
 
@@ -129,4 +138,5 @@ with open("unique.csv", "wb") as f:
 a = izip(*csv.reader(open("mattr.csv", "rb")))
 csv.writer(open("mattr_t.csv", "wb")).writerows(a)
 
-
+a = izip(*csv.reader(open("unique.csv", "rb")))
+csv.writer(open("unique_t.csv", "wb")).writerows(a)
