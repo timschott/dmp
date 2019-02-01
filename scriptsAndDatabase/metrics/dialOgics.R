@@ -75,7 +75,7 @@ sum(counts/2)
 
 detective_dialogue_freq <- c(0)
 
-for(i in seq(1:2)){
+for(i in seq(1:24)){
   temp_count_vec <- c(0)
   
   paras <- filter(detective_para_df, Title==detective_titles[i])
@@ -90,10 +90,8 @@ for(i in seq(1:2)){
   paras<- gsub("([a-z])(?:')|([a-z])(?:'[a-z])","\\1",paras, perl=TRUE)
   print(length(temp_count_vec))
   temp_count_vec <- str_count(paras, "'")
-  print(length(temp_count_vec))
-  print(length(which(temp_count_vec>.5)))
-    
-  if((length(which(temp_count_vec>.5))==length(temp_count_vec))){
+
+  if((length(which(temp_count_vec<.5))==length(temp_count_vec))){
     print("i is")
     print(i)
     temp_count_vec<-c(0)
@@ -118,4 +116,4 @@ zero <- c(0,0,0)
 kinda <- c(0,0,0,1,1)
 (length(which(kinda>.5))==length(kinda))
 zero >1
-
+# investigate 3 and 13. 
