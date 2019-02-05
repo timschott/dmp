@@ -11,6 +11,8 @@ library("tm")
 library(qdap)
 library('sentimentr')
 
+big_boy <- read.csv('starts.csv', stringsAsFactors = FALSE)
+
 con <- dbConnect(RSQLite::SQLite(), ":memory:", dbname="textTable.sqlite")
 detective_sent_df <- dbGetQuery(con, "SELECT Unit,ID,Title  FROM textTable WHERE Type='sentence' AND Label ='0'")
 detective_titles <- sort(unique(detective_sent_df$Title))
@@ -40,7 +42,7 @@ detective_sentiment_vec <- detective_sentiment_vec[-c(1)]
 
 con <- dbConnect(RSQLite::SQLite(), ":memory:", dbname="textTable.sqlite")
 lyrical_sent_df <- dbGetQuery(con, "SELECT Unit,ID,Title  FROM textTable WHERE Type='sentence' AND Label ='1'")
-lyrical_titles <- sort(unique(detective_sent_df$Title))
+lyrical_titles <- sort(unique(lyrical_sent_df$Title))
 dbDisconnect(con)
 
 lyrical_sentiment_vec <- c(0)
@@ -51,5 +53,11 @@ for(i in seq(from =1, to=26)){
   sentiments <- sentiment_by(sents)
   lyrical_sentiment_vec <- append(lyrical_sentiment_vec, sum(sentiments$ave_sentiment/length(sents)))
 }
-lyrical_sentiment_vec <- lyrical_sentiment_vec[-c(1)]
 
+# throw into big boy. 
+sentiment_vec <- c(lyrical_sentiment_vec, detective_sentiment_vec)
+
+big_boy <- as.data.frame(cbind(big_boy, sentiment_vec), stringsAsFactors = FALSE)
+colnames(big_boy)
+write.csv(big_boy,'starts.csv')
+               
