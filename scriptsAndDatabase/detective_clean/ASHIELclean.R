@@ -15,7 +15,7 @@ ash <- ash[ash.start:ash.fin-1]
 ash[grep("CHAPTER.X{0,3}(IX|IV|V?I{0,3}).", ash)]
 ash.paragraphs <- as.data.frame(ash, stringsAsFactors=FALSE)
 colnames(ash.paragraphs) <- c("paras")
-ash <- ash.paragraphs %>% 
+ash.paragraphs <- ash.paragraphs %>% 
   transmute(paragraphs=  gsub("\"", "'", paras))
 
 colnames(ash.paragraphs) <- c("paras")
@@ -69,6 +69,8 @@ con <- dbConnect(RSQLite::SQLite(), ":memory:", dbname="textTable.sqlite")
 dbWriteTable(con, "textTable", ash.para.df, append=TRUE, row.names=FALSE)
 #dbExecute(con, "DELETE FROM textTable WHERE Type='paragraph' OR Type= 'sentence' AND Title='theAshielMystery'")
 dbGetQuery(con, "SELECT Unit FROM textTable WHERE Type='sentence' AND Title='theAshielMystery' LIMIT 2")
+# dbExecute(con, "DELETE FROM textTable WHERE Title='theAshielMystery' AND Type='paragraph'")
+
 dbDisconnect(con)
 # dbGetQuery(con, "SELECT * FROM textTable WHERE Type='paragraph' AND Title='theAshielMystery' LIMIT 2")
 # dbGetQuery(con, "SELECT * FROM textTable WHERE Type= 'sentence' AND Title='theAshielMystery' LIMIT 2")
