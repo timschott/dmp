@@ -15,8 +15,6 @@ library(randomForest)
 big_boy <- read.csv('starts.csv', stringsAsFactors = FALSE)
 colnames(big_boy)
 str(big_boy)
-# fix labels .. 
-big_boy$numeric_labels_vec[27:50] <- 0
 
 # remove identifying characteristics in a duplicate
 novel_df <- big_boy %>% select(-c(labels_vec, titles_vec, numeric_labels_vec))
@@ -76,9 +74,8 @@ stepAIC(modelfull, direction = "backward", scope=list(upper=modelfull,lower=mode
 
 # stepwise AIC says use: sent_counts_vec, consecutive_counts_vec, dialogue_freq.
 
-
 #### try our hand using just normalized data but still every feature. 
-
+#### Feature Selection from GINI
 set.seed(19)
 splitIndex <- createDataPartition(normalized_novel_df[,outcomeName], p = .80, list = FALSE, times = 1)
 novel_train <- normalized_novel_df[ splitIndex,]
@@ -111,6 +108,21 @@ varImpPlot(m,type=2)
 
 subset <- normalized_novel_df %>% dplyr::select(c(dialogue_freq, i_freq, consecutive_counts_vec, 
                                          perceive_freq, self_freq, label2))
+
+set.seed(299)
+splitIndex <- createDataPartition(subset[,outcomeName], p = .80, list = FALSE, times = 1)
+novel_train <- subset[ splitIndex,]
+novel_test  <- subset[-splitIndex,]
+
+prop.table(table(subset$label2))
+prop.table(table(subset$label2))
+
+m <- randomForest(subset[,-6], normalized_novel_df$label2, 
+                  sampsize = round(0.8*(length(subset$label2))),ntree = 500, 
+                  mtry = sqrt(6), importance = TRUE)
+
+print(m) 
+## 2% OOB.
 
 
 
