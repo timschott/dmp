@@ -54,6 +54,11 @@ colMeans(scaled.dat)
 
 normalized_novel_df <- as.data.frame(cbind(scaled.dat, novel_df$label2))
 colnames(normalized_novel_df)[31] <- c("label2")
+str(normalized_novel_df)
+
+write.csv(normalized_novel_df,'normalized.csv')
+
+
 #######
 # step wise feature selection 
 
