@@ -11,6 +11,7 @@ import random
 # from sklearn.model_selection import GridSearchCV
 
 class SVMNovelClassifer:
+
     def __init__(self):
         random.seed(0)
 
@@ -22,10 +23,9 @@ class SVMNovelClassifer:
                        'para_comma_freq_vec', 'words_per_sentence_vec', 'words_per_paragraph_vec', 'sents_per_paragraph_vec',
                        'consecutive_counts_vec', 'consecutive_repeat_freq_vec', 'syll_and_word_freq_vec',
                        'polsyll_and_word_freq_vec', 'syll_and_sent_freq_vec', 'polsyll_and_sent_freq_vec', 'unique_counts_vec',
-                       'type_token_ratio_vec', 'mean_usage_frequency_vec' 'median_MATTR', 'object_freq relationship_freq',
+                       'type_token_ratio_vec', 'mean_usage_frequency_vec','median_MATTR', 'object_freq', 'relationship_freq',
                        'time_freq', 'self_freq', 'perceive_freq', 'i_freq','top_ten_freq','dialogue_freq',
-                       'question_vec exclamation_vec',
-                       'sentiment_vec', 'label2']
+                       'question_vec', 'exclamation_vec','sentiment_vec', 'label2']
 
         data.columns = col_names_x
 
@@ -34,10 +34,12 @@ class SVMNovelClassifer:
 
         return data, y
 
-
-    def select_model(self, training_csv):
+    def train_and_select_model(self, training_csv):
 
         X, Y = self.load_data(training_csv)
+
+        X = np.asarray(X)
+        Y = np.asarray(Y)
 
         # Attention: Write your own hyper-parameter candidates.
 
@@ -60,7 +62,7 @@ class SVMNovelClassifer:
 
         for train_index, test_index in kf.split(X):
             X_train, X_test = X[train_index], X[test_index]
-            y_train, y_test = y[train_index], y[test_index]
+            y_train, y_test = Y[train_index], Y[test_index]
 
             soft_linear_model = svm.SVC(kernel='linear', C=1.0).fit(X_train, y_train)
             hard_linear_model = svm.SVC(kernel='linear', C=10.0).fit(X_train, y_train)
@@ -76,22 +78,19 @@ class SVMNovelClassifer:
         for score in soft_linear_scores:
             print score
 
-        #print(max(scores))
-        #print(scores.index(max(scores)))
+        best_model = svm.SVC(kernel='linear', C=1.0).fit(X[0:40], y_train[0:40])
 
-        # best model is rbf 3 !
-        #return rbf_model3, scores[8]
-        #return best_model, best_score
-
+        return best_model, 2.0
 
 
 if __name__ == '__main__':
-    training_csv = "/../..normalized.csv"
+
+    training_csv = "normalized.csv"
+
     clf = SVMNovelClassifer()
-    #load_data(clf, training_csv)
+    # load_data(clf, training_csv)
 
     trained_model, cv_score = clf.train_and_select_model(training_csv)
-    clf.train_and_select_model(training_csv)
 
 
 
