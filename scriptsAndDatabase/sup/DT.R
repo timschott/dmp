@@ -1,4 +1,4 @@
-## SVM
+## DT
 setwd("~/Documents/7thSemester/dmp/corpus")
 library(scales)
 library("RSQLite")
@@ -57,8 +57,7 @@ colnames(normalized_novel_df)[31] <- c("label2")
 str(normalized_novel_df)
 
 write.csv(normalized_novel_df,'normalized.csv')
-
-
+cat(colnames(normalized_novel_df))
 #######
 # step wise feature selection 
 
