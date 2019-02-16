@@ -7,14 +7,12 @@ import sys
 import pandas as pd
 import os
 import sqlite3
+from sklearn.model_selection import train_test_split
 # Keras
 import keras
-from keras.models import Sequential
-from keras.preprocessing.text import Tokenizer
-import keras.preprocessing.text
-from keras.layers import Dense, Conv2D, MaxPooling2D, Dropout, Flatten
-
-
+from keras.layers import *
+from keras.models import *
+# https://towardsdatascience.com/understanding-lstm-and-its-quick-implementation-in-keras-for-sentiment-analysis-af410fd85b47
 def get_data():
     dir_path = os.path.dirname(os.path.realpath(__file__))
 
@@ -116,17 +114,13 @@ def encode(encoded_list):
     tokenizer.fit_on_texts(encoded_list)
     # print(tokenizer.word_index)  # To see the dictionary
     X = tokenizer.texts_to_sequences(encoded_list)
-    # tune to longest book being gravitys rainbow
     print(len(X))
     # sequences: List of lists, where each element is a sequence. --> do at the end
-    #X = keras.preprocessing.sequence.pad_sequences(X, maxlen=330351)
+
     print(len(X))
     return X
 
-if __name__ == '__main__':
-    print 'hello world'
-    stringed_words = get_data()
-
+def make_padded_list(word_strings):
     encoded_bucket = []
 
     for text in stringed_words:
@@ -134,10 +128,100 @@ if __name__ == '__main__':
         numbers_now = encode(clean)
         encoded_bucket.append(numbers_now)
 
+    # pad 0's up to longest book length, gravity's rainbow
     padded = keras.preprocessing.sequence.pad_sequences(encoded_bucket, maxlen=330351)
-    print(np.shape(padded))
+    np.save('padded_keras_list')
 
-    np.save('padded_keras_list', padded)
+# a vanilla LSTM
+def create_LSTM():
+
+    embed_dim = 128
+    lstm_out = 200
+    batch_size = 32
+    model = Sequential()
+    model.add(Embedding(69230, embed_dim, input_length=330351, mask_zero=True))
+    model.add(keras.layers.SpatialDropout1D(.2))
+    model.add(LSTM(units=128))
+    model.add(Dense(units=330351))
+    model.add(Activation('softmax'))
+    model.compile(optimizer='adam', loss='sparse_categorical_crossentropy')
+    print(model.summary())
+
+    return model
+
+# https://keras.io/layers/embeddings/
+# We want to print out some of the relevant data inside embeddings
+# https://stackoverflow.com/questions/51477977/highlighting-important-words-in-a-sentence-using-deep-learning
+def important_lstm():
+    inp = Input((None,))
+    # Embed words into vectors of size 10 each:
+    # Output shape is (None,10)
+    embs = Embedding(69230, 128)(inp)
+    # Run LSTM on these vectors and return output on each timestep
+    # Output shape is (None,5)
+    lstm = LSTM(units=128, return_sequences=True)(embs)
+    ##Attention Block
+    # Transform each timestep into 1 value (attention_value)
+    # Output shape is (None,1)
+    attention = TimeDistributed(Dense(1))(lstm)
+    # By running softmax on axis 1 we force attention_values
+    # to sum up to 1. We are effectively assigning a "weight" to each timestep
+    # Output shape is still (None,1) but each value changes
+    attention_vals = Softmax(axis=1)(attention)
+    # Multiply the encoded timestep by the respective weight
+    # I.e. we are scaling each timestep based on its weight
+    # Output shape is (None,5): (None,5)*(None,1)=(None,5)
+    scaled_vecs = Multiply()([lstm, attention_vals])
+    # Sum up all scaled timesteps into 1 vector
+    # i.e. obtain a weighted sum of timesteps
+    # Output shape is (5,) : Observe the time dimension got collapsed
+    context_vector = Lambda(lambda x: K.sum(x, axis=1))(scaled_vecs)
+    ##Attention Block over
+    # Get the output out
+    out = Dense(1, activation='sigmoid')(context_vector)
+    model = Model(inp, out)
+    model_with_attention_output = Model(inp, [out, attention_vals])
+    model.compile(optimizer='adam', loss='binary_crossentropy')
+
+    print(model.summary())
+    print(model_with_attention_output.summary())
+    return model, model_with_attention_output
 
 
+
+def train_and_test_model(X_train, X_test, Y_train, Y_test):
+
+    return 0
+
+
+if __name__ == '__main__':
+    print 'hello world'
+    stringed_words = get_data()
+
+    #make_padded_list(stringed_words)
+
+    pads = np.load('padded_keras_list.npy')
+
+    #lstm = create_LSTM()
+    #lstm_2, attentive = important_lstm()
+
+    # pads is 50 things.
+    y_labels = np.asarray([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0,
+                         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+
+    #print(np.shape(pads))
+    #print(np.shape(y_labels))
+    #dataset = pd.DataFrame({'pads': pads.values, 'label': y_labels})
+    df = pd.DataFrame(pads)
+
+    #train, test = train_test_split(dataset, test_size=0.2)
+
+    #train = train.as_matrix()
+    #test = test.as_matrix()
+
+    #print(np.shape(train))
+    #print(np.shape(test))
+
+
+    # break into training and testing, hand over to models.
 
