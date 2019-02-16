@@ -99,5 +99,6 @@ ends <- ends - 1
 cbind(titles,as.numeric(starts),as.numeric(ends))
 
 for_py <- paste0(titles, collapse=",")
+for_py_2 <- paste0("'",titles, "'", collapse=",")
 
 
