@@ -1,11 +1,7 @@
 # General imports
-import numpy as np
 from string import maketrans
-import matplotlib.pyplot as plt
-from sklearn.utils import shuffle
-import sys
+import numpy as np
 import pandas as pd
-import os
 import sqlite3
 from sklearn.model_selection import train_test_split
 # Keras
@@ -14,10 +10,7 @@ from keras.layers import *
 from keras.models import *
 from keras_preprocessing.text import *
 
-
-# https://towardsdatascience.com/understanding-lstm-and-its-quick-implementation-in-keras-for-sentiment-analysis-af410fd85b47
 def get_data():
-    dir_path = os.path.dirname(os.path.realpath(__file__))
 
     conn = sqlite3.connect('../../textTable.sqlite')
     cursor = conn.cursor()
@@ -83,9 +76,7 @@ def get_data():
     theSpiralStaircase = words[4618051:4689006]
 
     # thank you paste0 -- > with love, from R! paste0(titles, collapse=",")
-    [1]
 
-    # thanks R
     big_string_list = [str(absalomAbsalom), str(billyBudd), str(bloodMeridian), str(eureka), str(gravitysRainbow),
                        str(heartOfDarkness), str(lifeAndTimesOfMichaelK), str(lolita), str(mobyDick), str(mrsDalloway),
                        str(orlando), str(paleFire), str(portraitOfTheArtist), str(pym), str(somethingHappened),
@@ -112,18 +103,17 @@ def text_to_word_sequence(text, filters='!"#$%&()*+,-./:;<=>?@[\\]^_`{|}~\t\n', 
     seq = text.split(split)
     return [i for i in seq if i]
 
+# hand in a well-formatted string, get back the integer mapping
 def encode(encoded_list):
 
     tokenizer = Tokenizer(lower=True, split=' ')
     tokenizer.fit_on_texts(encoded_list)
-    # print(tokenizer.word_index)  # To see the dictionary
     X = tokenizer.texts_to_sequences(encoded_list)
-    print(len(X))
     # sequences: List of lists, where each element is a sequence. --> do at the end
 
-    print(len(X))
     return X
 
+# encode every string in my corpus 50 total
 def make_padded_list(word_strings):
     encoded_bucket = []
 
@@ -135,6 +125,10 @@ def make_padded_list(word_strings):
     # pad 0's up to longest book length, gravity's rainbow
     padded = keras.preprocessing.sequence.pad_sequences(encoded_bucket, maxlen=330351)
     np.save('padded_keras_list')
+    return 0
+
+
+# https://towardsdatascience.com/understanding-lstm-and-its-quick-implementation-in-keras-for-sentiment-analysis-af410fd85b47
 
 # a vanilla LSTM
 def create_LSTM():
@@ -148,7 +142,7 @@ def create_LSTM():
     model.add(LSTM(units=128))
     model.add(Dense(units=330351))
     model.add(Activation('softmax'))
-    model.compile(optimizer='adam', loss='sparse_categorical_crossentropy')
+    model.compile(optimizer='adam', loss='binary_crossentropy')
 
     # print(model.summary())
 
@@ -196,50 +190,46 @@ def important_lstm():
 def train_test_division(padded_list, y_labels):
 
     mat = np.matrix(padded_list)
-
     df = pd.DataFrame(data=mat)
     X_train, X_test, Y_train, Y_test = train_test_split(df, y_labels, test_size=0.20, random_state=21)
 
-    # Here we train the Network.
-
     return X_train, X_test, Y_train, Y_test
-
 
 def train_and_test_vanilla_model(X_train, X_test, Y_train, Y_test, model):
 
     model_history = model.fit(X_train, Y_train, batch_size=256, nb_epoch=3, verbose=1)
 
-    # predictions = model.predict_classes(X_test)
-
-    # score = model.evaluate(X_test, Y_test, verbose=0)
     predictions = model.predict_classes(X_test)
-
-    # output_predictions(predictions)
 
     score = model.evaluate(X_test, Y_test, verbose=0)
     print model.summary()
-    # print(score)
 
     val_loss_history = model_history.history['val_loss']
     val_acc_history = model_history.history['val_acc']
 
     print('Val loss: ', sum(val_loss_history) / len(val_loss_history))
     print('Val accuracy: ', sum(val_acc_history) / len(val_acc_history))
+    print('Vanilla Model Score: ',score)
 
-    print('Model Score: ',score)
-
-    return model_history
+    return model_history, predictions
 
 def train_and_test_attentive_model(X_train, X_test, Y_train, Y_test, model):
-    model.fit(X_train, Y_train, batch_size=32, nb_epoch=1, verbose=5)
+
+    model_history = model.fit(X_train, Y_train, batch_size=256, nb_epoch=3, verbose=1)
 
     predictions = model.predict_classes(X_test)
 
     score = model.evaluate(X_test, Y_test, verbose=0)
+    print model.summary()
 
-    print score
+    val_loss_history = model_history.history['val_loss']
+    val_acc_history = model_history.history['val_acc']
 
-    return 0
+    print('Val loss: ', sum(val_loss_history) / len(val_loss_history))
+    print('Val accuracy: ', sum(val_acc_history) / len(val_acc_history))
+    print('Vanilla Model Score: ', score)
+
+    return model_history, predictions
 
 if __name__ == '__main__':
     print 'hello world'
@@ -256,7 +246,8 @@ if __name__ == '__main__':
     x_train, x_test, y_train, y_test = train_test_division(pads, y_labels)
 
     lstm = create_LSTM()
-    # lstm_2, attentive = important_lstm()
+    lstm_2, attentive = important_lstm()
 
     vanilla_history = train_and_test_vanilla_model(x_train, x_test, y_train, y_test, lstm)
-    # train_and_test_attentive_model(x_train, x_test, y_train, y_test, attentive)
+    train_and_test_attentive_model(x_train, x_test, y_train, y_test, attentive)
+
