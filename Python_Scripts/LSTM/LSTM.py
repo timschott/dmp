@@ -10,6 +10,14 @@ from keras.layers import *
 from keras.models import *
 from keras_preprocessing.text import *
 
+# LSTM implementation
+# In this file I will construct a LSTM with the goal of identifying particularly
+# Consequential and important words across my corpus of 50 novels.
+
+
+# This function pulls all the words out of my database and
+# Returns them in a 50 element list with each element containing all the words of a single book
+# So, element 2 in this list is all the words from Blood Meridian as a single (enormous!) string
 def get_data():
 
     conn = sqlite3.connect('../../textTable.sqlite')
@@ -93,7 +101,11 @@ def get_data():
 
     return big_string_list
 
+
+# In order to pipe the words into a Keras tokenizer we have to make sure they're properly
+# Formatted in Unicode
 # https://github.com/keras-team/keras/issues/1072
+
 def text_to_word_sequence(text, filters='!"#$%&()*+,-./:;<=>?@[\\]^_`{|}~\t\n', split=" "):
     if type(text) == unicode:
         translate_table = {ord(c): ord(t) for c, t in zip(filters, split * len(filters))}
@@ -103,17 +115,21 @@ def text_to_word_sequence(text, filters='!"#$%&()*+,-./:;<=>?@[\\]^_`{|}~\t\n', 
     seq = text.split(split)
     return [i for i in seq if i]
 
-# hand in a well-formatted string, get back the integer mapping
+# In this function I hand in a well-formatted, Keras compliant string
+# It returns a sequence of integers that maps each unique word in the text to a number
+# This way it's readable by the LSTM
+
 def encode(encoded_list):
 
     tokenizer = Tokenizer(lower=True, split=' ')
     tokenizer.fit_on_texts(encoded_list)
     X = tokenizer.texts_to_sequences(encoded_list)
-    # sequences: List of lists, where each element is a sequence. --> do at the end
 
     return X
 
-# encode every string in my corpus 50 total
+# This function calls encode() for every book in my corpus
+# It saved it as a .npy object so I only need to call it once
+
 def make_padded_list(word_strings):
     encoded_bucket = []
 
@@ -128,9 +144,11 @@ def make_padded_list(word_strings):
     return 0
 
 
+# Instantiates a vanilla LSTM
+# Takes advantage of word embeddings
+# https://keras.io/layers/embeddings/
 # https://towardsdatascience.com/understanding-lstm-and-its-quick-implementation-in-keras-for-sentiment-analysis-af410fd85b47
 
-# a vanilla LSTM
 def create_LSTM():
 
     embed_dim = 128
@@ -148,8 +166,8 @@ def create_LSTM():
 
     return model
 
-# https://keras.io/layers/embeddings/
 # We want to print out some of the relevant data inside embeddings
+# This func is lifted from a stack overflow post about highlighting important words in sentences
 # https://stackoverflow.com/questions/51477977/highlighting-important-words-in-a-sentence-using-deep-learning
 def important_lstm():
     inp = Input((None,))
@@ -187,6 +205,8 @@ def important_lstm():
     # print(model_with_attention_output.summary())
     return model, model_with_attention_output
 
+# Splits and shuffles my training and testing data
+
 def train_test_division(padded_list, y_labels):
 
     mat = np.matrix(padded_list)
@@ -194,6 +214,8 @@ def train_test_division(padded_list, y_labels):
     X_train, X_test, Y_train, Y_test = train_test_split(df, y_labels, test_size=0.20, random_state=21)
 
     return X_train, X_test, Y_train, Y_test
+
+# Runs and evaluates my vanilla LSTM
 
 def train_and_test_vanilla_model(X_train, X_test, Y_train, Y_test, model):
 
@@ -212,6 +234,8 @@ def train_and_test_vanilla_model(X_train, X_test, Y_train, Y_test, model):
     print('Vanilla Model Score: ',score)
 
     return model_history, predictions
+
+# Runs and evaluates my Attentive LSTM
 
 def train_and_test_attentive_model(X_train, X_test, Y_train, Y_test, model):
 
@@ -238,16 +262,22 @@ if __name__ == '__main__':
 
     # make_padded_list(stringed_words)
 
+    # Load List
     pads = np.load('padded_keras_list.npy')
     y_labels = np.asarray(
         [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
 
+    # Split Data
     x_train, x_test, y_train, y_test = train_test_division(pads, y_labels)
+
+    # Create Models
 
     lstm = create_LSTM()
     lstm_2, attentive = important_lstm()
 
+    # Learn and Test
+    
     vanilla_history = train_and_test_vanilla_model(x_train, x_test, y_train, y_test, lstm)
     train_and_test_attentive_model(x_train, x_test, y_train, y_test, attentive)
 
