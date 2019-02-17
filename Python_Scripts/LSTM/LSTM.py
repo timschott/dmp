@@ -12,6 +12,9 @@ from sklearn.model_selection import train_test_split
 import keras
 from keras.layers import *
 from keras.models import *
+from keras_preprocessing.text import *
+
+
 # https://towardsdatascience.com/understanding-lstm-and-its-quick-implementation-in-keras-for-sentiment-analysis-af410fd85b47
 def get_data():
     dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -110,6 +113,7 @@ def text_to_word_sequence(text, filters='!"#$%&()*+,-./:;<=>?@[\\]^_`{|}~\t\n', 
     return [i for i in seq if i]
 
 def encode(encoded_list):
+
     tokenizer = Tokenizer(lower=True, split=' ')
     tokenizer.fit_on_texts(encoded_list)
     # print(tokenizer.word_index)  # To see the dictionary
@@ -123,7 +127,7 @@ def encode(encoded_list):
 def make_padded_list(word_strings):
     encoded_bucket = []
 
-    for text in stringed_words:
+    for text in word_strings:
         clean = text_to_word_sequence(text)
         numbers_now = encode(clean)
         encoded_bucket.append(numbers_now)
@@ -145,7 +149,8 @@ def create_LSTM():
     model.add(Dense(units=330351))
     model.add(Activation('softmax'))
     model.compile(optimizer='adam', loss='sparse_categorical_crossentropy')
-    print(model.summary())
+
+    # print(model.summary())
 
     return model
 
@@ -156,6 +161,7 @@ def important_lstm():
     inp = Input((None,))
     # Embed words into vectors of size 10 each:
     # Output shape is (None,10)
+    # 69230 is my vocab size
     embs = Embedding(69230, 128)(inp)
     # Run LSTM on these vectors and return output on each timestep
     # Output shape is (None,5)
@@ -183,45 +189,61 @@ def important_lstm():
     model_with_attention_output = Model(inp, [out, attention_vals])
     model.compile(optimizer='adam', loss='binary_crossentropy')
 
-    print(model.summary())
-    print(model_with_attention_output.summary())
+    # print(model.summary())
+    # print(model_with_attention_output.summary())
     return model, model_with_attention_output
 
+def train_test_division(padded_list, y_labels):
+
+    mat = np.matrix(padded_list)
+
+    df = pd.DataFrame(data=mat)
+    X_train, X_test, Y_train, Y_test = train_test_split(df, y_labels, test_size=0.20, random_state=21)
+
+    # Here we train the Network.
+
+    return X_train, X_test, Y_train, Y_test
 
 
-def train_and_test_model(X_train, X_test, Y_train, Y_test):
+def train_and_test_vanilla_model(X_train, X_test, Y_train, Y_test, model):
+
+    model.fit(X_train, Y_train, batch_size=32, nb_epoch=1, verbose=5)
+
+    predictions = model.predict_classes(X_test)
+
+    score = model.evaluate(X_test, Y_test, verbose=0)
+
+    print score
 
     return 0
 
+def train_and_test_attentive_model(X_train, X_test, Y_train, Y_test, model):
+    model.fit(X_train, Y_train, batch_size=32, nb_epoch=1, verbose=5)
+
+    predictions = model.predict_classes(X_test)
+
+    score = model.evaluate(X_test, Y_test, verbose=0)
+
+    print score
+
+    return 0
 
 if __name__ == '__main__':
     print 'hello world'
-    stringed_words = get_data()
 
-    #make_padded_list(stringed_words)
+    # stringed_words = get_data()
+
+    # make_padded_list(stringed_words)
 
     pads = np.load('padded_keras_list.npy')
+    y_labels = np.asarray(
+        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
 
-    #lstm = create_LSTM()
-    #lstm_2, attentive = important_lstm()
+    x_train, x_test, y_train, y_test = train_test_division(pads, y_labels)
 
-    # pads is 50 things.
-    y_labels = np.asarray([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0,
-                         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+    lstm = create_LSTM()
+    lstm_2, attentive = important_lstm()
 
-    #print(np.shape(pads))
-    #print(np.shape(y_labels))
-    #dataset = pd.DataFrame({'pads': pads.values, 'label': y_labels})
-    df = pd.DataFrame(pads)
-
-    #train, test = train_test_split(dataset, test_size=0.2)
-
-    #train = train.as_matrix()
-    #test = test.as_matrix()
-
-    #print(np.shape(train))
-    #print(np.shape(test))
-
-
-    # break into training and testing, hand over to models.
-
+    train_and_test_vanilla_model(x_train, x_test, y_train, y_test, lstm)
+    # train_and_test_attentive_model(x_train, x_test, y_train, y_test, attentive)
