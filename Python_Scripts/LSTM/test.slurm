@@ -4,9 +4,9 @@
 #SBATCH -N 1 # 1 node
 #SBATCH -n 1 # 1 task # only doing one thing
 #SBATCH -t 00-01:00:00 # time limit dd-hh:mm:ss
-#SBATCH --cpus-per-task=20 #max is 28 per node in standard partition (change if multi-threaded)
-#SBATCH --mem=120000
-#SBATCH --mem-per-cpu=6000 # 6000MB of total memory per cpu, max 120000 in standard partition 
+#SBATCH --cpus-per-task=4 #max is 8 cores
+#SBATCH --mem=120G # max is 240GB
+#SBATCH --mem-per-cpu=6G # 6GB of total memory per cpu (max 12GB for gpu)
 
 module purge #remove any loaded modules as a precaution
 module load anaconda2
