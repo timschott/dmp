@@ -19,7 +19,9 @@ from keras_preprocessing.text import *
 # So, element 2 in this list is all the words from Blood Meridian as a single (enormous!) string
 
 # At the moment, I'm having difficulties getting the 50 book version to run, so I'm testing it
-# Out with a smaller, 8 book list.
+# Out with a smaller, 4 book list. Thus the performance of the RNN is pretty hampered
+# Currently but that is okay as I'm really just interested in the output of the model
+# Itself not the quality of the results
 
 def get_data():
 
@@ -87,9 +89,10 @@ def get_data():
     theSpiralStaircase = words[4618051:4689006]
 
     # thank you paste0 -- > with love, from R! paste0(titles, collapse=",")
-    small_string_list = [str(billyBudd), str(bloodMeridian), str(eureka),
-                         str(heartOfDarkness), str(theScarhavenKeep), str(theSecretAdversary),
+    small_string_list = [str(billyBudd), str(bloodMeridian),
                          str(theShriekingPit), str(theSignOfFour)]
+
+
 
     big_string_list = [str(absalomAbsalom), str(billyBudd), str(bloodMeridian), str(eureka), str(gravitysRainbow),
                        str(heartOfDarkness), str(lifeAndTimesOfMichaelK), str(lolita), str(mobyDick), str(mrsDalloway),
@@ -180,10 +183,10 @@ def important_lstm():
     # Embed words into vectors of size 10 each:
     # Output shape is (None,10)
     # 69230 is my vocab size
-    embs = Embedding(69230, 128)(inp)
+    embs = Embedding(69230, 1024)(inp)
     # Run LSTM on these vectors and return output on each timestep
     # Output shape is (None,5)
-    lstm = LSTM(units=128, return_sequences=True)(embs)
+    lstm = LSTM(units=64, return_sequences=True)(embs)
     ##Attention Block
     # Transform each timestep into 1 value (attention_value)
     # Output shape is (None,1)
@@ -217,7 +220,7 @@ def train_test_division(padded_list, y_labels):
 
     mat = np.matrix(padded_list)
     df = pd.DataFrame(data=mat)
-    X_train, X_test, Y_train, Y_test = train_test_split(df, y_labels, test_size=0.20, random_state=21)
+    X_train, X_test, Y_train, Y_test = train_test_split(df, y_labels, test_size=0.25, random_state=21)
 
     return X_train, X_test, Y_train, Y_test
 
@@ -225,9 +228,9 @@ def train_test_division(padded_list, y_labels):
 
 def train_and_test_vanilla_model(X_train, X_test, Y_train, Y_test, model):
 
-    model_history = model.fit(X_train, Y_train, batch_size=256, epochs=3, verbose=1)
+    model_history = model.fit(X_train, Y_train, batch_size=64, epochs=3, verbose=1)
 
-    predictions = model.predict_classes(X_test)
+    predictions = model.predict(X_test)
 
     score = model.evaluate(X_test, Y_test, verbose=0)
     print model.summary()
@@ -245,21 +248,28 @@ def train_and_test_vanilla_model(X_train, X_test, Y_train, Y_test, model):
 
 def train_and_test_attentive_model(X_train, X_test, Y_train, Y_test, model):
 
-    model_history = model.fit(X_train, Y_train, batch_size=256, epochs=3, verbose=1)
+    model_history = model.fit(X_train, Y_train, batch_size=64, epochs=1, verbose=1)
 
-    predictions = model.predict_classes(X_test)
+    # predictions = model.predict_classes(X_test)
 
-    score = model.evaluate(X_test, Y_test, verbose=0)
+    # score = model.evaluate(X_test, Y_test, verbose=0)
+    attentions = model.predict(X_test, batch_size=64)
+
+    np.save('attentions_list', attentions)
+
     print model.summary()
 
-    val_loss_history = model_history.history['val_loss']
-    val_acc_history = model_history.history['val_acc']
+    #val_loss_history = model_history.history['val_loss']
+    #val_acc_history = model_history.history['val_acc']
 
-    print('Val loss: ', sum(val_loss_history) / len(val_loss_history))
-    print('Val accuracy: ', sum(val_acc_history) / len(val_acc_history))
-    print('Vanilla Model Score: ', score)
+   #  print('Val loss: ', sum(val_loss_history) / len(val_loss_history))
+    # print('Val accuracy: ', sum(val_acc_history) / len(val_acc_history))
+    # print('Attentive Model Score: ', score)
 
-    return model_history, predictions
+    with open('hist.json', 'w') as f:
+        json.dump(model_history.history, f)
+
+    return model_history
 
 if __name__ == '__main__':
     print 'hello world'
@@ -277,7 +287,7 @@ if __name__ == '__main__':
 
     # Make labels array
 
-    small_y_labels = np.asarray([1,1,1,1,0,0,0,0])
+    small_y_labels = np.asarray([1,1,0,0])
 
     #y_labels = np.asarray(
     #    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -297,12 +307,17 @@ if __name__ == '__main__':
     # Create Models
 
     #lstm = create_LSTM()
-    #lstm_2, attentive = important_lstm()
+    lstm_2, attentive = important_lstm()
 
+    # Small Models
     # vanilla_history, predictions = train_and_test_vanilla_model(small_x_train, small_x_test, small_y_train, small_y_test, lstm)
-    #hist, pred = train_and_test_attentive_model(small_x_train, small_x_test, small_y_train, small_y_test, lstm_2)
+    hist = train_and_test_attentive_model(small_x_train, small_x_test, small_y_train, small_y_test, lstm_2)
 
-    # Learn and Test
+    # Learn and Test (This is for big models)
+
+    history_dict = hist.history
+
+    history_dict.keys()
 
     #vanilla_history = train_and_test_vanilla_model(x_train, x_test, y_train, y_test, lstm)
     #train_and_test_attentive_model(x_train, x_test, y_train, y_test, attentive)
