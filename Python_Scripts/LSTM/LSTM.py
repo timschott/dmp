@@ -14,10 +14,13 @@ from keras_preprocessing.text import *
 # In this file I will construct a LSTM with the goal of identifying particularly
 # Consequential and important words across my corpus of 50 novels.
 
-
 # This function pulls all the words out of my database and
 # Returns them in a 50 element list with each element containing all the words of a single book
 # So, element 2 in this list is all the words from Blood Meridian as a single (enormous!) string
+
+# At the moment, I'm having difficulties getting the 50 book version to run, so I'm testing it
+# Out with a smaller, 8 book list.
+
 def get_data():
 
     conn = sqlite3.connect('../../textTable.sqlite')
@@ -84,6 +87,9 @@ def get_data():
     theSpiralStaircase = words[4618051:4689006]
 
     # thank you paste0 -- > with love, from R! paste0(titles, collapse=",")
+    small_string_list = [str(billyBudd), str(bloodMeridian), str(eureka),
+                         str(heartOfDarkness), str(theScarhavenKeep), str(theSecretAdversary),
+                         str(theShriekingPit), str(theSignOfFour)]
 
     big_string_list = [str(absalomAbsalom), str(billyBudd), str(bloodMeridian), str(eureka), str(gravitysRainbow),
                        str(heartOfDarkness), str(lifeAndTimesOfMichaelK), str(lolita), str(mobyDick), str(mrsDalloway),
@@ -99,7 +105,7 @@ def get_data():
                        str(theRedThumbMark), str(theScarhavenKeep), str(theSecretAdversary), str(theShriekingPit),
                        str(theSignOfFour), str(theSpiralStaircase)]
 
-    return big_string_list
+    return small_string_list, big_string_list
 
 
 # In order to pipe the words into a Keras tokenizer we have to make sure they're properly
@@ -140,7 +146,7 @@ def make_padded_list(word_strings):
 
     # pad 0's up to longest book length, gravity's rainbow
     padded = keras.preprocessing.sequence.pad_sequences(encoded_bucket, maxlen=330351)
-    np.save('padded_keras_list')
+    np.save('padded_small_keras_list', padded)
     return 0
 
 
@@ -160,7 +166,7 @@ def create_LSTM():
     model.add(LSTM(units=128))
     model.add(Dense(units=330351))
     model.add(Activation('softmax'))
-    model.compile(optimizer='adam', loss='binary_crossentropy')
+    model.compile(optimizer='adam', loss='sparse_categorical_crossentropy')
 
     # print(model.summary())
 
@@ -219,7 +225,7 @@ def train_test_division(padded_list, y_labels):
 
 def train_and_test_vanilla_model(X_train, X_test, Y_train, Y_test, model):
 
-    model_history = model.fit(X_train, Y_train, batch_size=256, nb_epoch=3, verbose=1)
+    model_history = model.fit(X_train, Y_train, batch_size=256, epochs=3, verbose=1)
 
     predictions = model.predict_classes(X_test)
 
@@ -239,7 +245,7 @@ def train_and_test_vanilla_model(X_train, X_test, Y_train, Y_test, model):
 
 def train_and_test_attentive_model(X_train, X_test, Y_train, Y_test, model):
 
-    model_history = model.fit(X_train, Y_train, batch_size=256, nb_epoch=3, verbose=1)
+    model_history = model.fit(X_train, Y_train, batch_size=256, epochs=3, verbose=1)
 
     predictions = model.predict_classes(X_test)
 
@@ -261,23 +267,43 @@ if __name__ == '__main__':
     # stringed_words = get_data()
 
     # make_padded_list(stringed_words)
+    # small_string, big_string = get_data()
+
+    # make_padded_list(small_string)
 
     # Load List
-    pads = np.load('padded_keras_list.npy')
-    y_labels = np.asarray(
-        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+    # pads = np.load('padded_keras_list.npy')
+    small_pads = np.load('padded_small_keras_list.npy')
+
+    # Make labels array
+
+    small_y_labels = np.asarray([1,1,1,1,0,0,0,0])
+
+    #y_labels = np.asarray(
+    #    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    #     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
 
     # Split Data
-    x_train, x_test, y_train, y_test = train_test_division(pads, y_labels)
+
+    #x_train, x_test, y_train, y_test = train_test_division(pads, y_labels)
+
+    small_x_train, small_x_test, small_y_train, small_y_test = train_test_division(small_pads, small_y_labels)
+
+    print small_x_train.shape
+    print small_x_test.shape
+    print small_y_train.shape
+    print small_y_test.shape
 
     # Create Models
 
-    lstm = create_LSTM()
-    lstm_2, attentive = important_lstm()
+    #lstm = create_LSTM()
+    #lstm_2, attentive = important_lstm()
+
+    # vanilla_history, predictions = train_and_test_vanilla_model(small_x_train, small_x_test, small_y_train, small_y_test, lstm)
+    #hist, pred = train_and_test_attentive_model(small_x_train, small_x_test, small_y_train, small_y_test, lstm_2)
 
     # Learn and Test
-    
-    vanilla_history = train_and_test_vanilla_model(x_train, x_test, y_train, y_test, lstm)
-    train_and_test_attentive_model(x_train, x_test, y_train, y_test, attentive)
+
+    #vanilla_history = train_and_test_vanilla_model(x_train, x_test, y_train, y_test, lstm)
+    #train_and_test_attentive_model(x_train, x_test, y_train, y_test, attentive)
 
