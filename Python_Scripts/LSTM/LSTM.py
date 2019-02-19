@@ -3,14 +3,20 @@ from string import maketrans
 import numpy as np
 import pandas as pd
 import sqlite3
+import tensorflow as tf
 from sklearn.model_selection import train_test_split
 # Keras
 import keras
 from keras.layers import *
 from keras.models import *
+from keras.engine.topology import Layer
 from keras_preprocessing.text import *
+from keras.layers import Input, Dense, merge
+from keras import backend as K
 
-# LSTM implementation
+from AttentionWithContext import AttentionWithContext, cal_att_weights
+
+
 # In this file I will construct a LSTM with the goal of identifying particularly
 # Consequential and important words across my corpus of 50 novels.
 
@@ -92,8 +98,6 @@ def get_data():
     small_string_list = [str(billyBudd), str(bloodMeridian),
                          str(theShriekingPit), str(theSignOfFour)]
 
-
-
     big_string_list = [str(absalomAbsalom), str(billyBudd), str(bloodMeridian), str(eureka), str(gravitysRainbow),
                        str(heartOfDarkness), str(lifeAndTimesOfMichaelK), str(lolita), str(mobyDick), str(mrsDalloway),
                        str(orlando), str(paleFire), str(portraitOfTheArtist), str(pym), str(somethingHappened),
@@ -108,7 +112,9 @@ def get_data():
                        str(theRedThumbMark), str(theScarhavenKeep), str(theSecretAdversary), str(theShriekingPit),
                        str(theSignOfFour), str(theSpiralStaircase)]
 
-    return small_string_list, big_string_list
+    quite_small = [str(words[1489827:1489926])]
+
+    return small_string_list, big_string_list, quite_small
 
 
 # In order to pipe the words into a Keras tokenizer we have to make sure they're properly
@@ -148,7 +154,7 @@ def make_padded_list(word_strings):
         encoded_bucket.append(numbers_now)
 
     # pad 0's up to longest book length, gravity's rainbow
-    padded = keras.preprocessing.sequence.pad_sequences(encoded_bucket, maxlen=330351)
+    padded = keras.preprocessing.sequence.pad_sequences(encoded_bucket, maxlen=1000)
     np.save('padded_small_keras_list', padded)
     return 0
 
@@ -195,6 +201,7 @@ def important_lstm():
     # to sum up to 1. We are effectively assigning a "weight" to each timestep
     # Output shape is still (None,1) but each value changes
     attention_vals = Softmax(axis=1)(attention)
+
     # Multiply the encoded timestep by the respective weight
     # I.e. we are scaling each timestep based on its weight
     # Output shape is (None,5): (None,5)*(None,1)=(None,5)
@@ -214,7 +221,65 @@ def important_lstm():
     # print(model_with_attention_output.summary())
     return model, model_with_attention_output
 
-# Splits and shuffles my training and testing data
+# https://github.com/keras-team/keras/issues/4962
+def rough_lstm():
+    units = 64
+
+    _input = Input(shape=[330351], dtype='int32')
+
+    # get the embedding layer
+    embedded = Embedding(input_dim=69230, output_dim=1024, input_length=330351)(_input)
+
+    activations = LSTM(units, return_sequences=True)(embedded)
+
+    # compute importance for each step
+    attention = TimeDistributed(Dense(1, activation='tanh'))(activations)
+    attention = Flatten()(attention)
+    attention = Activation('softmax')(attention)
+    attention = RepeatVector(units)(attention)
+    attention = Permute([2, 1])(attention)
+
+    # apply the attention
+    # sent_representation = merge([activations, attention], mode='mul')
+    print activations
+    print attention
+    sent_representation = concatenate([activations, attention])
+
+
+    sent_representation = Lambda(lambda xin: K.sum(xin, axis=1))(sent_representation)
+    np.save('sent_rep.npy', sent_representation)
+
+    print sent_representation
+
+    probabilities = Dense(3, activation='softmax')(sent_representation)
+    print probabilities
+
+    model = Model(input=_input, output=probabilities)
+
+    model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=[])
+
+    return model
+
+def stack_lstm():
+        # inp = Input(shape=(118,100))
+        # x = Embedding(max_features, embed_size, weights=[embedding_matrix],
+        # trainable=False)(inp)
+
+    model1=Sequential()
+    model1.add(Embedding(input_dim=449, `q1q12 input_length=1000))
+    model1.add(Activation('relu'))
+        # model1.add(Flatten())
+        # model1.add(BatchNormalization(input_shape=(100,)))
+    model1.add(Bidirectional(LSTM(1000, activation="relu", return_sequences=True)))
+    model1.add(Dropout(0.1))
+    model1.add(TimeDistributed(Dense(200)))
+    model1.add(AttentionWithContext())
+    model1.add(Dropout(0.25))
+    model1.add(Dense(4, activation="softmax"))
+    model1.compile(loss='sparse_categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
+    model1.summary()
+    return model1
+
 
 def train_test_division(padded_list, y_labels):
 
@@ -274,12 +339,12 @@ def train_and_test_attentive_model(X_train, X_test, Y_train, Y_test, model):
 if __name__ == '__main__':
     print 'hello world'
 
-    # stringed_words = get_data()
+    stringed_words = get_data()
 
     # make_padded_list(stringed_words)
-    # small_string, big_string = get_data()
+    small_string, big_string, quite_small = get_data()
 
-    # make_padded_list(small_string)
+    make_padded_list(quite_small)
 
     # Load List
     # pads = np.load('padded_keras_list.npy')
@@ -287,7 +352,7 @@ if __name__ == '__main__':
 
     # Make labels array
 
-    small_y_labels = np.asarray([1,1,0,0])
+    small_y_labels = np.asarray([1])
 
     #y_labels = np.asarray(
     #    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -297,28 +362,36 @@ if __name__ == '__main__':
 
     #x_train, x_test, y_train, y_test = train_test_division(pads, y_labels)
 
-    small_x_train, small_x_test, small_y_train, small_y_test = train_test_division(small_pads, small_y_labels)
-
-    print small_x_train.shape
-    print small_x_test.shape
-    print small_y_train.shape
-    print small_y_test.shape
+    # small_x_train, small_x_test, small_y_train, small_y_test = train_test_division(small_pads, small_y_labels)
 
     # Create Models
 
     #lstm = create_LSTM()
-    lstm_2, attentive = important_lstm()
+    # lstm_2, attentive = important_lstm()
 
     # Small Models
     # vanilla_history, predictions = train_and_test_vanilla_model(small_x_train, small_x_test, small_y_train, small_y_test, lstm)
-    hist = train_and_test_attentive_model(small_x_train, small_x_test, small_y_train, small_y_test, lstm_2)
+    #  hist = train_and_test_attentive_model(small_x_train, small_x_test, small_y_train, small_y_test, lstm_2)
+    # rough = rough_lstm()
+    #model1 = train_and_test_attentive_model(small_x_train, small_x_test, small_y_train, small_y_test, rough)
 
-    # Learn and Test (This is for big models)
-
-    history_dict = hist.history
-
-    history_dict.keys()
 
     #vanilla_history = train_and_test_vanilla_model(x_train, x_test, y_train, y_test, lstm)
     #train_and_test_attentive_model(x_train, x_test, y_train, y_test, attentive)
+    # from stack
+    model1 = stack_lstm()
+    model_history = model1.fit(small_pads, small_y_labels, batch_size=64, epochs=1, verbose=1)
+    sent_before_att = K.function([model1.layers[0].input, K.learning_phase()], [model1.layers[2].output])
+    sent_att_w = model1.layers[5].get_weights()
+    print sent_att_w
+    test_seq = small_pads
+    print test_seq
+    #test_seq = np.array(test_seq).reshape(1, 118, 100)
+    out = sent_before_att([small_pads, 0])
 
+    # Learn and Test (This is for big models)
+    cal_att_weights(out, sent_att_w)
+
+    history_dict = model1.history
+
+    history_dict.keys()
