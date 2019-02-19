@@ -14,8 +14,7 @@ from keras_preprocessing.text import *
 from keras.layers import Input, Dense, merge
 from keras import backend as K
 
-from AttentionWithContext import AttentionWithContext, cal_att_weights
-
+from AttentionWithContext import AttentionWithContext
 
 # In this file I will construct a LSTM with the goal of identifying particularly
 # Consequential and important words across my corpus of 50 novels.
@@ -180,115 +179,6 @@ def create_LSTM():
 
     return model
 
-# We want to print out some of the relevant data inside embeddings
-# This func is lifted from a stack overflow post about highlighting important words in sentences
-# https://stackoverflow.com/questions/51477977/highlighting-important-words-in-a-sentence-using-deep-learning
-def important_lstm():
-    inp = Input((None,))
-    embs = Embedding(69230, 1024)(inp)
-    lstm = LSTM(units=64, return_sequences=True)(embs)
-    attention = TimeDistributed(Dense(1))(lstm)
-    attention_vals = Softmax(axis=1)(attention)
-    scaled_vecs = Multiply()([lstm, attention_vals])
-    context_vector = Lambda(lambda x: K.sum(x, axis=1))(scaled_vecs)
-    out = Dense(1, activation='sigmoid')(context_vector)
-    model = Model(inp, out)
-    model_with_attention_output = Model(inp, [out, attention_vals])
-    model.compile(optimizer='adam', loss='binary_crossentropy')
-    return model, model_with_attention_output
-
-
-def important_lstm_take_2():
-    inp = Input((449, 1000,))
-    #1
-    model = Sequential()
-    #2
-    model.add(Embedding(input_dim=449, output_dim=16, input_length=1000))
-    #3
-    model.add(Bidirectional(LSTM(units=64, activation='relu', return_sequences=True)))
-    # model1.add(Flatten())
-    # model1.add(BatchNormalization(input_shape=(100,)))
-    #model1add(Bidirectional(LSTM(1000, activation="relu", return_sequences=True)))
-    #3
-    model.add(Dropout(0.1))
-    #4
-    model.add(TimeDistributed(Dense(200)))
-    #5
-    model.add(AttentionWithContext())
-    #6
-    model.add(Dropout(0.25))
-    #7
-    model.add(Dense(4, activation="softmax"))
-    model.compile(optimizer='adam', loss='sparse_categorical_crossentropy')
-    return model
-
-# https://github.com/keras-team/keras/issues/4962
-def rough_lstm():
-    units = 64
-
-    _input = Input(shape=[330351], dtype='int32')
-
-    # get the embedding layer
-    embedded = Embedding(input_dim=69230, output_dim=1024, input_length=330351)(_input)
-
-    activations = LSTM(units, return_sequences=True)(embedded)
-
-    # compute importance for each step
-    attention = TimeDistributed(Dense(1, activation='tanh'))(activations)
-    attention = Flatten()(attention)
-    attention = Activation('softmax')(attention)
-    attention = RepeatVector(units)(attention)
-    attention = Permute([2, 1])(attention)
-
-    # apply the attention
-    # sent_representation = merge([activations, attention], mode='mul')
-    print activations
-    print attention
-    sent_representation = concatenate([activations, attention])
-
-
-    sent_representation = Lambda(lambda xin: K.sum(xin, axis=1))(sent_representation)
-    np.save('sent_rep.npy', sent_representation)
-
-    print sent_representation
-
-    probabilities = Dense(3, activation='softmax')(sent_representation)
-    print probabilities
-
-    model = Model(input=_input, output=probabilities)
-
-    model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=[])
-
-    return model
-
-def stack_lstm():
-
-    inputshape = (18210, 115200)
-    max_features = 115200 - 1
-    # input shape didn't define. Embedding layer can accept 3D input by using input_shape
-    print('model model')
-    model1=Sequential()
-    # 1
-    model1.add(Embedding(max_features, 10, input_shape=inputshape))  #input_length=max_len))    #2
-    model1.add(Flatten())
-    model1.add(Activation('relu'))
-    # model1.add(Flatten())
-    # model1.add(BatchNormalization(input_shape=(100,)))
-    #3
-    model1.add(Bidirectional(LSTM(10, activation="relu", return_sequences=True)))
-    #4
-    model1.add(Dropout(0.1))
-    #5
-    model1.add(TimeDistributed(Dense(200)))
-    # layer 6
-    model1.add(AttentionWithContext())
-    model1.add(Dropout(0.25))
-    model1.add(Dense(4, activation="softmax"))
-    model1.compile(loss='sparse_categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
-    model1.summary()
-    return model1
-
-
 def train_test_division(padded_list, y_labels):
 
     mat = np.matrix(padded_list)
@@ -328,10 +218,6 @@ def train_and_test_attentive_model(X_train, X_test, Y_train, Y_test, model):
     # score = model.evaluate(X_test, Y_test, verbose=0)
     attentions = model.predict(X_test, batch_size=64)
 
-    np.save('attentions_list', attentions)
-
-    print model.summary()
-
     #val_loss_history = model_history.history['val_loss']
     #val_acc_history = model_history.history['val_acc']
 
@@ -343,6 +229,29 @@ def train_and_test_attentive_model(X_train, X_test, Y_train, Y_test, model):
         json.dump(model_history.history, f)
 
     return model_history
+
+def important_lstm_take_2():
+    # 1
+    model = Sequential()
+    # 2
+    model.add(Embedding(18211, 64, input_length=115200))
+    # 3
+    model.add(Bidirectional(LSTM(units=64, activation='relu', return_sequences=True)))
+    # 3
+    model.add(Dropout(0.1))
+    # 4
+    model.add(TimeDistributed(Dense(128)))
+    # 5
+    model.add(AttentionWithContext())
+    # 6
+    model.add(Dropout(0.25))
+    # 7
+    # model.add(Flatten())
+
+    model.add(Dense(4, activation="softmax"))
+    # Comp.
+    model.compile(optimizer='adam', loss='sparse_categorical_crossentropy')
+    return model
 
 if __name__ == '__main__':
     print 'hello world'
@@ -397,20 +306,42 @@ if __name__ == '__main__':
     #train_and_test_attentive_model(x_train, x_test, y_train, y_test, attentive)
     # from stack
     model1 = important_lstm_take_2()
+    #model2 = rough_lstm()
+
+    #small_x_train = np.expand_dims(small_x_train, axis=2)
 
     print(model1.summary())
+    #print(model2.summary())
 
     model_history = model1.fit(small_x_train, small_y_train, batch_size=32, epochs=1, verbose=1)
-    # sent_before_att = K.function([model1.layers[1].input, K.learning_phase()], [model1.layers[3].output])
-    # sent_att_w = model1.layers[4].get_weights()
-    # print sent_att_w
-    # test_seq = small_pads
-    # print test_seq
-    #test_seq = np.array(test_seq).reshape(1, 118, 100)
-    # out = sent_before_att([small_pads, 0])
 
+   # for layer in model1.layers:
+   #     print(layer.name, layer._inbound_nodes, layer._outbound_nodes)
+
+    sent_before_att = K.function([model1.layers[1].input, K.learning_phase()], [model1.layers[3].output])
+    sent_before_att_2 = K.function([model1.layers[0].input, K.learning_phase()], [model1.layers[3].output])
+
+    sent_att_w = model1.layers[4].get_weights()
+    #print(np.shape(sent_att_w))
+    #print(np.shape(sent_before_att))
+    test_seq = small_x_test
+    print(np.shape(test_seq))
+    #test_seq = np.reshape(1, 115210, 128)
+   # print sent_att_w[0]
+   # print sent_att_w[1]
+   # print sent_att_w[2]
+
+    out = sent_before_att_2([test_seq, 0])
+    # out = sent_before_att([test_seq, 0])
     # Learn and Test (This is for big models)
-    # cal_att_weights(out, sent_att_w)
+
+    eij = np.tanh(np.dot(out[0], sent_att_w[0]) + sent_att_w[1])
+    eij = np.dot(eij, sent_att_w[2])
+    eij = eij.reshape((eij.shape[0], eij.shape[1]))
+    ai = np.exp(eij) # e^x
+    weights = ai / np.sum(ai)
+
+    print weights
 
     # history_dict = model1.history
 
