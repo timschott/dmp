@@ -154,10 +154,9 @@ def make_padded_list(word_strings):
         encoded_bucket.append(numbers_now)
 
     # pad 0's up to longest book length, gravity's rainbow
-    padded = keras.preprocessing.sequence.pad_sequences(encoded_bucket, maxlen=1000)
+    padded = keras.preprocessing.sequence.pad_sequences(encoded_bucket, maxlen=115200)
     np.save('padded_small_keras_list', padded)
-    return 0
-
+    return
 
 # Instantiates a vanilla LSTM
 # Takes advantage of word embeddings
@@ -186,40 +185,42 @@ def create_LSTM():
 # https://stackoverflow.com/questions/51477977/highlighting-important-words-in-a-sentence-using-deep-learning
 def important_lstm():
     inp = Input((None,))
-    # Embed words into vectors of size 10 each:
-    # Output shape is (None,10)
-    # 69230 is my vocab size
     embs = Embedding(69230, 1024)(inp)
-    # Run LSTM on these vectors and return output on each timestep
-    # Output shape is (None,5)
     lstm = LSTM(units=64, return_sequences=True)(embs)
-    ##Attention Block
-    # Transform each timestep into 1 value (attention_value)
-    # Output shape is (None,1)
     attention = TimeDistributed(Dense(1))(lstm)
-    # By running softmax on axis 1 we force attention_values
-    # to sum up to 1. We are effectively assigning a "weight" to each timestep
-    # Output shape is still (None,1) but each value changes
     attention_vals = Softmax(axis=1)(attention)
-
-    # Multiply the encoded timestep by the respective weight
-    # I.e. we are scaling each timestep based on its weight
-    # Output shape is (None,5): (None,5)*(None,1)=(None,5)
     scaled_vecs = Multiply()([lstm, attention_vals])
-    # Sum up all scaled timesteps into 1 vector
-    # i.e. obtain a weighted sum of timesteps
-    # Output shape is (5,) : Observe the time dimension got collapsed
     context_vector = Lambda(lambda x: K.sum(x, axis=1))(scaled_vecs)
-    ##Attention Block over
-    # Get the output out
     out = Dense(1, activation='sigmoid')(context_vector)
     model = Model(inp, out)
     model_with_attention_output = Model(inp, [out, attention_vals])
     model.compile(optimizer='adam', loss='binary_crossentropy')
-
-    # print(model.summary())
-    # print(model_with_attention_output.summary())
     return model, model_with_attention_output
+
+
+def important_lstm_take_2():
+    inp = Input((449, 1000,))
+    #1
+    model = Sequential()
+    #2
+    model.add(Embedding(input_dim=449, output_dim=16, input_length=1000))
+    #3
+    model.add(Bidirectional(LSTM(units=64, activation='relu', return_sequences=True)))
+    # model1.add(Flatten())
+    # model1.add(BatchNormalization(input_shape=(100,)))
+    #model1add(Bidirectional(LSTM(1000, activation="relu", return_sequences=True)))
+    #3
+    model.add(Dropout(0.1))
+    #4
+    model.add(TimeDistributed(Dense(200)))
+    #5
+    model.add(AttentionWithContext())
+    #6
+    model.add(Dropout(0.25))
+    #7
+    model.add(Dense(4, activation="softmax"))
+    model.compile(optimizer='adam', loss='sparse_categorical_crossentropy')
+    return model
 
 # https://github.com/keras-team/keras/issues/4962
 def rough_lstm():
@@ -261,18 +262,25 @@ def rough_lstm():
     return model
 
 def stack_lstm():
-        # inp = Input(shape=(118,100))
-        # x = Embedding(max_features, embed_size, weights=[embedding_matrix],
-        # trainable=False)(inp)
 
+    inputshape = (18210, 115200)
+    max_features = 115200 - 1
+    # input shape didn't define. Embedding layer can accept 3D input by using input_shape
+    print('model model')
     model1=Sequential()
-    model1.add(Embedding(input_dim=449, `q1q12 input_length=1000))
+    # 1
+    model1.add(Embedding(max_features, 10, input_shape=inputshape))  #input_length=max_len))    #2
+    model1.add(Flatten())
     model1.add(Activation('relu'))
-        # model1.add(Flatten())
-        # model1.add(BatchNormalization(input_shape=(100,)))
-    model1.add(Bidirectional(LSTM(1000, activation="relu", return_sequences=True)))
+    # model1.add(Flatten())
+    # model1.add(BatchNormalization(input_shape=(100,)))
+    #3
+    model1.add(Bidirectional(LSTM(10, activation="relu", return_sequences=True)))
+    #4
     model1.add(Dropout(0.1))
+    #5
     model1.add(TimeDistributed(Dense(200)))
+    # layer 6
     model1.add(AttentionWithContext())
     model1.add(Dropout(0.25))
     model1.add(Dense(4, activation="softmax"))
@@ -287,7 +295,7 @@ def train_test_division(padded_list, y_labels):
     df = pd.DataFrame(data=mat)
     X_train, X_test, Y_train, Y_test = train_test_split(df, y_labels, test_size=0.25, random_state=21)
 
-    return X_train, X_test, Y_train, Y_test
+    return X_train.values, X_test.values, Y_train, Y_test
 
 # Runs and evaluates my vanilla LSTM
 
@@ -339,20 +347,19 @@ def train_and_test_attentive_model(X_train, X_test, Y_train, Y_test, model):
 if __name__ == '__main__':
     print 'hello world'
 
-    stringed_words = get_data()
+   #  stringed_words = get_data()
 
     # make_padded_list(stringed_words)
-    small_string, big_string, quite_small = get_data()
+    # small_string, big_string, quite_small = get_data()
 
-    make_padded_list(quite_small)
+    # make_padded_list(small_string)
 
     # Load List
     # pads = np.load('padded_keras_list.npy')
     small_pads = np.load('padded_small_keras_list.npy')
-
     # Make labels array
 
-    small_y_labels = np.asarray([1])
+    small_y_labels = np.asarray([1,1,0,0])
 
     #y_labels = np.asarray(
     #    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -360,10 +367,19 @@ if __name__ == '__main__':
 
     # Split Data
 
-    #x_train, x_test, y_train, y_test = train_test_division(pads, y_labels)
+    # x_train, x_test, y_train, y_test = train_test_division(pads, y_labels)
 
-    # small_x_train, small_x_test, small_y_train, small_y_test = train_test_division(small_pads, small_y_labels)
-
+    # pandas dfs.
+    small_x_train, small_x_test, small_y_train, small_y_test = train_test_division(small_pads, small_y_labels)
+    print(type(small_x_train))
+    print(small_x_train.shape)
+    print(type(small_x_test))
+    print(small_x_test.shape)
+    print(type(small_y_train))
+    print(small_y_train.shape)
+    print(type(small_y_test))
+    print(small_y_test.shape)
+    # print(small_x_test.shape)
     # Create Models
 
     #lstm = create_LSTM()
@@ -375,23 +391,30 @@ if __name__ == '__main__':
     # rough = rough_lstm()
     #model1 = train_and_test_attentive_model(small_x_train, small_x_test, small_y_train, small_y_test, rough)
 
-
+    # small_pads = small_pads.T
+    
     #vanilla_history = train_and_test_vanilla_model(x_train, x_test, y_train, y_test, lstm)
     #train_and_test_attentive_model(x_train, x_test, y_train, y_test, attentive)
     # from stack
-    model1 = stack_lstm()
-    model_history = model1.fit(small_pads, small_y_labels, batch_size=64, epochs=1, verbose=1)
-    sent_before_att = K.function([model1.layers[0].input, K.learning_phase()], [model1.layers[2].output])
-    sent_att_w = model1.layers[5].get_weights()
-    print sent_att_w
-    test_seq = small_pads
-    print test_seq
+    model1 = important_lstm_take_2()
+
+    print(model1.summary())
+
+    model_history = model1.fit(small_x_train, small_y_train, batch_size=32, epochs=1, verbose=1)
+    # sent_before_att = K.function([model1.layers[1].input, K.learning_phase()], [model1.layers[3].output])
+    # sent_att_w = model1.layers[4].get_weights()
+    # print sent_att_w
+    # test_seq = small_pads
+    # print test_seq
     #test_seq = np.array(test_seq).reshape(1, 118, 100)
-    out = sent_before_att([small_pads, 0])
+    # out = sent_before_att([small_pads, 0])
 
     # Learn and Test (This is for big models)
-    cal_att_weights(out, sent_att_w)
+    # cal_att_weights(out, sent_att_w)
 
-    history_dict = model1.history
+    # history_dict = model1.history
 
-    history_dict.keys()
+    # history_dict.keys()
+
+    # how about trying to adapt the original stack over flow option
+
