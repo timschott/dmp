@@ -4,6 +4,7 @@ library(scales)
 library("RSQLite")
 library("dplyr")
 library(caret)
+library(pROC)
 library(ggcorrplot)
 library(randomForest)
 library(MASS)
@@ -13,7 +14,7 @@ library(e1071)
 # let's look at what data is correlated. and then normalize our feature set. 
 
 # load in csv
-normalized_df <- read.csv('normalized.csv', stringsAsFactors = FALSE)
+normalized_df <- read.csv('particularly_normalized.csv', stringsAsFactors = FALSE)
 colnames(normalized_df)
 str(normalized_df)
 
@@ -34,15 +35,60 @@ training <- culled[partition,]
 testing <- culled[-partition,]
 
 trctrl <- trainControl(method="LOOCV")
-grid <- expand.grid(C = c(0.01, 0.05, 0.1, 0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2,5))
+grid <- expand.grid(C = c(0.01, 0.05, 0.1, 0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2,5,10, 15, 20, 300))
 svm_Linear_Grid <- train(label2 ~., data = training, method = "svmLinear",
                          trControl=trctrl,
-                         tuneGrid = grid,
-                         tuneLength = 5)
-plot(svm_Linear_Grid)
+                         tuneGrid = grid)
 
-test_pred_grid <- predict(svm_Linear_Grid, newdata = testing)
 
+for(i in (seq(1,16))){
+  fit <- svm(label2 ~., data = training, kernel = "linear",
+             cross=41,
+             cost = grid$C[i])
+  print(length(fit$SV)/5)
+}
+
+fit <- svm(label2 ~., data = training, kernel = "linear",
+           cross=41,
+           cost = 10)
+
+
+pred = predict(fit, testing)
+table(Actual=testing$label2, Fitted=pred)
+
+w = t(fit$coefs) %*% fit$SV
+# alright so the most consequential are dialgoue and anaphora
+sub <- culled %>% dplyr::select(dialogue_freq, consecutive_repeat_freq_vec,label2)
+# sub_test <- testing %>% dplyr::select(dialogue_freq, consecutive_repeat_freq_vec,label2)
+
+for(i in seq(1,16)){
+test_svm <- fit <- svm(label2 ~., data = sub, kernel = "linear",
+                       cross=50,
+                       cost = grid$C[i])
+print(length(fit$SV)/2)
+}
+
+test_svm <- svm(label2 ~., data = sub, kernel = "linear",
+           cross=41,
+           cost = 5)
+# parameter coefficients
+w = t(test_svm$coefs) %*% test_svm$SV
+
+# plot
+
+plot(test_svm, sub)
+
+# confusion matrix for subset 
+
+test_results <- predict(test_svm, newdata = sub_test)
+confusionMatrix(test_results, sub_test$label2)
+
+# manual
+t(w %*% t(as.matrix(sub[,-3]))) - test_svm$rho
+
+
+# old 
+test_pred_grid <- predict(test_svm, newdata = testing)
 confusionMatrix(test_pred_grid, testing$label2)
 
 test_pred_grid
@@ -50,9 +96,6 @@ testing$label2
 testing$i_freq
 
 normalized_df$i_freq
-
-
-
 
 library(gmodels)
 CrossTable(testing$label2, test_pred_grid,
@@ -82,4 +125,9 @@ CrossTable(y_pred,testing$label2,prop.chisq = FALSE)
 library(pROC)
 r =roc(testing$label2, attr(y_pred_prob, "probabilities")[,2])
 plot(r)
+
+
+
+
+
 
