@@ -4,7 +4,9 @@ library(scales)
 library("RSQLite")
 library("dplyr")
 library(caret)
+# install.packages("reprtree")
 library(ggcorrplot)
+library("rpart.plot")
 library(randomForest)
 library(MASS)
 library(randomForest)
@@ -75,7 +77,10 @@ for(i in seq(1, 30)){
 write.csv(new_df,'particularly_normalized.csv')
 
 #######
-# step wise feature selection 
+# read in better data. 
+
+new_df <- read.csv('particularly_normalized.csv', stringsAsFactors = FALSE)
+colnames(normalized_df)
 
 training.samples <- createDataPartition(normalized_novel_df$label2,p = 0.8, list = FALSE)
 train.data  <- normalized_novel_df[training.samples, ]
@@ -136,18 +141,20 @@ varImpPlot(m,type=2, sort=TRUE, main="Variable Importance")
 subset <- new_df %>% dplyr::select(c(dialogue_freq, 
                                          perceive_freq, self_freq, consecutive_counts_vec, label2))
 
+subset$label2 = factor(subset$label2)
+# rf <- randomForest(Species ~ ., data=iris)
 set.seed(299)
 splitIndex <- createDataPartition(subset[,outcomeName], p = .80, list = FALSE, times = 1)
 novel_train <- subset[ splitIndex,]
 novel_test  <- subset[-splitIndex,]
 
 prop.table(table(subset$label2))
-prop.table(table(subset$label2))
 
 m <- randomForest(label2~ ., subset, 
                   sampsize = round(0.8*(length(subset$label2))),ntree = 500, 
-                  mtry = sqrt(6), importance = TRUE)
+                  importance = TRUE)
 
+reprtree:::plot.getTree(m, main="Decision Tree")
 print(m) 
 ## 4% OOB!
 round(importance(m), 2)
