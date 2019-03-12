@@ -5,6 +5,7 @@ library("RSQLite")
 library("dplyr")
 library(caret)
 # install.packages("reprtree")
+library(reprtree)
 library(ggcorrplot)
 library("rpart.plot")
 library(randomForest)
@@ -34,7 +35,7 @@ correlationMatrix <- cor(novel_df[,1:30])
 print(correlationMatrix)
 
 # Plot the correlation matrix -> with a correlation plot. 
-ggcorrplot(correlationMatrix, method = "circle")
+ggcorrplot(correlationMatrix, method = "circle", title="Correlation Matrix")
 
 # find attributes that are highly corrected (ideally >0.75)
 # just using 50% for our example
@@ -80,29 +81,13 @@ write.csv(new_df,'particularly_normalized.csv')
 # read in better data. 
 
 new_df <- read.csv('particularly_normalized.csv', stringsAsFactors = FALSE)
-colnames(normalized_df)
 
-training.samples <- createDataPartition(normalized_novel_df$label2,p = 0.8, list = FALSE)
-train.data  <- normalized_novel_df[training.samples, ]
-test.data <- normalized_novel_df[-training.samples, ]
-
-# Fit the model
-# null model means not dependent on anything. 
-modelnull <- glm(label2 ~ 1, data = train.data, family = binomial)
-
-# the biggest model. all of our data
-modelfull <- glm(label2 ~ ., data = train.data, family = binomial)
-
-# trace just gets rid of our output 
-# tells us to get rid of tri cep 
-stepAIC(modelfull, direction = "backward", scope=list(upper=modelfull,lower=modelnull),trace = TRUE)  
-
-# stepwise AIC says use: sent_counts_vec, consecutive_counts_vec, dialogue_freq.
-
+new_df <- new_df %>% dplyr::select(-c(X))
+new_df$label2 <- as.factor(new_df$label2)
 #### try our hand using just normalized data but still every feature. 
 #### Feature Selection from GINI
 set.seed(19)
-splitIndex <- createDataPartition(new_df[,outcomeName], p = .80, list = FALSE, times = 1)
+splitIndex <- createDataPartition(new_df[,31], p = .80, list = FALSE, times = 1)
 novel_train <- new_df[ splitIndex,]
 novel_test  <- new_df[-splitIndex,]
 
@@ -123,12 +108,10 @@ x <- varImp(m)
 varImpPlot(m,type=2, sort=TRUE, main="Variable Importance")
 
 # random forest says that most important is:
-# dialogue, perceive, para, consecutive_repeat, ;
-# dialogue is a little bit of a red herring I think due to the instances
-# of 0 messing us up. imputing from the mean made it ecven more important
+# dialogue, perceive, para, consecutive_repeat_freq, self ;
 # but the other 4 are interesting because they're Frequencies and not
 # raw counts 
-# 3/8
+# 3/11
 # okay well the new results are pretty good. 
 # i fixed dialogue with my random sampling and it still reigns supreme.
 # paragraph count bubbles to the top. 
@@ -138,13 +121,14 @@ varImpPlot(m,type=2, sort=TRUE, main="Variable Importance")
 
 #a random forest with just those features
 
-subset <- new_df %>% dplyr::select(c(dialogue_freq, 
-                                         perceive_freq, self_freq, consecutive_counts_vec, label2))
+# dialogue continues to dominate my other features. what if i get rid of it? 
+
+subset <- new_df %>% dplyr::select(c(perceive_freq, self_freq, dialogue_freq, consecutive_repeat_freq_vec, label2))
 
 subset$label2 = factor(subset$label2)
 # rf <- randomForest(Species ~ ., data=iris)
-set.seed(299)
-splitIndex <- createDataPartition(subset[,outcomeName], p = .80, list = FALSE, times = 1)
+set.seed(12)
+splitIndex <- createDataPartition(subset[,5], p = .80, list = FALSE, times = 1)
 novel_train <- subset[ splitIndex,]
 novel_test  <- subset[-splitIndex,]
 
@@ -156,7 +140,58 @@ m <- randomForest(label2~ ., subset,
 
 reprtree:::plot.getTree(m, main="Decision Tree")
 print(m) 
-## 4% OOB!
-round(importance(m), 2)
-m$predicted
 m$confusion
+# 0 % OOB with 4 traits. Totally overfitting. Still need to remove features.
+
+# try each unique pair. 
+
+for(i in seq(1,4)){
+  for(j in seq(i+1,4)){
+    if(i==4){
+      break
+    }
+    m <- randomForest(as.data.frame(cbind(subset[,i], subset[,j])),subset$label2,  
+                      sampsize = round(0.8*(length(subset$label2))),ntree = 500, 
+                      importance = TRUE)
+    print(i)
+    print(j)
+    print(m$confusion)
+    print('=========')
+  }
+}
+
+# every single decision tree that uses dialogue boasts perfect performance
+# the best attribute? somehow a double edged sword.
+# this leads me to think suspiciously about my own work
+# i'm not *that* confident in it so i will keep treading....
+
+# next step: make all 6 confusion matrices to prove this point
+
+# then kick into svm, still with these four variables, reduce down to prove
+# my point that even with *meh* data you can predict these bad boys
+varImp(m)
+round(importance(m), 2)
+
+# https://stackoverflow.com/questions/37897252/plot-confusion-matrix-in-r-using-ggplot
+
+confusion_matrix <- as.data.frame(table(m$predicted, subset$label2))
+
+
+TClass <- factor(c("detective", "detective", "lyrical", "lyrical"))
+PClass <- factor(c("detective", "lyrical", "detective","lyrical"))
+Y      <- c(22,2,4,22)
+df <- data.frame(TClass, PClass, Y)
+
+ggplot(data =  df, mapping = aes(x = TClass, y= PClass)) +
+  geom_tile(aes(fill = Y), colour = "white") +
+  geom_text(aes(label = sprintf("%1.0f", Y)), vjust = 1) +
+  scale_fill_gradient(low = "#ff6961", high = "#61f7ff") +
+  theme_bw() + theme(legend.position = "none")+
+  ggtitle("Decision Tree Confusion Matrix") +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  xlab("True Class") +
+  ylab("Predicted Class")
+
+
+
+
