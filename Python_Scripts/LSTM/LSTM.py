@@ -243,6 +243,7 @@ def cal_att_weights(output, att_w):
     eij = eij.reshape((eij.shape[0], eij.shape[1]))
     ai = np.exp(eij)
     weights = ai / np.sum(ai)
+
     return weights
 
 def important_lstm_take_2():
@@ -284,6 +285,8 @@ if __name__ == '__main__':
     # pads = np.load('padded_keras_list.npy')
     small_pads = np.load('padded_small_keras_list.npy')
     # Make labels array
+    print small_pads
+
 
     small_y_labels = np.asarray([1,1,0,0])
 
@@ -307,6 +310,7 @@ if __name__ == '__main__':
     print(small_y_test.shape)
     # print(small_x_test.shape)
     # Create Models
+
 
     #lstm = create_LSTM()
     # lstm_2, attentive = important_lstm()
@@ -334,6 +338,8 @@ if __name__ == '__main__':
     test_seq = small_x_test
 
     print(np.shape(test_seq))
+    print(np.count_nonzero(test_seq))
+    print test_seq
 
     sent_before_att_2 = K.function([model1.layers[0].input, K.learning_phase()], [model1.layers[3].output])
 
@@ -342,5 +348,7 @@ if __name__ == '__main__':
     test_weight = sent_att_w[0]
 
     weights = cal_att_weights(out, sent_att_w)
-    dataframe = pd.DataFrame(data=weights.astype(float))
-    dataframe.to_csv('outfile.csv', sep=' ', header=False, float_format='%.2f', index=False)
+    print weights
+    # dataframe = pd.DataFrame(data=weights.astype(float))
+    # dataframe.to_csv('outfile.csv', sep=' ', header=False, float_format='%.2f', index=False)
+    np.savetxt('test.txt', weights, delimiter=',', fmt='%f')
