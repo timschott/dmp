@@ -153,6 +153,8 @@ def make_padded_list(word_strings):
         encoded_bucket.append(numbers_now)
 
     # pad 0's up to longest book length, gravity's rainbow
+    # since I'm working with a smaller subset right now, max length is just
+    # the number of words in the biggest book of the small set
     padded = keras.preprocessing.sequence.pad_sequences(encoded_bucket, maxlen=115200)
     np.save('padded_small_keras_list', padded)
     return
@@ -230,10 +232,25 @@ def train_and_test_attentive_model(X_train, X_test, Y_train, Y_test, model):
 
     return model_history
 
+
+def cal_att_weights(output, att_w):
+
+
+# if model_name == 'HAN':
+
+    eij = np.tanh(np.dot(output[0], att_w[0]) + att_w[1])
+    eij = np.dot(eij, att_w[2])
+    eij = eij.reshape((eij.shape[0], eij.shape[1]))
+    ai = np.exp(eij)
+    weights = ai / np.sum(ai)
+    return weights
+
 def important_lstm_take_2():
     # 1
     model = Sequential()
     # 2
+    # input length is the longest number of words
+    # first argument is howe many unique words there are (i think)
     model.add(Embedding(18211, 64, input_length=115200))
     # 3
     model.add(Bidirectional(LSTM(units=64, activation='relu', return_sequences=True)))
@@ -301,51 +318,29 @@ if __name__ == '__main__':
     #model1 = train_and_test_attentive_model(small_x_train, small_x_test, small_y_train, small_y_test, rough)
 
     # small_pads = small_pads.T
-    
+
     #vanilla_history = train_and_test_vanilla_model(x_train, x_test, y_train, y_test, lstm)
     #train_and_test_attentive_model(x_train, x_test, y_train, y_test, attentive)
     # from stack
-    model1 = important_lstm_take_2()
-    #model2 = rough_lstm()
 
-    #small_x_train = np.expand_dims(small_x_train, axis=2)
+    model1 = important_lstm_take_2()
 
     print(model1.summary())
-    #print(model2.summary())
 
     model_history = model1.fit(small_x_train, small_y_train, batch_size=32, epochs=1, verbose=1)
 
-   # for layer in model1.layers:
-   #     print(layer.name, layer._inbound_nodes, layer._outbound_nodes)
+    sent_att_w = model1.layers[4].get_weights()
 
-    sent_before_att = K.function([model1.layers[1].input, K.learning_phase()], [model1.layers[3].output])
+    test_seq = small_x_test
+
+    print(np.shape(test_seq))
+
     sent_before_att_2 = K.function([model1.layers[0].input, K.learning_phase()], [model1.layers[3].output])
 
-    sent_att_w = model1.layers[4].get_weights()
-    #print(np.shape(sent_att_w))
-    #print(np.shape(sent_before_att))
-    test_seq = small_x_test
-    print(np.shape(test_seq))
-    #test_seq = np.reshape(1, 115210, 128)
-   # print sent_att_w[0]
-   # print sent_att_w[1]
-   # print sent_att_w[2]
-
     out = sent_before_att_2([test_seq, 0])
-    # out = sent_before_att([test_seq, 0])
-    # Learn and Test (This is for big models)
 
-    eij = np.tanh(np.dot(out[0], sent_att_w[0]) + sent_att_w[1])
-    eij = np.dot(eij, sent_att_w[2])
-    eij = eij.reshape((eij.shape[0], eij.shape[1]))
-    ai = np.exp(eij) # e^x
-    weights = ai / np.sum(ai)
+    test_weight = sent_att_w[0]
 
-    print weights
-
-    # history_dict = model1.history
-
-    # history_dict.keys()
-
-    # how about trying to adapt the original stack over flow option
-
+    weights = cal_att_weights(out, sent_att_w)
+    dataframe = pd.DataFrame(data=weights.astype(float))
+    dataframe.to_csv('outfile.csv', sep=' ', header=False, float_format='%.2f', index=False)
