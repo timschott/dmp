@@ -1,5 +1,5 @@
 library(gridExtra)
-
+library(dplyr)
 lyrical_authors_vec <- c(
   "Cormac McCarthy",
   "Cormac McCarthy",
@@ -115,4 +115,73 @@ colnames(detective_df) <- c("Author", "Title")
 png("detective_corpus.png", height = 25*nrow(corpus_df), width = 250*ncol(corpus_df), title="Lyrical Corpus")
 grid.table(detective_df)
 
+
+big_boy <- read.csv('starts.csv', stringsAsFactors = FALSE)
+
+
+str(big_boy)
+novel_df <- big_boy %>% dplyr::select(-c(numeric_labels_vec, titles_vec))
+length(novel_df)
+big_boy$titles_vec
+t <- as.data.frame(t(novel_df), stringsAsFactors = FALSE)
+length(t)
+colnames(t) <- c(big_boy$titles_vec)
+
+png("data_points.png", height = 75*nrow(t), width = 150*ncol(t))
+grid.table(t)
 dev.off()
+
+# make size 7 subsets
+
+df1 <- t %>%
+  select(colnames(t)[1:7])
+
+df2 <- t %>%
+  select(colnames(t)[8:14])
+
+df3 <- t %>%
+  select(colnames(t)[15:21])
+
+df4 <- t %>%
+  select(colnames(t)[22:28])
+
+df5 <- t %>%
+  select(colnames(t)[29:35])
+
+df6 <- t %>%
+  select(colnames(t)[36:42])
+
+df7 <- t %>%
+  select(colnames(t)[42:50])
+
+
+png("data_points_1.png", height = 25*nrow(df1), width = 150*ncol(df1))
+grid.table(df1)
+dev.off()
+
+png("data_points_2.png", height = 25*nrow(df2), width = 150*ncol(df2))
+grid.table(df2)
+dev.off()
+
+png("data_points_3.png", height = 25*nrow(df3), width = 150*ncol(df3))
+grid.table(df3)
+dev.off()
+
+png("data_points_4.png", height = 25*nrow(df4), width = 150*ncol(df4))
+grid.table(df4)
+dev.off()
+
+png("data_points_5.png", height = 25*nrow(df5), width = 150*ncol(df5))
+grid.table(df5)
+dev.off()
+
+png("data_points_6.png", height = 25*nrow(df6), width = 150*ncol(df6))
+grid.table(df6)
+dev.off()
+
+png("data_points_7.png", height = 25*nrow(df7), width = 150*ncol(df7))
+grid.table(df7)
+dev.off()
+
+
+
