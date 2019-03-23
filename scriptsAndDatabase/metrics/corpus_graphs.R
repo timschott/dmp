@@ -183,5 +183,52 @@ png("data_points_7.png", height = 25*nrow(df7), width = 150*ncol(df7))
 grid.table(df7)
 dev.off()
 
+# got to make feature matrix selection 
+
+identifiers <- c("labels_vec", "word_counts", "sent_counts", "para_counts", "sent_comma_freq",
+                 "para_comma_freq", "words_per_sentence", "words_per_paragraph", 
+                 "sents_per_paragraph", "consecutive_counts", "consecutive_repeat_freq",
+                 "syll_and_word_freq", "polysyll_and_word_freq", "polysyll_and_sent_freq",
+                 "unique_counts", "type_token_ratio", "mean_usage_freq","median_MATTR",
+                 "object_freq", "relationship_freq", "time_freq","self_freq", "perceive_freq",
+                 "i_freq", "top_ten_freq", "dialogue_freq", "question_vec", "exclamation_vec",
+                 "sentiment_vec")
+explanation <- c("Category",
+                 "Number of words",
+                 "Number of sentences",
+                 "Number of paragraphs",
+                 "Number of commas per sentence",
+                 "Number of commas per paragraph",
+                 "Number of words per sentence",
+                 "Number of words per paragraph",
+                 "Number of sentences per paragraph",
+                 "Number of anaphoric sentences",
+                 "Frequency of anaphoric sentences",
+                 "Number of syllables per word",
+                 "Number of polysyllables per word",
+                 "Number of polysyllables per sentence",
+                 "Number of unique words",
+                 "Type-Token Ratio",
+                 "Mean Usage Frequency (1 over Type-Token Ratio)",
+                 "Median Moving-Average Type-Token Ratio",
+                 "Percent of words in Harvard Inquirer's “object” category",
+                 "Percent of words in Harvard Inquirer's “relationship” category",
+                 "Percent of words in Harvard Inquirer's “time” category",
+                 "Percent of words in Harvard Inquirer's “self” category",
+                 "Percent of words in Harvard Inquirer's “perceive” category",
+                 "Frequency of the word 'I'",
+                 "Frequency of a book's top ten words",
+                 "Percentage of dialogue",
+                 "Number of question marks",
+                 "Number of exclamation points",
+                 "average sentiment across text")
+explanation <- as.data.frame((cbind(identifiers, explanation)))
+colnames(explanation) <- c("Feature Names", "Explanation")
+
+png("explanation.png", height = 25*nrow(explanation), width =250*ncol(explanation))
+grid.table(explanation)
+dev.off()
+
+
 
 
