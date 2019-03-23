@@ -1,0 +1,118 @@
+library(gridExtra)
+
+lyrical_authors_vec <- c(
+  "Cormac McCarthy",
+  "Cormac McCarthy",
+  "D.H. Lawrence",
+  "D.H. Lawrence",
+  "D.H. Lawrence",
+  "Edgar Allen Poe",
+  "Edgar Allen Poe",
+  "F. Scott Fitzgerald",
+  "Herman Melville",
+  "Herman Melville",
+  "James Joyce",
+  "Jean Rhys",
+  "Joseph Conrad",
+  "Joseph Heller", 
+  "J. M. Coetzee",
+  "Malcolm Lawry", 
+  "Oscar Wilde",
+  "Thomas Pynchon", 
+  "Virginia Woolf",
+  "Virginia Woolf",
+  "Virginia Woolf",
+  "Vladimir Nabokov",
+  "Vladimir Nabokov", 
+  "William Faulkner", 
+  "William Faulkner",
+  "William H. Gass")
+
+lyrical_books_vec <- c("Blood Meridian",
+  "The Road",
+  "The Rainbow",
+  "The Serpent", 
+  "Women in Love",
+  "Gravity's Rainbow",
+  "Eureka: A Prose Poem",
+  "The Great Gatsby",
+  "Billy Budd",
+  "Moby Dick",
+  "Portrait of the Artist as a Young Man",
+  "Wide Sargasso Sea",
+  "Heart of Darkness",
+  "Something Happened",
+  "Life and Times of Michael K",
+  "Under the Volcano", 
+  "The Picture of Dorian Gray",
+  "The Narrative of Arthur Gordon Pym of Nantucket",
+  "Mrs. Dalloway", 
+  "Orlando", 
+  "To The Lighthouse", 
+  "Pale Fire", 
+  "Lolita",
+  "Absalom Absalom", 
+  "The Sound and the Fury",
+  "In The Heart of the Heart of the Country")
+
+det_authors_vec <- c("Agatha Christie",
+                     "Anna Katherine Green",
+                     "Arthur Conan Doyle", 
+                     "Arthur Conan Doye",
+                     "Arthur J. Rees", 
+                     "Arthur J. Rees",
+                     "Arthur J. Rees",
+                     "Carolyn Wells",
+                     "Edgar Wallace", 
+                     "Edgar Wallace",
+                     "Emmuska Orczy",
+                     "Ethel Lina White",
+                     "Fred Merrick White",
+                     "Fred Merrick White",   
+                     "G.K. Chesterton",
+                     "Harrington Strong",
+                     "J.S. Fletcher", 
+                     "J.S. Fletcher", 
+                     "J.S. Fletcher",
+                     "Mary Roberts Rinehart",
+                     "Mrs. Charles Bryce",
+                     "R. Austin Freedman",
+                     "Raymond Chandler",   
+                     "Wilkie Collins")
+
+det_books_vec <- c("The Secret Adversary",
+                   "The Leavenworth Case",
+                   "A Study in Scarlet",
+                   "The Sign of Four",
+                   "The Shrieking Pit", 
+                   "The Moon Rock",
+                   "The Hand in the Dark",
+                   "The Maxwell Mystery", 
+                   "The Angel Of Terror", 
+                   "The Daffodil Mystery",
+                   "The Old Man in the Corner",
+                   "The Spiral Staircase",
+                   "The Lady in Blue",
+                   "The Mystery of Room 75",
+                   "The Brand of Silence",
+                   "The Innocence of Father Brown",   
+                   "The Paradise Mystery", 
+                   "The Rayner Slade Amalgamation", 
+                   "The Scarhaven Keep",
+                   "The Circular Staircase",
+                   "The Ashiel Mystery",
+                   "The Red Thumb Mark",
+                   "The Big Sleep", 
+                   "The Moonstone")
+
+lyrical_df <- as.data.frame(cbind(lyrical_authors_vec, lyrical_books_vec))
+colnames(lyrical_df) <- c("Author", "Title")
+png("lyrical_corpus.png", height = 25*nrow(corpus_df), width = 250*ncol(corpus_df), title="Lyrical Corpus")
+grid.table(lyrical_df)
+
+detective_df <- as.data.frame(cbind(det_authors_vec, det_books_vec))
+colnames(detective_df) <- c("Author", "Title")
+png("detective_corpus.png", height = 25*nrow(corpus_df), width = 250*ncol(corpus_df), title="Lyrical Corpus")
+grid.table(detective_df)
+
+dev.off()
