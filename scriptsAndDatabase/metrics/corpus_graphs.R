@@ -31,9 +31,9 @@ lyrical_authors_vec <- c(
 lyrical_books_vec <- c("Blood Meridian",
   "The Road",
   "The Rainbow",
-  "The Serpent", 
+  "The Plumed Serpent", 
   "Women in Love",
-  "Gravity's Rainbow",
+  "The Narrative of Arthur Gordon Pym of Nantucket",
   "Eureka: A Prose Poem",
   "The Great Gatsby",
   "Billy Budd",
@@ -42,10 +42,10 @@ lyrical_books_vec <- c("Blood Meridian",
   "Wide Sargasso Sea",
   "Heart of Darkness",
   "Something Happened",
-  "Life and Times of Michael K",
+  "Life & Times of Michael K",
   "Under the Volcano", 
   "The Picture of Dorian Gray",
-  "The Narrative of Arthur Gordon Pym of Nantucket",
+  "Gravity's Rainbow",
   "Mrs. Dalloway", 
   "Orlando", 
   "To The Lighthouse", 
@@ -94,8 +94,8 @@ det_books_vec <- c("The Secret Adversary",
                    "The Spiral Staircase",
                    "The Lady in Blue",
                    "The Mystery of Room 75",
+                   "The Innocence of Father Brown",
                    "The Brand of Silence",
-                   "The Innocence of Father Brown",   
                    "The Paradise Mystery", 
                    "The Rayner Slade Amalgamation", 
                    "The Scarhaven Keep",
@@ -107,12 +107,13 @@ det_books_vec <- c("The Secret Adversary",
 
 lyrical_df <- as.data.frame(cbind(lyrical_authors_vec, lyrical_books_vec))
 colnames(lyrical_df) <- c("Author", "Title")
-png("lyrical_corpus.png", height = 25*nrow(corpus_df), width = 250*ncol(corpus_df), title="Lyrical Corpus")
+png("lyrical_corpus.png", height = 25*nrow(lyrical_df), width = 250*ncol(lyrical_df), title="Lyrical Corpus")
 grid.table(lyrical_df)
+dev.off()
 
 detective_df <- as.data.frame(cbind(det_authors_vec, det_books_vec))
 colnames(detective_df) <- c("Author", "Title")
-png("detective_corpus.png", height = 25*nrow(corpus_df), width = 250*ncol(corpus_df), title="Lyrical Corpus")
+png("detective_corpus.png", height = 25*nrow(detective_df), width = 250*ncol(detective_df), title="Lyrical Corpus")
 grid.table(detective_df)
 
 
@@ -229,6 +230,11 @@ png("explanation.png", height = 25*nrow(explanation), width =250*ncol(explanatio
 grid.table(explanation)
 dev.off()
 
+some_weights <- c(0.7237152, -0.3074419, -1.345788)
+some_labels <- c("anaphora-frequency", "i-frequency", "perception-frequency")
+both <- as.data.frame(cbind(some_labels, some_weights))
+colnames(both) <- c("Features", "Weights")
 
-
-
+png("feature_weights.png", height = 50*nrow(both), width =150*ncol(both))
+grid.table(both)
+dev.off()
