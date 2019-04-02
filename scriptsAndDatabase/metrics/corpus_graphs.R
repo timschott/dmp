@@ -238,3 +238,19 @@ colnames(both) <- c("Features", "Weights")
 png("feature_weights.png", height = 50*nrow(both), width =150*ncol(both))
 grid.table(both)
 dev.off()
+
+books <-c("Billy Budd", "Eureka: A Prose Poem", "Heart of Darkness",
+           "The Sound and the Fury", "Wide Sargasso Sea",
+           "The Big Sleep", "The Circular Staircase", "The Mystery of Room 75")
+authors <-c("Herman Meville", "Edgar Allan Poe", "Joseph Conrad",
+            "William Faulkner", "Jean Rhys", "Raymond Chandler",
+            "Mary Roberts Rinehart", "Fred Merrick White")
+labeled <- c(rep("detective", 5), rep("lyrical", 3))
+correct <- c(rep("lyrical", 5), rep("detective",3))
+
+titles <- as.data.frame(cbind(books, authors, labeled, correct))
+colnames(titles) <- c("Title","Author", "Classified Label", "Correct Label")
+
+png("bad_books.png", height = 25*nrow(titles), width =125*ncol(titles))
+grid.table(titles)
+dev.off()
