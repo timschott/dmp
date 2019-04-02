@@ -248,9 +248,33 @@ authors <-c("Herman Meville", "Edgar Allan Poe", "Joseph Conrad",
 labeled <- c(rep("detective", 5), rep("lyrical", 3))
 correct <- c(rep("lyrical", 5), rep("detective",3))
 
-titles <- as.data.frame(cbind(books, authors, labeled, correct))
-colnames(titles) <- c("Title","Author", "Classified Label", "Correct Label")
+anaphora_frequencies <- c(0.0351803, 0.04165119,0.0768869,0.09379594,
+                          0.06921818,0.1037446,0.0642068,0.07345635)
+anaphora_diff <- c(0.0351803-0.07821698 , 0.04165119-0.07821698,0.0768869-0.07821698, 0.09379594-0.07821698,
+                   0.06921818-0.07821698,0.1037446-0.05647833,0.0642068-0.05647833, 0.05647833-0.07345635)
 
-png("bad_books.png", height = 25*nrow(titles), width =125*ncol(titles))
+perception_frequencies <- c(0.01359659,0.01117902,0.01258402,0.01235963,
+                            0.01317223, 0.01380939,0.01302544,0.013804)
+all_rep <-  big_boy[,(13)]
+all_perceptions <-  big_boy[,(27)]
+
+# average anaphora across lyrical is very high
+mean(all_rep[1:26]) # 0.07821698
+# and low in detective 
+mean(all_rep[27:50])# 0.05647833
+# average perception is very low across lyrical
+mean(all_perceptions[1:26]) # 0.01251985
+# and high in detective 
+mean(all_perceptions[27:50]) # 0.0153349
+
+# 2, 4, 6, 22, 25, 30, 32, 41
+
+# new_df[c(2,4,6,22,25,30,32,41), c(12, 25)]
+
+titles <- as.data.frame(cbind(books, authors, anaphora_frequencies,
+                              perception_frequencies, labeled, correct))
+colnames(titles) <- c("Title","Author", "Frequency of Anaphora", "Frequency of Perception Words", "Classified Label", "Correct Label")
+
+png("bad_books.png", height = 25*nrow(titles), width =150*ncol(titles))
 grid.table(titles)
 dev.off()
