@@ -248,15 +248,30 @@ authors <-c("Herman Meville", "Edgar Allan Poe", "Joseph Conrad",
 labeled <- c(rep("detective", 5), rep("lyrical", 3))
 correct <- c(rep("lyrical", 5), rep("detective",3))
 
+# divide by standard dev 
+all_rep <-  big_boy[,(13)]
+all_perceptions <-  big_boy[,(27)]
+
+
 anaphora_frequencies <- c(0.0351803, 0.04165119,0.0768869,0.09379594,
                           0.06921818,0.1037446,0.0642068,0.07345635)
 anaphora_diff <- c(0.0351803-0.07821698 , 0.04165119-0.07821698,0.0768869-0.07821698, 0.09379594-0.07821698,
-                   0.06921818-0.07821698,0.1037446-0.05647833,0.0642068-0.05647833, 0.05647833-0.07345635)
+                   0.06921818-0.07821698,0.1037446-0.05647833,0.0642068-0.05647833, 0.07345635-0.05647833)
 
+anaphora_z <- anaphora_diff
+anaphora_z[1:5] <- anaphora_z[1:5]/(sd(all_rep[1:26]))
+anaphora_z[6:8] <- anaphora_z[6:8]/(sd(all_rep[27:50]))
+anaphora_z <- round(anaphora_z, digits = 2)
+anaphora_frequencies <- round(anaphora_frequencies, digits = 6)
 perception_frequencies <- c(0.01359659,0.01117902,0.01258402,0.01235963,
                             0.01317223, 0.01380939,0.01302544,0.013804)
-all_rep <-  big_boy[,(13)]
-all_perceptions <-  big_boy[,(27)]
+perception_diff <- c(0.01359659-0.01251985,0.01117902-0.01251985,0.01258402-0.01251985,0.01235963-0.01251985,
+                     0.01317223-0.01251985, 0.01380939-0.0153349,0.01302544-0.0153349,0.013804-0.0153349)
+perception_z <- perception_diff
+perception_z[1:5] <- perception_z[1:5]/(sd(all_perceptions[1:26]))
+perception_z[6:8] <- perception_z[6:8]/(sd(all_perceptions[27:50]))
+perception_z <- round(perception_z, digits = 2)
+perception_frequencies <- round(perception_frequencies, digits = 6)
 
 # average anaphora across lyrical is very high
 mean(all_rep[1:26]) # 0.07821698
@@ -266,15 +281,25 @@ mean(all_rep[27:50])# 0.05647833
 mean(all_perceptions[1:26]) # 0.01251985
 # and high in detective 
 mean(all_perceptions[27:50]) # 0.0153349
+0.0577228
 
 # 2, 4, 6, 22, 25, 30, 32, 41
 
 # new_df[c(2,4,6,22,25,30,32,41), c(12, 25)]
 
-titles <- as.data.frame(cbind(books, authors, anaphora_frequencies,
-                              perception_frequencies, labeled, correct))
-colnames(titles) <- c("Title","Author", "Frequency of Anaphora", "Frequency of Perception Words", "Classified Label", "Correct Label")
+titles <- as.data.frame(cbind(books, authors,labeled, correct, anaphora_frequencies,anaphora_z,
+                              perception_frequencies, perception_z))
+colnames(titles) <- c("Title","Author", "Classified Label", "Correct Label","Frequency of Anaphora", "z-score", "Frequency of Perception Words", "z-score")
 
-png("bad_books.png", height = 25*nrow(titles), width =150*ncol(titles))
+png("bad_books.png", height = 25*nrow(titles), width =120*ncol(titles))
 grid.table(titles)
 dev.off()
+perceive[168] <- "*null*"
+
+perc <- as.data.frame(cbind(perceive[1:42], perceive[43:84], perceive[85:126], perceive[127:168]))
+colnames(perc) <- c("HGI Perceptual Words", "HGI Perceptual Words", "HGI Perceptual Words", "HGI Perceptual Words")
+png("perc.png", height = 22.5*nrow(perc), width =170*ncol(perc))
+grid.table(perc)
+dev.off()
+
+
