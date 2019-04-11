@@ -48,10 +48,10 @@ def pltcolor(lst):
     for l in lst:
 
         if l == 1.0:
-            
+
             cols.append('blue')
         else:
-            cols.append('green')
+            cols.append('red')
     return cols
 
 
@@ -87,8 +87,37 @@ if __name__ == "__main__":
     # plt.xscale('log)
     cols = pltcolor(row)
 
-    plt.scatter(x, row, s=3, c = cols)
-    plt.title("Syllables Across Quentin's Last Monologue")
+    dummies = np.empty(545)
+
+    dummies[0:100] = 7
+    dummies[100:200] = 6
+    dummies[200:300] = 5
+    dummies[300:400] = 4
+    dummies[400:500] = 3
+    dummies[500:545] = 2
+
+    print dummies
+    print x
+
+    plt.scatter(x[0:100], dummies[0:100], s=10, c = cols, label='Monoysyllables')
+    plt.scatter(x[0:100], dummies[100:200], s=10, c=cols[100:200])
+    plt.scatter(x[0:100], dummies[200:300], s=10, c=cols[200:300])
+    plt.scatter(x[0:100], dummies[300:400], s=10, c=cols[300:400])
+    plt.scatter(x[0:100], dummies[400:500], s=10, c=cols[400:500])
+    plt.scatter(x[0:45], dummies[500:545], s=10, c=cols[500:545])
+    plt.scatter(x[0], dummies[500], s=10, color='red', label='Polysyllables')
+
+    frame1 = plt.gca()
+    # frame1.legend(('monosyllables', 'polysyllables'))
+
+    frame1.axes.get_yaxis().set_visible(False)
+
+    plt.xlabel("Words")
+
+    plt.legend(loc='best')
+    plt.subplots_adjust(bottom=0.05)
+
+    plt.title("Syllables Across Quentin's Interior Monologue")
     plt.savefig("quent_plot.png", dpi=500)
     plt.gcf().clear()
     plt.show()
