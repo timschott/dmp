@@ -11,7 +11,6 @@ def read_file(filename):
     for line in file:
         for word in line.split():
             words.append(word)
-            print(word)
 
     return words
 
@@ -36,9 +35,27 @@ def keep_track(words):
     syll_counts = []
 
     for word in words:
-        syll_counts.append(syllable_count(word))
+        if(syllable_count(word) >1 ):
+            syll_counts.append(2)
+        else:
+            syll_counts.append(1)
 
     return syll_counts
+
+
+def pltcolor(lst):
+    cols = []
+    for l in lst:
+
+        if l == 1.0:
+            
+            cols.append('blue')
+        else:
+            cols.append('green')
+    return cols
+
+
+# Create the colors list using the function above
 
 
 if __name__ == "__main__":
@@ -46,6 +63,7 @@ if __name__ == "__main__":
     results = keep_track(sound)
 
     print results
+    print(sound[525:545])
     print(len(results))
     #858 total words
     #1172 total syllables
@@ -53,8 +71,8 @@ if __name__ == "__main__":
     polycount = 0
 
     for i in results:
-        if i!=1:
-            polycount+=1
+        if i != 1:
+            polycount += 1
 
     print 'poly ' + str(polycount)
     monocount =  1172 - polycount
@@ -63,10 +81,13 @@ if __name__ == "__main__":
     row = np.array(results)
     row = row.astype(float)
     x = np.arange(1, len(row) + 1, 1)
-    print x
-    plt.figure(figsize=(9, 9))
 
-    plt.plot(x, row)
+    plt.figure(figsize=(16, 3))
+
+    # plt.xscale('log)
+    cols = pltcolor(row)
+
+    plt.scatter(x, row, s=3, c = cols)
     plt.title("Syllables Across Quentin's Last Monologue")
     plt.savefig("quent_plot.png", dpi=500)
     plt.gcf().clear()
