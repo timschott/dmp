@@ -42,17 +42,46 @@ def keep_track(words):
 
     return syll_counts
 
+def dist_count(colors):
+
+    print colors
+
+    for i in range(0, len(colors)):
+
+        print('---')
+
+        if(colors[i] == 'red' and colors[i+1] == 'blue' and colors[i+2]=='blue' and colors[i+3]=='blue'):
+            print i
+
+
+        if(i == 737):
+            break
+
+    return 0
+
 
 def pltcolor(lst):
     cols = []
+    num_cols = []
     for l in lst:
-
         if l == 1.0:
-
             cols.append('blue')
+            num_cols.append(1.0)
         else:
             cols.append('red')
-    return cols
+            num_cols.append(2.0)
+    return cols, num_cols
+
+
+def indices(lst, element):
+    result = []
+    offset = -1
+    while True:
+        try:
+            offset = lst.index(element, offset + 1)
+        except ValueError:
+            return result
+        result.append(offset)
 
 
 # Create the colors list using the function above
@@ -62,62 +91,87 @@ if __name__ == "__main__":
     sound = read_file("quent.txt")
     results = keep_track(sound)
 
-    print results
-    print(sound[525:545])
-    print(len(results))
-    #858 total words
-    #1172 total syllables
-    print(sum(results))
-    polycount = 0
+    print(len(sound))
 
-    for i in results:
-        if i != 1:
-            polycount += 1
-
-    print 'poly ' + str(polycount)
-    monocount =  1172 - polycount
-    print 'mono ' + str(monocount)
+    print sound[213:231]
 
     row = np.array(results)
     row = row.astype(float)
     x = np.arange(1, len(row) + 1, 1)
 
-    plt.figure(figsize=(16, 3))
+    plt.figure(figsize=(12, 4))
 
     # plt.xscale('log)
-    cols = pltcolor(row)
+    cols, num_cols = pltcolor(row)
+    print num_cols
 
-    dummies = np.empty(545)
+    reds = indices(num_cols, 2.0)
 
-    dummies[0:100] = 7
-    dummies[100:200] = 6
-    dummies[200:300] = 5
-    dummies[300:400] = 4
-    dummies[400:500] = 3
-    dummies[500:545] = 2
+    print reds
 
-    print dummies
-    print x
+    dists = []
+    consec = 0
+    for i in range(0, len(reds)-2):
+
+        distance = reds[i+1] - reds[i]
+        dists.append(distance)
+        if distance == 1:
+            consec+=1
+        if distance == 18:
+            print reds[i]
+            print reds[i+1]
+            print '---'
+
+    print dists
+    print sum(dists)/len(dists)
+    print consec
+
+    print(sorted(dists, reverse=True))
+
+    #out = dist_count(cols)
+    print('dfjkdjfkdajzkd')
+    #print out
+    print ('dlkjfkldfd')
+
+
+
+    dummies = np.empty(739)
+
+
+    dummies[0:100] = 9
+    dummies[100:200] = 8
+    dummies[200:300] = 7
+    dummies[300:400] = 6
+    dummies[400:500] = 5
+    dummies[500:600] = 4
+    dummies[600:700] = 3
+    dummies[700:739] = 2
+
+    #print(cols.index("red"))
 
     plt.scatter(x[0:100], dummies[0:100], s=10, c = cols, label='Monoysyllables')
     plt.scatter(x[0:100], dummies[100:200], s=10, c=cols[100:200])
     plt.scatter(x[0:100], dummies[200:300], s=10, c=cols[200:300])
     plt.scatter(x[0:100], dummies[300:400], s=10, c=cols[300:400])
     plt.scatter(x[0:100], dummies[400:500], s=10, c=cols[400:500])
-    plt.scatter(x[0:45], dummies[500:545], s=10, c=cols[500:545])
+    plt.scatter(x[0:100], dummies[500:600], s=10, c=cols[500:600])
+    plt.scatter(x[0:100], dummies[600:700], s=10, c=cols[600:700])
+    plt.scatter(x[0:39], dummies[700:739], s=10, c=cols[400:500])
+
     plt.scatter(x[0], dummies[500], s=10, color='red', label='Polysyllables')
 
     frame1 = plt.gca()
     # frame1.legend(('monosyllables', 'polysyllables'))
 
     frame1.axes.get_yaxis().set_visible(False)
+    frame1.axes.get_xaxis().set_visible(False)
 
     plt.xlabel("Words")
 
     plt.legend(loc='best')
     plt.subplots_adjust(bottom=0.05)
 
-    plt.title("Syllables Across Quentin's Interior Monologue")
+    plt.title("Syllabic Variety Across Quentin's Closing Sequence")
     plt.savefig("quent_plot.png", dpi=500)
     plt.gcf().clear()
     plt.show()
