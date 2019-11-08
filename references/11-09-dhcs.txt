@@ -1,0 +1,40 @@
+Abu-Mostafa, Yaser, et al. Learning From Data. AMLbook, 2012, AMLbook.com.
+Alvarado, Rafael, and Paul Humphreys. “Big Data, Thick Mediation, and Representational Opacity.” New Literary History, vol. 48, no. 4, Autumn 2017, pp. 729–49.
+Bender, Bert. “‘Moby-Dick’, An American Lyrical Novel.” Studies in the Novel, vol. 10, no. 3, Fall 1978, pp. 346–56.
+Covington, Michael, and Joe McFall. The Moving-Average Type-Token Ratio. http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.248.5206&rep=rep1&type=pdf. Linguistic Society of America, Chicago.
+Culler, Jonathan. Theory of the Lyric. Harvard University Press. Accessed 7 July 2018.
+Da, Nan Z. “The Computational Case against Computational Literary Studies.” Critical Inquiry, vol. 45, no. 3, Spring 2019, pp. 601–39, doi:https://doi.org/10.1086/702594.
+Dietterich, Thomas. Challenges for Machine Learning in Computational Sustainability. https://datascience.columbia.edu/files/seasdepts/idse/pdf-files/Seminar_Poster__Thomas_Dietterich.pdf. Columbia University.
+Felski, Rita. Uses of Literature. Wiley-Blackwell, 2008.
+Gabernet, Armand Ruiz, and Jay Limburn. “Breaking the 80/20 Rule: How Data Catalogs Transform Data Scientists’ Productivity.” IBM Cloud Blog, 23 Aug. 2017, https://www.ibm.com/blogs/bluemix/2017/08/ibm-data-catalog-data-scientists-productivity/.
+General Inquirer Category Description. http://www.wjh.harvard.edu/~inquirer/homecat.htm. Accessed 3 Dec. 2018.
+General Inquirer Usage. http://www.wjh.harvard.edu/~inquirer/3JMoreInfo.html. Accessed 3 Dec. 2018.
+Google. Keras. 2.2.4., Google, 2018, https://www.tensorflow.org/guide/keras.
+Hayes, Adam. “Moving Average.” Investopedia, 31 Jan. 2019, https://www.investopedia.com/terms/m/movingaverage.asp.
+Heidegger, Martin, and Joan Stambaugh. Being and Time. SUNY Press, 2010, https://www.amazon.com/Being-Time-Translation-Contemporary-Continental/dp/1438432763/ref=asc_df_1438432763/?tag=hyprod-20&linkCode=df0&hvadid=312168414377&hvpos=1o2&hvnetw=g&hvrand=17660720388080620249&hvpone=&hvptwo=&hvqmt=&hvdev=c&hvdvcmdl=&hvlocint=&hvlocphy=9008337&hvtargid=pla-436622550668&psc=1.
+Jackson, Virginia. Dickinson’s Misery. Princeton University Press, 2005, https://press.princeton.edu/titles/7989.html.
+---. “Lyric.” The Princeton Encyclopedia of Poetry and Poetics: Fourth Edition, edited by Roland Greene et al., Princeton University Press, 2012, pp. 826–34. ProQuest Ebook Central, http://ebookcentral.proquest.com/lib/uva/detail.action?docID=913846.
+Jockers, Matthew. Macroanalysis: Digital Methods & Literary History. University of Illinois Press, 2013, 6/28/2018.
+---. Text Analysis with R for Students of Literature. Springer, 2014, 3/3/2018.
+Kao, Justine, and Dan Jurafsky. “A Computational Analysis of Style, Affect, and Imagery in Contemporary Poetry.” Proceedings of the NAACL-HLT 2012 Workshop on Computational Linguistics for Literature, June 2012, p. 10.
+Moretti, Franco, editor. Canon / Archive: Studies in Quantative Formalism From the Stanford Literary Lab. n+1, 2017.
+---. Distant Reading. Penguin Random House, 2013.
+Muller, Kirill, et al. RSQLite. 2.1.1, 2018, https://cran.r-project.org/web/packages/RSQLite/RSQLite.pdf. CRAN.
+“Overfitting, n.” OED Online, Oxford University Press. Oxford English Dictionary, http://www.oed.com/view/Entry/258314. Accessed 28 Mar. 2019.
+Project Gutenberg Australia. http://gutenberg.net.au/crime-mystery.html. Accessed 25 Feb. 2019.
+Python Software Foundation. Python. 2.7, http://python.org. Accessed 11 Mar. 2018.
+Qi, Dr Yanjun. Lecture 11: Support Vector Machine (Basics). p. 58.
+---. Lecture 18: Decision Tree / Random Forest / Ensemble. p. 72.
+Qi, Yanjun. Lecture 1: Introduction. https://qiyanjun.github.io/2018fUVA-CS4501MachineLearning//Lectures/L01-intro.pdf. UVA CS 4501.
+---. Lecture 11: Support Vector Machine (Basics). https://qiyanjun.github.io/2018fUVA-CS4501MachineLearning//Lectures/L11-SVM-basic.pdf. UVA CS 4501. Accessed 30 Oct. 2018.
+---. Lecture 18: Decision Tree / Random Forest / Ensemble. UVA CS 4501.
+R Core Team. R. R Foundation for Statistical Computing, 2014, http://www.R-project.org/.
+Rinker, Tyler W. Qdap (Quantitative Discourse Analysis Package). 2.3.2, 2019, https://cran.r-project.org/web/packages/qdap/vignettes/qdap_vignette.html. CRAN.
+Starr, G. Gabrielle. Lyric Generations: Poetry and the Novel in the Long Eighteenth Century. John Hopkins University Press, 2015, https://ebookcentral.proquest.com/lib/uva/detail.action?docID=4398495.
+Stone, Philip, et al. General Inquirer: A Computer Approach to Content Analysis. MIT Press, 1966, https://www.amazon.com/General-Inquirer-Computer-Approach-Analysis/dp/026269011X.
+Technische Universität Wien. E1071. 1.7-1, 2019, https://cran.r-project.org/web/packages/e1071/e1071.pdf. CRAN.
+“The Digital in the Humanities: An Interview with Franco Moretti.” Los Angeles Review of Books, https://lareviewofbooks.org/article/the-digital-in-the-humanities-an-interview-with-franco-moretti/. Accessed 21 Mar. 2019.
+Tyler, Rinker. SentimentR. 2.6.1, 2018, https://cran.r-project.org/web/packages/sentimentr/sentimentr.pdf. CRAN.
+Underwood, Ted. “Why an Age of Machine Learning Needs the Humanities.” Public Books, 5 Dec. 2018, https://www.publicbooks.org/why-an-age-of-machine-learning-needs-the-humanities/.
+Unsworth, John. What Is Humanities Computing (and What Is Not)? 8 Nov. 2002, http://www.people.virginia.edu/~jmu2m/texas-hc.html.
+Yang, Zichao, et al. “Hierarchical Attention Networks for Document Classification.” Proceedings of the 2016 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies, Association for Computational Linguistics, 2016, pp. 1480–89. Crossref, doi:10.18653/v1/N16-1174.
